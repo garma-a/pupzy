@@ -62,11 +62,11 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
   });
 
   it('wires ShortUuid component to id and banned_by_admin_id', () => {
-    const customComponents = { ShortUuid: 'CustomShortUuid' };
+    const customComponents = { ShortUuid: 'CustomShortUuid', ReferenceLink: 'CustomReferenceLink' };
     const res = buildUsersResource(db, pool, customComponents);
     assert.equal(res.options.properties.id.components.list, 'CustomShortUuid');
     assert.equal(res.options.properties.id.components.show, 'CustomShortUuid');
-    assert.equal(res.options.properties.banned_by_admin_id.components.show, 'CustomShortUuid');
+    assert.equal(res.options.properties.banned_by_admin_id.components.show, 'CustomReferenceLink');
   });
 
   it('marks service-owned, auth, trust, counter, and ban audit properties as isDisabled', () => {

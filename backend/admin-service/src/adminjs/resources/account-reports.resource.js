@@ -1,7 +1,9 @@
 import { buildAccountReportReviewAction } from '../actions/review-report.actions.js';
 import { ENUMS } from '../enums.js';
+import { buildPolymorphicReferenceHook } from '../reference-targets.js';
 import { virtualFilterOptions } from '../queue-filters.js';
 import {
+  attachReferenceLink,
   attachShortUuid,
   buildReadOnlyResource,
   enumProperty,
@@ -21,12 +23,14 @@ export function buildAccountReportsResource(db, components = {}, pool, cache) {
     ...virtualFilterOptions('account_reports'),
   };
 
-  attachShortUuid(
+  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachReferenceLink(
     properties,
-    ['id', 'reporter_id', 'reported_user_id', 'source_id', 'reviewed_by_admin_id'],
+    ['reporter_id', 'reported_user_id', 'source_id', 'reviewed_by_admin_id'],
     components,
     ['list', 'show'],
   );
+  const resolveSource = buildPolymorphicReferenceHook(pool, { typeField: 'source_type', idField: 'source_id' });
 
   return buildReadOnlyResource(db, 'account_reports', { name: 'Moderation', icon: 'Flag' }, properties, {
     sort: { sortBy: 'created_at', direction: 'desc' },
@@ -64,8 +68,8 @@ export function buildAccountReportsResource(db, components = {}, pool, cache) {
       'review_state',
     ],
     actions: {
-      list: { after: stripPopulatedPasswordHashes },
-      show: { after: stripPopulatedPasswordHashes },
+      list: { after: [stripPopulatedPasswordHashes, resolveSource] },
+      show: { after: [stripPopulatedPasswordHashes, resolveSource] },
       reviewWithNoAction: buildAccountReportReviewAction(pool, components?.ModerationAction, cache),
     },
   });

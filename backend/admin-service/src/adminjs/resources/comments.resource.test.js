@@ -8,6 +8,7 @@ describe('AdminJS Comments Resource & Actions (Ticket 09)', () => {
   const pool = { query: async () => ({ rows: [] }) };
   const components = {
     ShortUuid: 'ShortUuidMock',
+    ReferenceLink: 'ReferenceLinkMock',
     ModerationAction: 'ModerationActionMock',
   };
 

@@ -16,6 +16,7 @@ import {
 } from '../src/adminjs/resources/vet-clinics.resource.js';
 import { ValidationError } from 'adminjs';
 import { buildAuthenticate } from '../src/auth/authenticate.js';
+import { referenceTitle } from '../src/adminjs/reference-title.js';
 import { buildCsrfProtection } from '../src/middleware/csrf.js';
 import { requireSameOrigin } from '../src/middleware/same-origin.js';
 import { TestDatabaseHelper, insertPost, seedPrincipals } from './test-database.helper.js';
@@ -3826,6 +3827,128 @@ describe('AdminJS HTTP security and resource behavior', () => {
       assert.equal(body.redirectUrl, `/admin/resources/users/records/${principals.userId}/show`);
       const stored = await database.pool.query(`SELECT full_name FROM users WHERE id = $1`, [principals.userId]);
       assert.equal(stored.rows[0].full_name, 'Edited Through Http');
+    });
+  });
+  describe('references carry what the ReferenceLink needs', () => {
+    const apiGet = async (path) =>
+      (await fetch(`${baseUrl}/admin/api/resources/${path}`, { headers: { cookie: superCookie } })).json();
+
+    it('returns the post, comment and reporter behind report ids, including an Arabic-name-only user', async () => {
+      const { rows: users } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name, full_name_arabic)
+         VALUES ('ref-arabic-only', 'ref-arabic@example.com', NULL, 'هنا إبراهيم') RETURNING id`,
+      );
+      const arabicId = users[0].id;
+      const postId = await insertPost(database.pool, {
+        userId: principals.userId,
+        cityId: principals.cityId,
+        title: 'Reference title post',
+        moderationStatus: 'FLAGGED',
+      });
+      const { rows: comments } = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status) VALUES ($1, $2, 'Seen near the bridge yesterday', 'ACTIVE') RETURNING id`,
+        [postId, arabicId],
+      );
+      const { rows: reports } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [postId, arabicId],
+      );
+      const { rows: commentReports } = await database.pool.query(
+        `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [comments[0].id, principals.userId],
+      );
+
+      const list = await apiGet('post_reports/actions/list');
+      const report = list.records.find((record) => record.id === reports[0].id);
+      assert.equal(report.populated.post_id.params.title, 'Reference title post');
+      assert.equal(referenceTitle('posts', report.populated.post_id.params, postId), 'Reference title post');
+      assert.equal(
+        referenceTitle('users', report.populated.reporter_id.params, arabicId),
+        'هنا إبراهيم',
+        'an Arabic-name-only user is named, never "Deleted account"',
+      );
+
+      const commentList = await apiGet('comment_reports/actions/list');
+      const commentReport = commentList.records.find((record) => record.id === commentReports[0].id);
+      assert.equal(
+        referenceTitle('comments', commentReport.populated.comment_id.params, comments[0].id),
+        'Seen near the bridge yesterday',
+      );
+
+      const shown = await apiGet(`post_reports/records/${reports[0].id}/show`);
+      assert.equal(shown.record.populated.post_id.params.title, 'Reference title post');
+    });
+
+    it('resolves Moderation Action targets by type with one query per type and flags rows that no longer exist', async () => {
+      const postIds = [];
+      for (const title of ['Audit one', 'Audit two', 'Audit three']) {
+        postIds.push(await insertPost(database.pool, { userId: principals.userId, cityId: principals.cityId, title }));
+      }
+      const { rows: comment } = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status) VALUES ($1, $2, 'Audit comment', 'ACTIVE') RETURNING id`,
+        [postIds[0], principals.userId],
+      );
+      const missingId = '00000000-0000-7000-8000-000000000abc';
+      const targets = [
+        ['POST_FLAGGED', 'POST', postIds[0]],
+        ['POST_FLAGGED', 'POST', postIds[1]],
+        ['POST_FLAGGED', 'POST', postIds[2]],
+        ['COMMENT_REMOVED', 'COMMENT', comment[0].id],
+        ['USER_UNBANNED', 'USER', principals.userId],
+        ['POST_FLAGGED', 'POST', missingId],
+      ];
+      for (const [actionType, targetType, targetId] of targets) {
+        await database.pool.query(
+          `INSERT INTO moderation_actions (admin_user_id, action_type, target_type, target_id) VALUES ($1, $2, $3, $4)`,
+          [principals.adminId, actionType, targetType, targetId],
+        );
+      }
+
+      const queries = [];
+      const originalQuery = database.pool.query;
+      database.pool.query = function (...args) {
+        queries.push(String(args[0]?.text ?? args[0]));
+        return originalQuery.apply(this, args);
+      };
+      let list;
+      try {
+        list = await apiGet('moderation_actions/actions/list');
+      } finally {
+        database.pool.query = originalQuery;
+      }
+
+      const lookups = (table) => queries.filter((sql) => new RegExp(`FROM ${table} WHERE id = ANY`).test(sql));
+      assert.equal(lookups('posts').length, 1, 'one posts query for every Post target on the page');
+      assert.equal(lookups('comments').length, 1);
+      assert.equal(lookups('users').length, 1);
+
+      const byTarget = (id) => list.records.find((record) => record.params.target_id === id).populated.target_id;
+      assert.equal(byTarget(postIds[1]).resourceId, 'posts');
+      assert.equal(byTarget(postIds[1]).params.title, 'Audit two');
+      assert.equal(byTarget(postIds[1]).missing, false);
+      assert.equal(byTarget(comment[0].id).params.text, 'Audit comment');
+      assert.equal(byTarget(principals.userId).resourceId, 'users');
+      assert.equal(byTarget(missingId).missing, true, 'a target that no longer exists is flagged');
+    });
+
+    it('resolves an Account Report source by its type', async () => {
+      const postId = await insertPost(database.pool, {
+        userId: principals.userId,
+        cityId: principals.cityId,
+        title: 'Source post',
+      });
+      const { rows: other } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name) VALUES ('ref-source-user', 'ref-source@example.com', 'Source User') RETURNING id`,
+      );
+      const { rows } = await database.pool.query(
+        `INSERT INTO account_reports (reporter_id, reported_user_id, reason, source_type, source_id)
+         VALUES ($1, $2, 'SPAM', 'POST', $3) RETURNING id`,
+        [other[0].id, principals.userId, postId],
+      );
+      const shown = await apiGet(`account_reports/records/${rows[0].id}/show`);
+      assert.equal(shown.record.populated.source_id.resourceId, 'posts');
+      assert.equal(shown.record.populated.source_id.params.title, 'Source post');
+      assert.equal(shown.record.populated.reported_user_id.params.email, 'user@example.com');
     });
   });
 });

@@ -1,5 +1,6 @@
 import { ENUMS } from '../enums.js';
 import {
+  attachReferenceLink,
   attachShortUuid,
   buildReadOnlyResource,
   enumProperty,
@@ -26,7 +27,8 @@ export function buildAdoptionApplicationsResource(db, components = {}) {
     created_at: { isDisabled: true },
   };
 
-  attachShortUuid(properties, ['id', 'target_post_id', 'applicant_id'], components, ['list', 'show']);
+  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['target_post_id', 'applicant_id'], components, ['list', 'show']);
 
   return buildReadOnlyResource(db, 'adoption_applications', { name: 'User Activity', icon: 'Users' }, properties, {
     sort: { sortBy: 'created_at', direction: 'desc' },

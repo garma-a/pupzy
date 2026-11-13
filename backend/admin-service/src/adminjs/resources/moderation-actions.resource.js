@@ -1,12 +1,14 @@
 import { ENUMS } from '../enums.js';
+import { buildPolymorphicReferenceHook } from '../reference-targets.js';
 import {
+  attachReferenceLink,
   attachShortUuid,
   buildReadOnlyResource,
   enumProperty,
   stripPopulatedPasswordHashes,
 } from './resource-helpers.js';
 
-export function buildModerationActionsResource(db, components = {}) {
+export function buildModerationActionsResource(db, components = {}, pool) {
   const properties = {
     id: { isTitle: true, isDisabled: true },
     admin_user_id: {},
@@ -20,7 +22,9 @@ export function buildModerationActionsResource(db, components = {}) {
     created_at: { isDisabled: true },
   };
 
-  attachShortUuid(properties, ['id', 'admin_user_id', 'target_id'], components, ['list', 'show']);
+  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['admin_user_id', 'target_id'], components, ['list', 'show']);
+  const resolveTarget = buildPolymorphicReferenceHook(pool, { typeField: 'target_type', idField: 'target_id' });
 
   return buildReadOnlyResource(db, 'moderation_actions', { name: 'Admin Management', icon: 'Lock' }, properties, {
     sort: { sortBy: 'created_at', direction: 'desc' },
@@ -37,8 +41,8 @@ export function buildModerationActionsResource(db, components = {}) {
     ],
     filterProperties: ['id', 'action_type', 'target_type', 'target_id', 'admin_user_id', 'created_at'],
     actions: {
-      list: { after: stripPopulatedPasswordHashes },
-      show: { after: stripPopulatedPasswordHashes },
+      list: { after: [stripPopulatedPasswordHashes, resolveTarget] },
+      show: { after: [stripPopulatedPasswordHashes, resolveTarget] },
     },
   });
 }

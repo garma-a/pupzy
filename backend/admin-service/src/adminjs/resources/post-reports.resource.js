@@ -2,6 +2,7 @@ import { buildPostReportReviewAction } from '../actions/review-report.actions.js
 import { ENUMS } from '../enums.js';
 import { virtualFilterOptions } from '../queue-filters.js';
 import {
+  attachReferenceLink,
   attachShortUuid,
   buildReadOnlyResource,
   enumProperty,
@@ -20,7 +21,8 @@ export function buildPostReportsResource(db, components = {}, pool, cache) {
     ...virtualFilterOptions('post_reports'),
   };
 
-  attachShortUuid(properties, ['id', 'post_id', 'reporter_id', 'reviewed_by_admin_id'], components, ['list', 'show']);
+  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['post_id', 'reporter_id', 'reviewed_by_admin_id'], components, ['list', 'show']);
 
   return buildReadOnlyResource(db, 'post_reports', { name: 'Moderation', icon: 'Flag' }, properties, {
     sort: { sortBy: 'created_at', direction: 'desc' },

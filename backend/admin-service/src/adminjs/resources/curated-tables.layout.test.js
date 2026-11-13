@@ -28,6 +28,7 @@ const db = { table: (name) => ({ name }) };
 const pool = {};
 const components = {
   ShortUuid: 'ShortUuidMock',
+  ReferenceLink: 'ReferenceLinkMock',
   ModerationAction: 'ModerationActionMock',
   MappedLocationEdit: 'MappedLocationEditMock',
   MappedLocationShow: 'MappedLocationShowMock',
@@ -75,8 +76,8 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
       ]);
       assert.ok(res.options.showProperties.includes('has_visible_serious_injury'));
       assert.ok(res.options.showProperties.includes('can_animal_move_or_escape'));
-      assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
-      assert.equal(res.options.properties.post_id.components.show, 'ShortUuidMock');
+      assert.equal(res.options.properties.post_id.components.list, 'ReferenceLinkMock');
+      assert.equal(res.options.properties.post_id.components.show, 'ReferenceLinkMock');
       assert.equal(res.options.actions.new.isAccessible, false);
       assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
@@ -97,7 +98,7 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
       assert.ok(res.options.showProperties.includes('circumstances'));
       assert.ok(res.options.showProperties.includes('color_and_markings'));
       assert.ok(res.options.showProperties.includes('has_collar_with_identification_tag'));
-      assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
+      assert.equal(res.options.properties.post_id.components.list, 'ReferenceLinkMock');
       assert.equal(res.options.actions.new.isAccessible, false);
       assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
@@ -119,7 +120,7 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
       assert.ok(res.options.showProperties.includes('personality_tags'));
       assert.ok(res.options.showProperties.includes('health_notes'));
       assert.ok(res.options.showProperties.includes('additional_requirements'));
-      assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
+      assert.equal(res.options.properties.post_id.components.list, 'ReferenceLinkMock');
       assert.equal(res.options.actions.new.isAccessible, false);
       assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
@@ -137,7 +138,7 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
         'price_currency',
         'open_to_offers',
       ]);
-      assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
+      assert.equal(res.options.properties.post_id.components.list, 'ReferenceLinkMock');
       assert.equal(res.options.actions.new.isAccessible, false);
       assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
@@ -157,7 +158,7 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
       ]);
       assert.ok(res.options.showProperties.includes('terms_summary'));
       assert.ok(res.options.showProperties.includes('mating_conditions'));
-      assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
+      assert.equal(res.options.properties.post_id.components.list, 'ReferenceLinkMock');
       assert.equal(res.options.actions.new.isAccessible, false);
       assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
@@ -179,7 +180,7 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
       assert.ok(res.options.showProperties.includes('public_url'));
       assert.ok(res.options.showProperties.includes('cloudflare_storage_key'));
       assert.equal(res.options.properties.id.components.list, 'ShortUuidMock');
-      assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
+      assert.equal(res.options.properties.post_id.components.list, 'ReferenceLinkMock');
       assert.equal(res.options.actions.new.isAccessible, false);
       assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
@@ -189,8 +190,8 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
     it('post_upvotes is completely read-only and uses ShortUuid', () => {
       const res = buildPostUpvotesResource(db, components);
       assert.deepEqual(res.options.listProperties, ['post_id', 'user_id', 'created_at']);
-      assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
-      assert.equal(res.options.properties.user_id.components.list, 'ShortUuidMock');
+      assert.equal(res.options.properties.post_id.components.list, 'ReferenceLinkMock');
+      assert.equal(res.options.properties.user_id.components.list, 'ReferenceLinkMock');
       assert.equal(res.options.actions.new.isAccessible, false);
       assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
@@ -199,8 +200,8 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
     it('post_saves is completely read-only and uses ShortUuid', () => {
       const res = buildPostSavesResource(db, components);
       assert.deepEqual(res.options.listProperties, ['post_id', 'user_id', 'created_at']);
-      assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
-      assert.equal(res.options.properties.user_id.components.list, 'ShortUuidMock');
+      assert.equal(res.options.properties.post_id.components.list, 'ReferenceLinkMock');
+      assert.equal(res.options.properties.user_id.components.list, 'ReferenceLinkMock');
       assert.equal(res.options.actions.new.isAccessible, false);
       assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
@@ -274,8 +275,8 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
         'created_at',
       ]);
       assert.equal(res.options.properties.id.components.list, 'ShortUuidMock');
-      assert.equal(res.options.properties.admin_user_id.components.list, 'ShortUuidMock');
-      assert.equal(res.options.properties.target_id.components.list, 'ShortUuidMock');
+      assert.equal(res.options.properties.admin_user_id.components.list, 'ReferenceLinkMock');
+      assert.equal(res.options.properties.target_id.components.list, 'ReferenceLinkMock');
       assert.equal(res.options.actions.new.isAccessible, false);
       assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
@@ -296,8 +297,8 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
       assert.ok(res.options.showProperties.includes('coordinates'));
       assert.ok(res.options.showProperties.includes('discrepancy_details'));
       assert.equal(res.options.properties.id.components.list, 'ShortUuidMock');
-      assert.equal(res.options.properties.vet_clinic_id.components.list, 'ShortUuidMock');
-      assert.equal(res.options.properties.admin_user_id.components.list, 'ShortUuidMock');
+      assert.equal(res.options.properties.vet_clinic_id.components.list, 'ReferenceLinkMock');
+      assert.equal(res.options.properties.admin_user_id.components.list, 'ReferenceLinkMock');
       assert.equal(res.options.actions.new.isAccessible, false);
       assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);

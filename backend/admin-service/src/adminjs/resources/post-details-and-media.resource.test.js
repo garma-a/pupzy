@@ -12,6 +12,7 @@ import { buildPostMediaResource } from './post-media.resource.js';
 const db = { table: (name) => ({ name }) };
 const components = {
   ShortUuid: 'ShortUuidMock',
+  ReferenceLink: 'ReferenceLinkMock',
 };
 
 describe('Post Details & Media Safely Read-Only Resources', () => {
@@ -56,25 +57,25 @@ describe('Post Details & Media Safely Read-Only Resources', () => {
   });
 
   it('wires ShortUuid component to IDs on list and show views', () => {
-    assert.equal(resources.rescue_posts.options.properties.post_id.components.list, 'ShortUuidMock');
-    assert.equal(resources.rescue_posts.options.properties.post_id.components.show, 'ShortUuidMock');
+    assert.equal(resources.rescue_posts.options.properties.post_id.components.list, 'ReferenceLinkMock');
+    assert.equal(resources.rescue_posts.options.properties.post_id.components.show, 'ReferenceLinkMock');
 
-    assert.equal(resources.lost_posts.options.properties.post_id.components.list, 'ShortUuidMock');
-    assert.equal(resources.lost_posts.options.properties.post_id.components.show, 'ShortUuidMock');
+    assert.equal(resources.lost_posts.options.properties.post_id.components.list, 'ReferenceLinkMock');
+    assert.equal(resources.lost_posts.options.properties.post_id.components.show, 'ReferenceLinkMock');
 
-    assert.equal(resources.adoption_posts.options.properties.post_id.components.list, 'ShortUuidMock');
-    assert.equal(resources.adoption_posts.options.properties.post_id.components.show, 'ShortUuidMock');
+    assert.equal(resources.adoption_posts.options.properties.post_id.components.list, 'ReferenceLinkMock');
+    assert.equal(resources.adoption_posts.options.properties.post_id.components.show, 'ReferenceLinkMock');
 
-    assert.equal(resources.product_posts.options.properties.post_id.components.list, 'ShortUuidMock');
-    assert.equal(resources.product_posts.options.properties.post_id.components.show, 'ShortUuidMock');
+    assert.equal(resources.product_posts.options.properties.post_id.components.list, 'ReferenceLinkMock');
+    assert.equal(resources.product_posts.options.properties.post_id.components.show, 'ReferenceLinkMock');
 
-    assert.equal(resources.mating_posts.options.properties.post_id.components.list, 'ShortUuidMock');
-    assert.equal(resources.mating_posts.options.properties.post_id.components.show, 'ShortUuidMock');
+    assert.equal(resources.mating_posts.options.properties.post_id.components.list, 'ReferenceLinkMock');
+    assert.equal(resources.mating_posts.options.properties.post_id.components.show, 'ReferenceLinkMock');
 
     assert.equal(resources.post_media.options.properties.id.components.list, 'ShortUuidMock');
     assert.equal(resources.post_media.options.properties.id.components.show, 'ShortUuidMock');
-    assert.equal(resources.post_media.options.properties.post_id.components.list, 'ShortUuidMock');
-    assert.equal(resources.post_media.options.properties.post_id.components.show, 'ShortUuidMock');
+    assert.equal(resources.post_media.options.properties.post_id.components.list, 'ReferenceLinkMock');
+    assert.equal(resources.post_media.options.properties.post_id.components.show, 'ReferenceLinkMock');
   });
 
   it('preserves complete detail fields in showProperties and scan-oriented listProperties', () => {

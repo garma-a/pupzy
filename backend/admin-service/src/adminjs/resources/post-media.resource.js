@@ -1,4 +1,9 @@
-import { attachShortUuid, buildReadOnlyResource, stripPopulatedPasswordHashes } from './resource-helpers.js';
+import {
+  attachReferenceLink,
+  attachShortUuid,
+  buildReadOnlyResource,
+  stripPopulatedPasswordHashes,
+} from './resource-helpers.js';
 
 export function buildPostMediaResource(db, components = {}) {
   const hasPreview = Boolean(components.PostMediaPreview);
@@ -18,7 +23,8 @@ export function buildPostMediaResource(db, components = {}) {
     created_at: { isDisabled: true },
   };
 
-  attachShortUuid(properties, ['id', 'post_id'], components, ['list', 'show']);
+  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['post_id'], components, ['list', 'show']);
 
   return buildReadOnlyResource(db, 'post_media', { name: 'Post Details', icon: 'Image' }, properties, {
     sort: { sortBy: 'created_at', direction: 'desc' },

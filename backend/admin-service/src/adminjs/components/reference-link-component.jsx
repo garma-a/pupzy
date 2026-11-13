@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ViewHelpers } from 'adminjs';
+import { ViewHelpers, useTranslation } from 'adminjs';
 import { useNavigate } from 'react-router';
 
 import { deletedLabel, referenceTitle } from '../reference-title.js';
@@ -50,12 +50,15 @@ function CopyId({ value }) {
  */
 export default function ReferenceLink(props) {
   const { property, where } = props;
+  const { translateProperty } = useTranslation();
   const body = <ReferenceValue {...props} />;
   if (where !== 'show') return body;
   // Show pages print the property label because a custom component replaces AdminJS's own row.
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4 }}>{property?.label}</div>
+      <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4 }}>
+        {translateProperty(property?.path, property?.resourceId)}
+      </div>
       {body}
     </div>
   );

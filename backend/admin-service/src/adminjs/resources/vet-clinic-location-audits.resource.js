@@ -1,4 +1,9 @@
-import { attachShortUuid, buildReadOnlyResource, stripPopulatedPasswordHashes } from './resource-helpers.js';
+import {
+  attachReferenceLink,
+  attachShortUuid,
+  buildReadOnlyResource,
+  stripPopulatedPasswordHashes,
+} from './resource-helpers.js';
 
 export function buildVetClinicLocationAuditsResource(db, components = {}) {
   const properties = {
@@ -17,7 +22,8 @@ export function buildVetClinicLocationAuditsResource(db, components = {}) {
     created_at: { isDisabled: true },
   };
 
-  attachShortUuid(properties, ['id', 'vet_clinic_id', 'admin_user_id'], components, ['list', 'show']);
+  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['vet_clinic_id', 'admin_user_id'], components, ['list', 'show']);
 
   return buildReadOnlyResource(
     db,

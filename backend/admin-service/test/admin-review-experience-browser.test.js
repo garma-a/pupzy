@@ -1023,6 +1023,108 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
     }
   });
 
+  it('links every reference to its record by a readable name, from reports and the audit log', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      const { rows: arabic } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name_arabic)
+         VALUES ('bwg-ref-arabic', 'ref-arabic@example.com', 'هنا إبراهيم') RETURNING id`,
+      );
+      const reporterId = arabic[0].id;
+      const commentId = await insertComment({
+        postId: fixture.flaggedId,
+        authorId: fixture.commenterId,
+        text: 'A comment that someone reported for review',
+        createdAt: new Date(Date.now() - 3_600_000),
+      });
+      const { rows: postReport } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [fixture.flaggedId, reporterId],
+      );
+      const { rows: commentReport } = await database.pool.query(
+        `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [commentId, reporterId],
+      );
+      await database.pool.query(
+        `INSERT INTO moderation_actions (admin_user_id, action_type, target_type, target_id)
+         VALUES ($1, 'POST_FLAGGED', 'POST', $2)`,
+        [principals.adminId, fixture.flaggedId],
+      );
+
+      const waitForPath = (fragment) =>
+        page.waitForFunction((text) => window.location.pathname.includes(text), { timeout: 30000 }, fragment);
+      const openShow = async (resourceId, recordId) => {
+        await page.goto(`${baseUrl}/admin/resources/${resourceId}/records/${recordId}/show`, {
+          waitUntil: 'networkidle0',
+        });
+        await page.waitForSelector('[data-testid="pupzy-reference-link"]', { timeout: 60000 });
+      };
+      const clickReference = async (resourceId) => {
+        await page.click(`[data-testid="pupzy-reference-link"][data-reference-resource="${resourceId}"]`);
+      };
+
+      await loginAsAdmin(page, baseUrl);
+
+      // List: readable names, no raw UUIDs for references, and a link click opens the target, not the row.
+      await page.goto(`${baseUrl}/admin/resources/post_reports`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector('[data-testid="pupzy-reference-link"]', { timeout: 60000 });
+      const listText = await page.$eval('table tbody', (node) => node.innerText);
+      assert.match(listText, /Flagged case awaiting review/);
+      assert.match(listText, /هنا إبراهيم/);
+      const rowCount = await page.$$eval('table tbody tr', (rows) => rows.length);
+      assert.equal(
+        (listText.match(/[0-9a-f]{8}…[0-9a-f]{4}/g) ?? []).length,
+        rowCount,
+        "only each row's own id is a short UUID; references show names",
+      );
+      console.log(`[fix3 evidence] post reports list ${await recordEvidence(page, 'fix3-post-reports-list')}`);
+      await clickReference('posts');
+      await waitForPath(`/resources/posts/records/${fixture.flaggedId}/show`);
+      assert.ok(!page.url().includes('post_reports'), 'the link opened the Post, not the report row');
+
+      // Post Report: Post, back, then the reporter.
+      await openShow('post_reports', postReport[0].id);
+      const showText = await page.$eval('body', (node) => node.innerText);
+      assert.match(showText, /Reported by/);
+      assert.doesNotMatch(showText, /reporter_id|post_id/, 'reference labels are plain words');
+      console.log(`[fix3 evidence] post report show ${await recordEvidence(page, 'fix3-post-report-show')}`);
+      await clickReference('posts');
+      await waitForPath(`/resources/posts/records/${fixture.flaggedId}/show`);
+      await page.goBack({ waitUntil: 'networkidle0' });
+      await page.waitForSelector('[data-testid="pupzy-reference-link"][data-reference-resource="users"]');
+      await clickReference('users');
+      await waitForPath(`/resources/users/records/${reporterId}/show`);
+
+      // Comment Report: the Comment, then its author.
+      await openShow('comment_reports', commentReport[0].id);
+      const commentLink = await page.$eval(
+        '[data-testid="pupzy-reference-link"][data-reference-resource="comments"]',
+        (node) => node.innerText,
+      );
+      assert.match(commentLink, /A comment that someone reported/);
+      await clickReference('comments');
+      await waitForPath(`/resources/comments/records/${commentId}/show`);
+      await page.waitForSelector('[data-testid="pupzy-reference-link"][data-reference-resource="users"]');
+      await clickReference('users');
+      await waitForPath(`/resources/users/records/${fixture.commenterId}/show`);
+
+      // Moderation Actions: a target cell opens the Post.
+      await page.goto(`${baseUrl}/admin/resources/moderation_actions`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector('[data-testid="pupzy-reference-link"][data-reference-resource="posts"]', {
+        timeout: 60000,
+      });
+      console.log(
+        `[fix3 evidence] moderation actions list ${await recordEvidence(page, 'fix3-moderation-actions-list')}`,
+      );
+      await clickReference('posts');
+      await waitForPath(`/resources/posts/records/${fixture.flaggedId}/show`);
+      assert.ok(!page.url().includes('moderation_actions'));
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
   it('shows the dashboard empty state when no review work remains', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {

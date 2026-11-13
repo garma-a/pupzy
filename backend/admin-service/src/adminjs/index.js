@@ -6,6 +6,7 @@ import { Database } from '@adminjs/sql';
 import { DashboardStatsCache } from './dashboard/dashboard-cache.js';
 import { buildDashboardHandler } from './dashboard/dashboard-handler.js';
 import { pupzyTheme } from './theme.js';
+import { PROPERTY_LABELS } from './property-labels.js';
 import { buildAdminUsersResource } from './resources/admin-users.resource.js';
 import { buildAdoptionApplicationsResource } from './resources/adoption-applications.resource.js';
 import { buildAdoptionPostsResource } from './resources/adoption-posts.resource.js';
@@ -81,6 +82,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'ModerationAction',
       path.join(currentDirectory, 'components', 'moderation-action-component.jsx'),
     ),
+    ReferenceLink: componentLoader.add(
+      'ReferenceLink',
+      path.join(currentDirectory, 'components', 'reference-link-component.jsx'),
+    ),
     ShortUuid: componentLoader.add('ShortUuid', path.join(currentDirectory, 'components', 'short-uuid-component.jsx')),
     MappedLocationEdit: componentLoader.add(
       'MappedLocationEdit',
@@ -141,7 +146,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     buildCitiesResource(db, components),
     buildVetClinicsResource(db, pool, components, cache),
     buildAdminUsersResource(db, components),
-    buildModerationActionsResource(db, components),
+    buildModerationActionsResource(db, components, pool),
     buildVetClinicLocationAuditsResource(db, components),
   ];
 
@@ -176,7 +181,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       translations: {
         en: {
           actions: { show: 'Details', list: 'Records' },
-          properties: { review_status: 'Status' },
+          properties: PROPERTY_LABELS,
           resources: { posts: { actions: { show: 'Review Post', list: 'Posts' } } },
           components: {
             Login: {

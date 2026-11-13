@@ -2,6 +2,7 @@ import { buildCommentReportReviewAction } from '../actions/review-report.actions
 import { ENUMS } from '../enums.js';
 import { virtualFilterOptions } from '../queue-filters.js';
 import {
+  attachReferenceLink,
   attachShortUuid,
   buildReadOnlyResource,
   enumProperty,
@@ -19,7 +20,8 @@ export function buildCommentReportsResource(db, components = {}, pool, cache) {
     ...virtualFilterOptions('comment_reports'),
   };
 
-  attachShortUuid(properties, ['id', 'comment_id', 'reporter_id'], components, ['list', 'show']);
+  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['comment_id', 'reporter_id'], components, ['list', 'show']);
 
   return buildReadOnlyResource(db, 'comment_reports', { name: 'Moderation', icon: 'Flag' }, properties, {
     sort: { sortBy: 'created_at', direction: 'desc' },

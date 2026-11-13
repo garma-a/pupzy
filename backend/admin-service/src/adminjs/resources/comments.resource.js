@@ -1,5 +1,11 @@
 import { buildCommentActions } from '../actions/moderate-comment.actions.js';
-import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
+import {
+  attachReferenceLink,
+  attachShortUuid,
+  enumProperty,
+  noDeleteActions,
+  stripPopulatedPasswordHashes,
+} from './resource-helpers.js';
 
 export function buildCommentsResource(db, pool, components = {}, cache) {
   const properties = {
@@ -15,7 +21,8 @@ export function buildCommentsResource(db, pool, components = {}, cache) {
     updated_at: { isDisabled: true },
   };
 
-  attachShortUuid(properties, ['id', 'post_id', 'author_id', 'parent_id'], components, ['list', 'show']);
+  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['post_id', 'author_id', 'parent_id'], components, ['list', 'show']);
 
   return {
     resource: db.table('comments'),

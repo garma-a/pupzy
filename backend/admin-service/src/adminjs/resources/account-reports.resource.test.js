@@ -55,11 +55,13 @@ describe('AdminJS Account Reports Resource Configuration', () => {
   });
 
   it('attaches ShortUuid custom component to ID and relation fields when provided', () => {
-    const components = { ShortUuid: 'CustomShortUuidComponent' };
+    const components = { ShortUuid: 'CustomShortUuidComponent', ReferenceLink: 'CustomReferenceLinkComponent' };
     const resource = buildAccountReportsResource(db, components);
-    for (const field of ['id', 'reporter_id', 'reported_user_id', 'source_id', 'reviewed_by_admin_id']) {
-      assert.equal(resource.options.properties[field].components.list, 'CustomShortUuidComponent');
-      assert.equal(resource.options.properties[field].components.show, 'CustomShortUuidComponent');
+    assert.equal(resource.options.properties.id.components.list, 'CustomShortUuidComponent');
+    assert.equal(resource.options.properties.id.components.show, 'CustomShortUuidComponent');
+    for (const field of ['reporter_id', 'reported_user_id', 'source_id', 'reviewed_by_admin_id']) {
+      assert.equal(resource.options.properties[field].components.list, 'CustomReferenceLinkComponent');
+      assert.equal(resource.options.properties[field].components.show, 'CustomReferenceLinkComponent');
     }
   });
 
@@ -73,7 +75,7 @@ describe('AdminJS Account Reports Resource Configuration', () => {
 
   it('strips populated password hashes from list and show after hooks', () => {
     const resource = buildAccountReportsResource(db);
-    const showAfter = resource.options.actions.show.after;
+    const [showAfter] = [resource.options.actions.show.after].flat();
     const response = {
       record: {
         params: { id: 'report-1' },

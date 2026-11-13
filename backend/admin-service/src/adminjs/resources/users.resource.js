@@ -1,6 +1,6 @@
 import { ValidationError } from 'adminjs';
 import { buildBanUserAction, buildUnbanUserAction } from '../actions/ban-user.action.js';
-import { attachShortUuid, noDeleteActions, stripRecordParams } from './resource-helpers.js';
+import { attachReferenceLink, attachShortUuid, noDeleteActions, stripRecordParams } from './resource-helpers.js';
 
 const stripPrivateFields = (response) =>
   stripRecordParams(response, ['phone_number', 'last_known_location', 'password_hash']);
@@ -168,7 +168,7 @@ export function buildUsersResource(db, pool, components, cache) {
   };
 
   attachShortUuid(properties, ['id'], components, ['list', 'show']);
-  attachShortUuid(properties, ['banned_by_admin_id'], components, ['show']);
+  attachReferenceLink(properties, ['banned_by_admin_id'], components, ['show']);
 
   return {
     resource: db.table('users'),

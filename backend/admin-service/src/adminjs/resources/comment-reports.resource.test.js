@@ -40,14 +40,14 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
   });
 
   it('attaches ShortUuid custom component to ID and relation fields when provided', () => {
-    const components = { ShortUuid: 'CustomShortUuidComponent' };
+    const components = { ShortUuid: 'CustomShortUuidComponent', ReferenceLink: 'CustomReferenceLinkComponent' };
     const resource = buildCommentReportsResource(db, components);
     assert.equal(resource.options.properties.id.components.list, 'CustomShortUuidComponent');
     assert.equal(resource.options.properties.id.components.show, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.comment_id.components.list, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.comment_id.components.show, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.reporter_id.components.list, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.reporter_id.components.show, 'CustomShortUuidComponent');
+    assert.equal(resource.options.properties.comment_id.components.list, 'CustomReferenceLinkComponent');
+    assert.equal(resource.options.properties.comment_id.components.show, 'CustomReferenceLinkComponent');
+    assert.equal(resource.options.properties.reporter_id.components.list, 'CustomReferenceLinkComponent');
+    assert.equal(resource.options.properties.reporter_id.components.show, 'CustomReferenceLinkComponent');
   });
 
   it('enforces read-only actions (disables new, edit, delete, bulkDelete)', () => {
