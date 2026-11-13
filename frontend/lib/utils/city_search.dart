@@ -116,7 +116,10 @@ class CitySearchIndex {
   ///  1. its name starts with the query;
   ///  2. its name contains the query;
   ///  3. an alias contains the query;
-  ///  4. its governorate or district does.
+  ///  4. its governorate or district does;
+  ///  5. the query has several words ("Bahary Alexandria", "سموحة اسكندرية")
+  ///     and each one is in the City's name, an alias, its district or its
+  ///     governorate, though the whole query isn't.
   /// Within each group official districts come before Neighbourhoods, so
   /// "Maadi" lists the Maadi district before small places of the same name,
   /// then alphabetical by the name shown in the current language.
@@ -124,9 +127,10 @@ class CitySearchIndex {
     final needle = normalizeCitySearch(query);
     if (needle.isEmpty) return _cities;
 
+    final words = _searchWords(query);
     final matches = <({_SearchableCity entry, bool inGovernorate, int rank})>[];
     for (final entry in _entries) {
-      final rank = entry.rank(needle);
+      final rank = entry.rank(needle) ?? (words.length > 1 && entry.hasAllWords(words) ? 5 : null);
       if (rank != null) matches.add((entry: entry, inGovernorate: entry.governorates.contains(needle), rank: rank));
     }
     matches.sort((a, b) {
@@ -139,6 +143,17 @@ class CitySearchIndex {
     return [for (final match in matches) match.entry.city];
   }
 }
+
+/// The words of [query] for matching word by word, each normalized; a
+/// standalone article ("el", "al", "ال") is dropped, and commas separate words
+/// like spaces do.
+List<String> _searchWords(String query) => [
+  for (final word in query.split(_wordSeparators))
+    if (normalizeCitySearch(word) case final normalized when normalized.isNotEmpty && !_articles.contains(normalized)) normalized,
+];
+
+final _wordSeparators = RegExp(r'[\s,،]+');
+const _articles = {'el', 'al', 'ال'};
 
 class _SearchableCity {
   _SearchableCity(this.city, this.index)
@@ -175,6 +190,17 @@ class _SearchableCity {
   ];
 
   String sortKey(bool arabic) => arabic ? arabicName : englishName;
+
+  /// Whether every one of [words] is in this City's name, an alias, its
+  /// district or its governorate.
+  bool hasAllWords(List<String> words) => words.every(
+    (word) =>
+        englishName.contains(word) ||
+        arabicName.contains(word) ||
+        aliases.any((alias) => alias.contains(word)) ||
+        governorates.any((name) => name.contains(word)) ||
+        districtNames.any((name) => name.contains(word)),
+  );
 
   /// The match group for [needle] (see [CitySearchIndex.search]), or null
   /// when nothing matches.

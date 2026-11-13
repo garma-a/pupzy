@@ -165,6 +165,50 @@ void main() {
     });
   });
 
+  group('several words', () {
+    final catalog = [
+      _city('Bahary', 'بحري', 'Alexandria', district: _in('Al Gomrok', 'قسم الجمرك')),
+      _city('Bahary', 'بحري', 'Behera'),
+      _city('Smouha', 'سموحة', 'Alexandria', district: _in('Sidi Gaber', 'قسم سيدي جابر')),
+      _city('Al Maadi', 'المعادي', 'Cairo'),
+    ];
+    List<String> places(String query) => [
+      for (final city in CitySearchIndex.of(catalog).search(query, arabic: false)) '${city['nameEnglish']} · ${city['governorate']}',
+    ];
+
+    test('"Bahary Alexandria" finds the place in that governorate (tester suggestion)', () {
+      expect(places('Bahary Alexandria'), ['Bahary · Alexandria']);
+      expect(places('Alexandria Bahary'), ['Bahary · Alexandria'], reason: 'word order does not matter');
+      expect(places('bahary, alex'), ['Bahary · Alexandria'], reason: 'commas and partial words work');
+    });
+
+    test('works in Arabic, with any alef or article spelling', () {
+      expect(places('بحري الإسكندرية'), ['Bahary · Alexandria']);
+      expect(places('بحرى اسكندرية'), ['Bahary · Alexandria']);
+      expect(places('سموحة، الاسكندرية'), ['Smouha · Alexandria']);
+    });
+
+    test('a district name narrows the search too', () {
+      expect(places('Smouha Sidi Gaber'), ['Smouha · Alexandria']);
+    });
+
+    test('a standalone article is ignored', () {
+      expect(places('el Maadi Cairo'), ['Al Maadi · Cairo']);
+    });
+
+    test('every word must match', () {
+      expect(places('Bahary Cairo'), isEmpty);
+    });
+
+    test('whole-phrase matches still come first', () {
+      final cities = [
+        _city('Sidi Bishr Gaber', 'x', 'Alexandria'),
+        _city('Sidi Gaber', 'قسم سيدي جابر', 'Alexandria'),
+      ];
+      expect(_search('Sidi Gaber', cities: cities), ['Sidi Gaber', 'Sidi Bishr Gaber']);
+    });
+  });
+
   test('the Arabic governorate comes from the server when it sends one', () {
     final city = _city('Luxor', 'الأقصر', 'Luxor', governorateArabic: 'محافظة الأقصر');
     expect(cityGovernorateName(city, arabic: true), 'محافظة الأقصر');
