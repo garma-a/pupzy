@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { reportReviewStatus } from '../report-status.js';
+import { BackToInbox } from './back-to-inbox.jsx';
 import { StateTag } from './record-status-component.jsx';
 import ShowField from './show-field.jsx';
 
@@ -27,11 +28,14 @@ export default function ReportStatus({ property, record, where }) {
     ? null
     : [closedOn ? `Closed on ${closedOn}` : null, reviewerName ? `by ${reviewerName}` : null].filter(Boolean).join(' ');
   return (
-    <ShowField property={property}>
-      <div data-testid="pupzy-report-status">
-        {tag}
-        {detail ? <span className="pupzy-report-status-detail"> {detail}</span> : null}
-      </div>
-    </ShowField>
+    <>
+      <BackToInbox />
+      <ShowField property={property}>
+        <div data-testid="pupzy-report-status">
+          {tag}
+          {detail ? <span className="pupzy-report-status-detail"> {detail}</span> : null}
+        </div>
+      </ShowField>
+    </>
   );
 }

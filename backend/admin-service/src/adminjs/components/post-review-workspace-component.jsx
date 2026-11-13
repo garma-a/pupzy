@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiClient } from 'adminjs';
 import { Badge, Box, Button, H3, H4, Link, Loader, MessageBox, Text } from '@adminjs/design-system';
 
-import { filteredListBackLink, recallListSearch, reportReviewHref } from './list-return.js';
+import { BackToInbox } from './back-to-inbox.jsx';
+import { filteredListBackLink, inboxReturnFromSearch, recallListSearch, reportReviewHref } from './list-return.js';
 import { MediaThumb, useMediaLightbox } from './media-lightbox.jsx';
 import { StateTag } from './record-status-component.jsx';
 
@@ -204,6 +205,7 @@ export default function PostReviewWorkspace({ resource, record }) {
             Open Post for moderation
           </Link>
         ) : null}
+        {inboxReturnFromSearch(currentSearch, adminRootPath()) ? <BackToInbox /> : null}
         <Link href={backLink.href} data-testid="pupzy-back-to-queue" style={{ fontWeight: 600 }}>
           ← {backLink.label}
         </Link>

@@ -88,7 +88,8 @@ async function loginAsAdmin(page, url) {
 
 async function openDashboard(page) {
   await page.goto(`${baseUrl}/admin`, { waitUntil: 'networkidle0' });
-  await page.waitForSelector('[data-testid="pupzy-work-queues"]', { timeout: 60000 });
+  await page.waitForSelector('[data-testid="pupzy-tiles"]', { timeout: 60000 });
+  await page.waitForSelector('[data-testid="pupzy-cases"], [data-testid="pupzy-inbox-empty"]', { timeout: 60000 });
 }
 
 async function openWorkspace(page, postId) {
@@ -360,25 +361,22 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       await loginAsAdmin(page, baseUrl);
       await page.waitForSelector('[role="alert"]');
       assert.equal(
-        await page.$('[data-testid="pupzy-work-queues"]'),
-        null,
+        await page.$eval('[data-testid="pupzy-tile-count-flagged"]', (node) => node.innerText),
+        '–',
         'failed data is never shown as zero counts',
       );
       assert.equal(
-        await page.$('.pupzy-inbox-empty'),
+        await page.$('[data-testid="pupzy-inbox-empty"]'),
         null,
-        'a failed request must not claim the review queue is clear',
+        'a failed request must not claim the Inbox is clear',
       );
-      assert.equal(await page.$('.pupzy-metric-grid'), null, 'unavailable totals must not be rendered as zeros');
+      assert.equal(await page.$('[data-testid="pupzy-cases"]'), null, 'no cases are invented for a failed request');
       unavailable = false;
       await page.click('[role="alert"] button');
-      await page.waitForSelector('[data-testid="pupzy-work-queues"]');
+      await page.waitForSelector('[data-testid="pupzy-cases"]');
       assert.equal(await page.$('[role="alert"]'), null);
-      const count = await page.$eval(
-        '[data-testid="pupzy-queue-flagged"] .pupzy-queue-button-count',
-        (node) => node.innerText,
-      );
-      assert.equal(count, '1', 'Retry restores the actual review queue');
+      const count = await page.$eval('[data-testid="pupzy-tile-count-flagged"]', (node) => node.innerText);
+      assert.equal(count, '1', 'Retry restores the actual counts');
       assert.deepEqual(errors, []);
     } finally {
       await page.close();
@@ -407,7 +405,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       });
 
       await loginAsAdmin(page, baseUrl);
-      await page.waitForSelector('[data-testid="pupzy-work-queues"]', { timeout: 60000 });
+      await page.waitForSelector('[data-testid="pupzy-cases"]', { timeout: 60000 });
 
       const refreshIdle = await page.evaluate(() => {
         const button = document.querySelector('.pupzy-dashboard-refresh');
@@ -472,11 +470,8 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
 
       await page.waitForSelector('[role="alert"]');
       const errorState = await page.$eval('[role="alert"]', (element) => element.innerText);
-      assert.match(errorState, /Dashboard data could not be loaded/);
-      assert.ok(
-        await page.$('[data-testid="pupzy-work-queues"]'),
-        'a failed refresh keeps the last good dashboard visible',
-      );
+      assert.match(errorState, /The inbox could not be loaded/);
+      assert.ok(await page.$('[data-testid="pupzy-cases"]'), 'a failed refresh keeps the last good Inbox visible');
       console.log(`[bwg-21 evidence] dashboard error state ${await recordEvidence(page, '02-dashboard-error-state')}`);
 
       await Promise.all([
@@ -560,23 +555,11 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
     }
   });
 
-  it('reaches expired history from the dashboard and returns to the same filtered list', async () => {
+  it('reaches expired history from a filtered Posts list and returns to the same filtered list', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {
       await loginAsAdmin(page, baseUrl);
-      await openDashboard(page);
-
-      const expiredQueue = await page.$eval('[data-testid="pupzy-queue-expired"]', (element) => ({
-        label: element.innerText,
-        count: element.querySelector('.pupzy-queue-button-count')?.innerText,
-      }));
-      assert.match(expiredQueue.label, /Expired/);
-      assert.equal(expiredQueue.count, '1', 'the expired history queue counts the seeded expired listing');
-
-      await Promise.all([
-        page.waitForNavigation({ waitUntil: 'networkidle0' }),
-        page.click('[data-testid="pupzy-queue-expired"]'),
-      ]);
+      await page.goto(`${baseUrl}/admin/resources/posts?filters.status=EXPIRED`, { waitUntil: 'networkidle0' });
       const url = new URL(page.url());
       assert.equal(url.pathname, '/admin/resources/posts');
       assert.equal(url.searchParams.get('filters.status'), 'EXPIRED');
@@ -675,11 +658,11 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       await openDashboard(page);
 
       const dashboardLayout = await page.evaluate(() => {
-        const cards = Array.from(document.querySelectorAll('.pupzy-metric-grid > *')).map((element) => {
+        const cards = Array.from(document.querySelectorAll('[data-testid="pupzy-tiles"] > *')).map((element) => {
           const box = element.getBoundingClientRect();
           return { width: box.width, left: box.left };
         });
-        const queue = document.querySelector('[data-testid="pupzy-queue-flagged"]');
+        const queue = document.querySelector('[data-testid="pupzy-tile-flagged"]');
         const refresh = document.querySelector('.pupzy-dashboard-refresh');
         return {
           documentClientWidth: document.documentElement.clientWidth,
@@ -694,18 +677,18 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       assert.equal(
         dashboardLayout.documentScrollWidth,
         dashboardLayout.documentClientWidth,
-        'the dashboard does not scroll horizontally at 390px',
+        'the Inbox does not scroll horizontally at 390px',
       );
       assert.ok(
         Math.max(...dashboardLayout.cardWidths) - Math.min(...dashboardLayout.cardWidths) <= 1,
-        'metric cards keep a shared width',
+        'count tiles keep a shared width',
       );
       assert.equal(
         new Set(dashboardLayout.cardLefts.map(Math.round)).size,
         2,
-        'compact totals align to two mobile columns',
+        'count tiles align to two mobile columns',
       );
-      assert.ok(dashboardLayout.queueTransition <= 0.001, 'reduced motion collapses queue button transitions');
+      assert.ok(dashboardLayout.queueTransition <= 0.001, 'reduced motion collapses tile transitions');
       assert.ok(dashboardLayout.refreshTransition <= 0.001, 'reduced motion collapses refresh transitions');
       assert.ok(dashboardLayout.refreshHeight >= 38, 'the refresh action keeps a usable touch target');
 
@@ -738,22 +721,23 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       console.log(`[bwg-21 evidence] narrow dashboard ${await recordEvidence(page, '08-narrow-dashboard')}`);
 
       const queueFocus = await page.evaluate(() => {
-        document.querySelector('[data-testid="pupzy-queue-flagged"]').focus();
+        document.querySelector('[data-testid="pupzy-tile-flagged"]').focus();
         return {
           testId: document.activeElement?.dataset?.testid,
           focusVisible: document.activeElement?.matches(':focus-visible'),
           outlineWidth: getComputedStyle(document.activeElement).outlineWidth,
         };
       });
-      assert.equal(queueFocus.testId, 'pupzy-queue-flagged');
+      assert.equal(queueFocus.testId, 'pupzy-tile-flagged');
       assert.equal(queueFocus.focusVisible, true);
       assert.notEqual(queueFocus.outlineWidth, '0px');
-      await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }), page.keyboard.press('Enter')]);
-      assert.match(page.url(), /filters\.moderation_status=FLAGGED/);
-      await page.waitForSelector('tr[data-id]');
-      assert.deepEqual(await page.$$eval('tr[data-id]', (rows) => rows.map((row) => row.dataset.id)), [
-        fixture.flaggedId,
-      ]);
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => new URL(location.href).searchParams.get('kind') === 'flagged');
+      await page.waitForFunction(() => document.querySelectorAll('[data-testid="pupzy-case"]').length === 1);
+      assert.match(
+        await page.$eval('.pupzy-case-title', (element) => element.innerText),
+        /Flagged case awaiting review/,
+      );
 
       await page.goto(`${baseUrl}/admin/resources/posts`, { waitUntil: 'networkidle0' });
       await page.waitForSelector('tr[data-id]');
@@ -781,13 +765,15 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
 
       await openDashboard(page);
       await page.evaluate(() => {
-        document.querySelector('[data-testid="pupzy-needs-review-table"] tbody tr td a[href*="/records/"]').focus();
+        document
+          .querySelector('[data-testid="pupzy-case"][data-kind="flagged"] [data-testid="pupzy-case-open"]')
+          .focus();
       });
       const focusedTitle = await page.evaluate(() => ({
         focusVisible: document.activeElement?.matches(':focus-visible'),
         href: document.activeElement?.getAttribute('href'),
       }));
-      assert.equal(focusedTitle.focusVisible, true, 'the review-table title link is keyboard reachable');
+      assert.equal(focusedTitle.focusVisible, true, 'the Open case link is keyboard reachable');
       assert.match(focusedTitle.href ?? '', /\/admin\/resources\/posts\/records\/.+\/show/);
       await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }), page.keyboard.press('Enter')]);
       await page.waitForSelector('[data-testid="pupzy-review-workspace"]', { timeout: 60000 });
@@ -1616,7 +1602,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
     });
   });
 
-  it('shows the dashboard empty state when no review work remains', async () => {
+  it('shows the Inbox empty state when no review work remains', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {
       await database.pool.query(`TRUNCATE TABLE ${BUSINESS_TABLES} CASCADE`);
@@ -1635,18 +1621,15 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       await openDashboard(page);
 
       const dashboardText = await page.$eval('body', (element) => element.innerText);
-      assert.match(dashboardText, /Review queue clear/);
-      assert.match(dashboardText, /There are no active Posts awaiting review/);
-      const flaggedCount = await page.$eval(
-        '[data-testid="pupzy-queue-flagged"] .pupzy-queue-button-count',
-        (element) => element.innerText,
+      assert.match(dashboardText, /Nothing needs attention\. Nice work\./);
+      assert.match(
+        await page.$eval('[data-testid="pupzy-inbox-empty"] a', (el) => el.getAttribute('href')),
+        /post_reports\?filters\.review_state=REVIEWED/,
       );
+      const flaggedCount = await page.$eval('[data-testid="pupzy-tile-count-flagged"]', (element) => element.innerText);
       assert.equal(flaggedCount, '0');
-      assert.equal(await page.$('[data-testid="pupzy-needs-review-table"] tbody tr'), null);
-      assert.ok(
-        await page.$('[data-testid="pupzy-work-queues"]'),
-        'queue navigation stays available when the queue is empty',
-      );
+      assert.equal(await page.$('[data-testid="pupzy-case"]'), null);
+      assert.ok(await page.$('[data-testid="pupzy-tiles"]'), 'the count tiles stay available when the Inbox is empty');
       console.log(`[bwg-21 evidence] dashboard empty state ${await recordEvidence(page, '12-dashboard-empty-state')}`);
 
       assert.deepEqual(errors, []);

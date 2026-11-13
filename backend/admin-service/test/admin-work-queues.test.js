@@ -462,13 +462,20 @@ describe('Admin work-queue navigation over authenticated AdminJS HTTP', () => {
     );
     assert.equal(recordIds(openPostReports).includes(fixture.reviewedPostReportId), false);
 
-    const flaggedNoReportsRow = dashboard.needsReview.find((post) => post.id === fixture.flaggedNoReports);
-    const flaggedWithReportRow = dashboard.needsReview.find((post) => post.id === fixture.flaggedPost);
-    assert.equal(Number(flaggedNoReportsRow.open_report_count), 0, 'a flagged Post without Reports shows zero');
-    assert.equal(Number(flaggedWithReportRow.open_report_count), 1);
+    const reviewRows = dashboard.inbox.items.filter((item) => ['flagged', 'pending'].includes(item.kind));
+    const flaggedNoReportsRow = reviewRows.find((item) => item.targetId === fixture.flaggedNoReports);
+    const flaggedWithReportRow = reviewRows.find((item) => item.targetId === fixture.flaggedPost);
+    assert.equal(flaggedNoReportsRow.reportCount, 0, 'a flagged Post without Reports shows zero');
+    assert.equal(flaggedWithReportRow.reportCount, 1);
 
-    const approvedRow = dashboard.needsReview.find((post) => post.id === fixture.approvedWithOpenReport);
-    assert.equal(approvedRow, undefined, 'approved Posts stay out of the review table');
+    const approvedRow = reviewRows.find((item) => item.targetId === fixture.approvedWithOpenReport);
+    assert.equal(approvedRow, undefined, 'approved Posts are never flagged or pending review work');
+    assert.ok(
+      dashboard.inbox.items.some(
+        (item) => item.kind === 'post_report' && item.targetId === fixture.approvedWithOpenReport,
+      ),
+      'an approved Post with an open Report is a Post report case',
+    );
   });
 
   it('paginates a large flagged queue with a total that matches the dashboard count', async () => {

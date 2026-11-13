@@ -1,107 +1,201 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiClient } from 'adminjs';
-import { Loader } from '@adminjs/design-system';
+import { useLocation, useNavigate } from 'react-router';
+
+import { Avatar } from '../components/avatar-component.jsx';
+import { INBOX_RETURN_KEY, adminRootPath, rememberListSearch } from '../components/list-return.js';
+import { caseHref, inboxSearch, relativeAge, reportCountLabel } from './inbox-format.js';
 import { queueHref } from './work-queues.js';
 
 const api = new ApiClient();
-const statLabels = [
-  ['total_users', 'Total users'],
-  ['banned_users', 'Banned users'],
-  ['total_posts', 'Total Posts'],
-  ['active_posts', 'Active Posts'],
-  ['needs_review_posts', 'Needs review'],
-  ['flagged_posts', 'Flagged'],
+
+/** The five counts at the top; each one filters the list below. */
+const TILES = [
+  { kind: 'post_report', queue: 'open_post_reports', label: 'Open Post Reports' },
+  { kind: 'comment_report', queue: 'open_comment_reports', label: 'Open Comment Reports' },
+  { kind: 'account_report', queue: 'open_account_reports', label: 'Open Account Reports' },
+  { kind: 'flagged', queue: 'flagged', label: 'Flagged posts' },
+  { kind: 'pending', queue: 'pending_moderation', label: 'Pending review' },
 ];
-const ALERT_GROUPS = ['needs_review'];
-const statusLabel = (value) =>
-  ({ PENDING_AUTO_REVIEW: 'Pending review', FLAGGED: 'Flagged', CLEAN: 'Clean' })[value] ?? value;
-const typeLabel = (value) => (value ? value.charAt(0) + value.slice(1).toLowerCase() : '');
-function adminRootPath() {
-  return (typeof window !== 'undefined' && window.REDUX_STATE?.paths?.rootPath) || '/admin';
+const KIND_TONE = {
+  post_report: 'warning',
+  comment_report: 'warning',
+  account_report: 'warning',
+  flagged: 'danger',
+  pending: 'warning',
+};
+const KINDS = new Set(TILES.map((tile) => tile.kind));
+
+function readSearch(search) {
+  const params = new URLSearchParams(search);
+  const page = Number.parseInt(params.get('page'), 10);
+  return {
+    kind: KINDS.has(params.get('kind')) ? params.get('kind') : 'all',
+    order: params.get('order') === 'newest' ? 'newest' : 'oldest',
+    page: Number.isFinite(page) && page > 0 ? page : 1,
+  };
 }
-function QueueButton({ queue, priority }) {
-  const isAlert = ALERT_GROUPS.includes(queue.group) && queue.count > 0;
+
+const isPlainClick = (event) =>
+  event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+
+function Thumbnail({ item }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [item.thumbnailUrl]);
+  if (item.avatar) return <Avatar name={item.avatar.name} src={item.avatar.pictureUrl} size={40} />;
+  if (item.thumbnailUrl && !failed) {
+    return (
+      <img
+        className="pupzy-case-thumb"
+        src={item.thumbnailUrl}
+        alt={`Photo for ${item.title}`}
+        loading="lazy"
+        width="40"
+        height="40"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
   return (
-    <a
-      href={queueHref(queue, adminRootPath())}
-      className="pupzy-queue-button"
-      data-testid={`pupzy-queue-${queue.id}`}
-      data-alert={isAlert ? 'true' : 'false'}
-      data-priority={priority ? 'true' : 'false'}
-    >
-      <span className="pupzy-queue-button-label">{queue.label}</span>
-      <span className="pupzy-queue-button-meta">
-        <span className="pupzy-queue-button-count" aria-label={`${queue.count} records`}>
-          {queue.count.toLocaleString()}
-        </span>
-      </span>
-    </a>
+    <span className="pupzy-case-thumb pupzy-case-thumb-empty" role="img" aria-label="No photo">
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        aria-hidden="true"
+      >
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <circle cx="9" cy="10" r="1.6" />
+        <path d="m21 16-5-5-8 8" />
+      </svg>
+    </span>
   );
 }
-function queueGroups(queues) {
-  const groups = [];
-  for (const queue of queues) {
-    let group = groups.find((candidate) => candidate.id === queue.group);
-    if (!group) {
-      group = { id: queue.group, label: queue.groupLabel, queues: [] };
-      groups.push(group);
-    }
-    group.queues.push(queue);
-  }
-  return groups;
+
+function CaseRow({ item, search, rootPath, onOpen }) {
+  const href = caseHref(item.target, `${rootPath}${search}`, rootPath);
+  const exact = new Date(item.since).toLocaleString();
+  return (
+    <li className="pupzy-case" data-testid="pupzy-case" data-kind={item.kind}>
+      <Thumbnail item={item} />
+      <div className="pupzy-case-main">
+        <div className="pupzy-case-meta">
+          <span className="pupzy-status" data-tone={KIND_TONE[item.kind]} data-testid="pupzy-case-kind">
+            {item.kindLabel}
+          </span>
+          <span className="pupzy-case-count" data-open={item.reportCount > 0} data-testid="pupzy-case-count">
+            {reportCountLabel(item.reportCount)}
+          </span>
+        </div>
+        <span className="pupzy-case-title" dir="auto" title={item.title}>
+          {item.title}
+        </span>
+        <span className="pupzy-case-reason" data-testid="pupzy-case-reason" dir="auto">
+          {item.reasonLabel}
+        </span>
+      </div>
+      <div className="pupzy-case-reporter">
+        {item.reporter ? (
+          <>
+            <Avatar name={item.reporter.name} src={item.reporter.pictureUrl} size={28} />
+            <span dir="auto" title={item.reporter.name}>
+              {item.reporter.name}
+            </span>
+          </>
+        ) : (
+          <span className="pupzy-case-muted">Automatic review</span>
+        )}
+      </div>
+      <time className="pupzy-case-age" dateTime={new Date(item.since).toISOString()} title={exact}>
+        {relativeAge(item.since)}
+      </time>
+      <a className="pupzy-case-open" href={href} data-testid="pupzy-case-open" onClick={(event) => onOpen(event, href)}>
+        Open case
+      </a>
+    </li>
+  );
 }
-export default function Dashboard() {
+
+function SkeletonRows() {
+  return (
+    <ul className="pupzy-cases" aria-hidden="true" data-testid="pupzy-cases-loading">
+      {Array.from({ length: 6 }, (_, index) => (
+        <li key={index} className="pupzy-case pupzy-case-skeleton">
+          <span className="pupzy-skeleton pupzy-skeleton-thumb" />
+          <span className="pupzy-case-main">
+            <span className="pupzy-skeleton pupzy-skeleton-line" style={{ width: '30%' }} />
+            <span className="pupzy-skeleton pupzy-skeleton-line" style={{ width: '70%' }} />
+          </span>
+          <span className="pupzy-skeleton pupzy-skeleton-line" style={{ width: '60%' }} />
+          <span className="pupzy-skeleton pupzy-skeleton-line" style={{ width: '50%' }} />
+          <span className="pupzy-skeleton pupzy-skeleton-line" style={{ width: 80 }} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export default function Inbox() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const rootPath = adminRootPath();
+  const { kind, order, page } = readSearch(location.search);
+  const canonicalSearch = inboxSearch({ kind, order, page });
+
   const [data, setData] = useState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const load = useCallback(async (fresh = false) => {
-    setLoading(true);
-    try {
-      const response = await api.getDashboard(fresh ? { params: { fresh: 'true' } } : undefined);
-      setData(response.data);
-      setError('');
-    } catch {
-      setError('Dashboard data could not be loaded.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const latestRequest = useRef(0);
+
+  const load = useCallback(
+    async (fresh = false) => {
+      const requestId = latestRequest.current + 1;
+      latestRequest.current = requestId;
+      setLoading(true);
+      try {
+        const params = { kind, order, page, ...(fresh ? { fresh: 'true' } : {}) };
+        const response = await api.getDashboard({ params });
+        if (latestRequest.current !== requestId) return;
+        setData(response.data);
+        setError('');
+      } catch {
+        if (latestRequest.current !== requestId) return;
+        setError('The inbox could not be loaded.');
+      } finally {
+        if (latestRequest.current === requestId) setLoading(false);
+      }
+    },
+    [kind, order, page],
+  );
+
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
-  if (!data && error) {
-    return (
-      <div className="pupzy-desk pupzy-desk-unavailable">
-        <h1>Moderation overview</h1>
-        <div className="pupzy-desk-error" role="alert">
-          <div>
-            <h2>Overview unavailable</h2>
-            <p>{error} Retry to see current Posts, reports and totals.</p>
-          </div>
-          <button data-variant="primary" disabled={loading} aria-busy={loading} onClick={() => void load(true)}>
-            {loading ? 'Retrying…' : 'Retry'}
-          </button>
-        </div>
-      </div>
-    );
-  }
-  if (loading && !data) {
-    return (
-      <div className="pupzy-desk-loading" role="status" aria-live="polite">
-        <Loader />
-        <p>Loading Pupzy moderation overview…</p>
-      </div>
-    );
-  }
+
+  const go = (next) => navigate({ pathname: rootPath, search: inboxSearch({ kind, order, page: 1, ...next }) });
+  const openCase = (event, href) => {
+    rememberListSearch(INBOX_RETURN_KEY, canonicalSearch);
+    if (isPlainClick(event)) {
+      event.preventDefault();
+      navigate(href);
+    }
+  };
+
   const queues = data?.queues ?? [];
-  const flaggedQueue = queues.find((queue) => queue.id === 'flagged');
-  const priorityQueue = queues.find((queue) => queue.group === 'needs_review' && queue.count > 0);
+  const countOf = (queueId) => Number(queues.find((queue) => queue.id === queueId)?.count ?? 0);
+  const inbox = data?.inbox;
+  const closedReports = queueHref({ resource: 'post_reports', filters: { review_state: 'REVIEWED' } }, rootPath);
+  const nothingAtAll = inbox && inbox.total === 0 && kind === 'all';
+
   return (
-    <div className="pupzy-desk">
+    <div className="pupzy-desk" data-testid="pupzy-inbox">
       <div className="pupzy-desk-header">
         <div>
-          <h1>Moderation overview</h1>
-          <p>Start with open reports, then take a closer look at new Posts.</p>
+          <h1>Inbox</h1>
+          <p>Open cases that need a moderator, {order === 'oldest' ? 'oldest first' : 'newest first'}.</p>
         </div>
         <div className="pupzy-desk-refresh">
           <button
@@ -132,118 +226,128 @@ export default function Dashboard() {
           </span>
         </div>
       </div>
+
       {error ? (
-        <div className="pupzy-desk-error" role="alert">
-          <p>{error} The last loaded overview remains below.</p>
+        <div className="pupzy-desk-error" role="alert" data-testid="pupzy-inbox-error">
+          <p>{data ? `${error} The last loaded inbox remains below.` : `${error} Retry to see the open cases.`}</p>
           <button data-variant="primary" disabled={loading} aria-busy={loading} onClick={() => void load(true)}>
             {loading ? 'Retrying…' : 'Retry'}
           </button>
         </div>
       ) : null}
-      <section className="pupzy-desk-queues" aria-labelledby="pupzy-queues-heading">
-        <div className="pupzy-section-heading">
-          <h2 id="pupzy-queues-heading">Work queues</h2>
-        </div>
-        <div className="pupzy-queue-groups" data-testid="pupzy-work-queues">
-          {queueGroups(queues).map((group) => (
-            <section key={group.id} className="pupzy-queue-group" data-testid={`pupzy-queue-group-${group.id}`}>
-              <h3>{group.label}</h3>
-              <div className="pupzy-queue-grid">
-                {group.queues.map((queue) => (
-                  <QueueButton key={queue.id} queue={queue} priority={priorityQueue?.id === queue.id} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </section>
-      <section className="pupzy-review-inbox" aria-labelledby="pupzy-inbox-heading">
-        <div className="pupzy-inbox-heading">
-          <div>
-            <h2 id="pupzy-inbox-heading">Posts needing review</h2>
-            <p>Open a Post to see its photos, discussion and reports.</p>
-          </div>
-          {flaggedQueue ? (
+
+      <nav className="pupzy-tiles" aria-label="Filter the inbox" data-testid="pupzy-tiles">
+        {TILES.map((tile) => {
+          const active = kind === tile.kind;
+          const count = countOf(tile.queue);
+          return (
             <a
-              href={queueHref(flaggedQueue, adminRootPath())}
-              className="pupzy-inbox-link"
-              data-testid="pupzy-view-all-flagged"
+              key={tile.kind}
+              className="pupzy-tile"
+              href={`${rootPath}${inboxSearch({ kind: active ? 'all' : tile.kind, order })}`}
+              aria-current={active ? 'true' : undefined}
+              data-active={active}
+              data-alert={count > 0}
+              data-testid={`pupzy-tile-${tile.kind}`}
+              onClick={(event) => {
+                if (!isPlainClick(event)) return;
+                event.preventDefault();
+                go({ kind: active ? 'all' : tile.kind });
+              }}
             >
-              Flagged — needs review <span>{flaggedQueue.count.toLocaleString()}</span>
+              <strong data-testid={`pupzy-tile-count-${tile.kind}`}>{data ? count.toLocaleString() : '–'}</strong>
+              <span>{tile.label}</span>
             </a>
-          ) : null}
+          );
+        })}
+      </nav>
+
+      <section aria-labelledby="pupzy-cases-heading" className="pupzy-cases-section">
+        <div className="pupzy-cases-toolbar">
+          <h2 id="pupzy-cases-heading">
+            {kind === 'all' ? 'All open cases' : TILES.find((tile) => tile.kind === kind)?.label}
+            {inbox ? <span className="pupzy-case-muted"> · {inbox.total.toLocaleString()}</span> : null}
+          </h2>
+          <div className="pupzy-cases-controls">
+            {kind !== 'all' ? (
+              <button className="pupzy-link-button" onClick={() => go({ kind: 'all' })}>
+                Show all
+              </button>
+            ) : null}
+            <div className="pupzy-segmented" role="group" aria-label="Sort order">
+              {[
+                ['oldest', 'Oldest first'],
+                ['newest', 'Newest first'],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  aria-pressed={order === value}
+                  data-testid={`pupzy-order-${value}`}
+                  onClick={() => go({ order: value })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-        {data?.needsReview?.length ? (
-          <div className="pupzy-inbox-table" data-testid="pupzy-needs-review-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Post</th>
-                  <th>Type</th>
-                  <th>Moderation</th>
-                  <th>Open reports</th>
-                  <th>Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.needsReview.map((post) => (
-                  <tr key={post.id}>
-                    <td>
-                      <a
-                        href={`${adminRootPath()}/resources/posts/records/${encodeURIComponent(post.id)}/show`}
-                        title={post.title}
-                      >
-                        {post.title}
-                      </a>
-                    </td>
-                    <td>{typeLabel(post.post_type)}</td>
-                    <td>
-                      <span
-                        className="pupzy-status"
-                        data-tone={post.moderation_status === 'FLAGGED' ? 'danger' : 'warning'}
-                      >
-                        {statusLabel(post.moderation_status)}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="pupzy-report-count" data-open={Number(post.open_report_count ?? 0) > 0}>
-                        {Number(post.open_report_count ?? 0)}
-                      </span>
-                    </td>
-                    <td>
-                      <time dateTime={post.created_at}>
-                        {new Date(post.created_at).toLocaleDateString([], { day: 'numeric', month: 'short' })}
-                      </time>
-                    </td>
-                  </tr>
+
+        {!inbox && loading ? <SkeletonRows /> : null}
+        {inbox ? (
+          <div aria-busy={loading} data-loading={loading}>
+            {inbox.items.length ? (
+              <ul className="pupzy-cases" data-testid="pupzy-cases">
+                {inbox.items.map((item) => (
+                  <CaseRow key={item.key} item={item} search={canonicalSearch} rootPath={rootPath} onOpen={openCase} />
                 ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="pupzy-inbox-empty">
-            <span aria-hidden="true">✓</span>
-            <h3>Review queue clear</h3>
-            <p>There are no active Posts awaiting review. Open a work queue to revisit earlier decisions.</p>
-          </div>
-        )}
-      </section>
-      <section className="pupzy-community-summary" aria-label="Community totals">
-        <div className="pupzy-metric-grid">
-          {statLabels.map(([key, label]) => {
-            const count = Number(data?.stats?.[key] ?? 0);
-            return (
-              <div
-                key={key}
-                className="pupzy-card pupzy-stat"
-                data-alert={['needs_review_posts', 'flagged_posts'].includes(key) && count > 0}
-              >
-                <span>{label}</span>
-                <strong title={count.toLocaleString()}>{count.toLocaleString()}</strong>
+              </ul>
+            ) : (
+              <div className="pupzy-cases-empty" data-testid="pupzy-inbox-empty">
+                <span aria-hidden="true">✓</span>
+                {nothingAtAll ? (
+                  <>
+                    <h3>Nothing needs attention. Nice work.</h3>
+                    <p>
+                      Every report is closed and no post is waiting for review.{' '}
+                      <a href={closedReports}>See closed reports</a>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3>Nothing in this list.</h3>
+                    <p>
+                      <button className="pupzy-link-button" onClick={() => go({ kind: 'all' })}>
+                        Show all open cases
+                      </button>
+                    </p>
+                  </>
+                )}
               </div>
-            );
-          })}
-        </div>
+            )}
+          </div>
+        ) : null}
+
+        {inbox && inbox.totalPages > 1 ? (
+          <div className="pupzy-cases-pager" data-testid="pupzy-pager">
+            <button
+              disabled={inbox.page <= 1 || loading}
+              onClick={() => go({ page: inbox.page - 1 })}
+              data-testid="pupzy-page-previous"
+            >
+              Previous
+            </button>
+            <span>
+              Page {inbox.page} of {inbox.totalPages}
+            </span>
+            <button
+              disabled={inbox.page >= inbox.totalPages || loading}
+              onClick={() => go({ page: inbox.page + 1 })}
+              data-testid="pupzy-page-next"
+            >
+              Next
+            </button>
+          </div>
+        ) : null}
       </section>
     </div>
   );

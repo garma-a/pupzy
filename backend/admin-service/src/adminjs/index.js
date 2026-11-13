@@ -92,7 +92,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     path.join(currentDirectory, 'components', 'scrollable-records-table-component.jsx'),
   );
   const components = {
-    Dashboard: componentLoader.add('Dashboard', path.join(currentDirectory, 'dashboard', 'dashboard-component.jsx')),
+    Dashboard: componentLoader.add('Dashboard', path.join(currentDirectory, 'dashboard', 'inbox-component.jsx')),
     ModerationAction: componentLoader.add(
       'ModerationAction',
       path.join(currentDirectory, 'components', 'moderation-action-component.jsx'),

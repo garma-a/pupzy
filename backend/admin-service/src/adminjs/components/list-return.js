@@ -50,16 +50,43 @@ export function adminRootPath() {
 }
 
 /**
- * Accepts a `returnTo` only when it is a record page inside this admin
- * (`<root>/resources/<resource>/records/<id>/show`, optional query). Anything
- * else (another site, protocol-relative or script URLs) is ignored so a crafted
+ * Accepts a `returnTo` only when it is a page inside this admin that staff come
+ * back to: a record page (`<root>/resources/<resource>/records/<id>/show`) or
+ * the Moderation Inbox (`<root>`), each with an optional query. Anything else
+ * (another site, protocol-relative or script URLs) is ignored so a crafted
  * link cannot send a moderator elsewhere after an action.
  */
 export function safeReturnPath(value, rootPath = '/admin') {
   if (typeof value !== 'string') return null;
   const escapedRoot = rootPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const pattern = new RegExp(`^${escapedRoot}/resources/[A-Za-z0-9_-]+/records/[A-Za-z0-9-]+/show(\\?[^#\\s]*)?$`);
+  const record = `${escapedRoot}/resources/[A-Za-z0-9_-]+/records/[A-Za-z0-9-]+/show`;
+  const inbox = `${escapedRoot}/?`;
+  const pattern = new RegExp(`^(${record}|${inbox})(\\?[^#\\s]*)?$`);
   return pattern.test(value) ? value : null;
+}
+
+/** Where "Open case" remembers the Inbox's filter and page for this browser tab. */
+export const INBOX_RETURN_KEY = 'inbox';
+
+/** The Inbox path in a page's `returnTo` query, or null when it points anywhere else. */
+export function inboxReturnFromSearch(search, rootPath = '/admin') {
+  const value = safeReturnPath(new URLSearchParams(search ?? '').get('returnTo'), rootPath);
+  const pathname = value?.split('?')[0];
+  const isInbox = pathname === rootPath || pathname === `${rootPath}/`;
+  return isInbox ? value : null;
+}
+
+/**
+ * Where "Back to inbox" goes: an Inbox `returnTo` in the page's own query, else
+ * the Inbox query remembered when the case was opened (same filter and page),
+ * else the plain Inbox.
+ */
+export function inboxBackHref(search, rootPath = '/admin', storage) {
+  const fromLink = inboxReturnFromSearch(search, rootPath);
+  if (fromLink) return fromLink;
+  const remembered = recallListSearch(INBOX_RETURN_KEY, storage);
+  const rememberedHref = remembered.startsWith('?') ? safeReturnPath(`${rootPath}${remembered}`, rootPath) : null;
+  return rememberedHref ?? rootPath;
 }
 
 /**

@@ -7,6 +7,8 @@ import {
   recallListSearch,
   rememberListSearch,
   reportReviewHref,
+  inboxBackHref,
+  inboxReturnFromSearch,
   safeReturnPath,
 } from './list-return.js';
 
@@ -110,5 +112,32 @@ describe('report review return target', () => {
     ]) {
       assert.equal(safeReturnPath(unsafe), null, String(unsafe));
     }
+  });
+  it('accepts the Inbox, with its filter and page, as a return path', () => {
+    for (const inbox of ['/admin', '/admin/', '/admin?kind=flagged&order=newest&page=2']) {
+      assert.equal(safeReturnPath(inbox), inbox, inbox);
+    }
+    for (const unsafe of ['/administrator', '/admin/other', '//evil.example', '/admin?x=1#frag', '/admin?x= 1']) {
+      assert.equal(safeReturnPath(unsafe), null, unsafe);
+    }
+  });
+
+  it('sends "Back to inbox" to the same filter and page', () => {
+    const storage = createStorage();
+    const inbox = '/admin?kind=post_report&page=2';
+    const search = `?returnTo=${encodeURIComponent(inbox)}`;
+    assert.equal(inboxReturnFromSearch(search), inbox);
+    assert.equal(inboxBackHref(search, '/admin', storage), inbox, 'the link in the page wins');
+
+    assert.equal(inboxBackHref('', '/admin', storage), '/admin', 'nothing remembered: the plain Inbox');
+    rememberListSearch('inbox', '?kind=flagged&order=newest', storage);
+    assert.equal(inboxBackHref('', '/admin', storage), '/admin?kind=flagged&order=newest');
+
+    const recordReturn = `?returnTo=${encodeURIComponent('/admin/resources/posts/records/p-1/show')}`;
+    assert.equal(inboxReturnFromSearch(recordReturn), null, 'a record page is not the Inbox');
+    assert.equal(inboxBackHref(recordReturn, '/admin', storage), '/admin?kind=flagged&order=newest');
+
+    rememberListSearch('inbox', 'javascript:alert(1)', storage);
+    assert.equal(inboxBackHref('', '/admin', storage), '/admin', 'a tampered memory is ignored');
   });
 });

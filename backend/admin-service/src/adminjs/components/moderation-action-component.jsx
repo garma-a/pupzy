@@ -10,6 +10,7 @@ import {
   POST_CORRECTION_ACTIONS,
   POST_RESOLUTION_ACTIONS,
 } from './moderation-action-messages.js';
+import { BackToInbox } from './back-to-inbox.jsx';
 import { adminRootPath, safeReturnPath } from './list-return.js';
 
 const api = new ApiClient();
@@ -60,6 +61,7 @@ export default function ModerationAction({ action, resource, record }) {
 
   return (
     <Box variant="white" p="xl">
+      <BackToInbox />
       <H3 mb="sm">{label}</H3>
       {consequence ? (
         <Text id="moderation-action-consequence" mb="lg" color="grey60">

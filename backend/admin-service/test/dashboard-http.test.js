@@ -200,7 +200,7 @@ describe('AdminJS Redis-free dashboard and cache invalidation HTTP behavior', ()
     const dashboard = await getDashboard();
     assert.ok(dashboard.stats);
     assert.ok(dashboard.stats.computedAt);
-    assert.ok(Array.isArray(dashboard.needsReview));
+    assert.ok(Array.isArray(dashboard.inbox.items));
   });
 
   it('reuses cached stats within 120 seconds and recomputes after TTL expiry', async () => {
@@ -430,21 +430,21 @@ describe('AdminJS Redis-free dashboard and cache invalidation HTTP behavior', ()
       status: 'ACTIVE',
     });
 
-    // Verify it appears in needsReview
+    // Verify it appears in the Inbox as a pending-review case
     let dash = await getDashboard();
-    assert.ok(dash.needsReview.some((p) => p.id === postId));
+    assert.ok(dash.inbox.items.some((item) => item.kind === 'pending' && item.targetId === postId));
 
     // Approve the post
     const actionRes = await postAction(`/admin/api/resources/posts/records/${postId}/approvePost`);
     assert.equal(actionRes.status, 200);
     assert.equal(actionRes.data?.notice?.type, 'success');
 
-    // Next dashboard request immediately excludes the approved post from needsReview
+    // Next dashboard request immediately excludes the approved post from the Inbox
     dash = await getDashboard();
     assert.equal(
-      dash.needsReview.some((p) => p.id === postId),
+      dash.inbox.items.some((item) => item.targetId === postId),
       false,
-      'approved post must be immediately excluded from review queue',
+      'approved post must be immediately excluded from the Inbox',
     );
   });
 
