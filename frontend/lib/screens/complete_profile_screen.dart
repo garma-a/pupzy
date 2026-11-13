@@ -10,6 +10,7 @@ import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/city_picker_sheet.dart';
 import 'app_shell.dart';
+import 'login_screen.dart';
 
 class CompleteProfileScreen extends StatefulWidget {
   const CompleteProfileScreen({super.key});
@@ -171,6 +172,38 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     );
   }
 
+  /// Leaves sign-up: asks first, then signs out and returns to the sign-in
+  /// screen, so the user can switch account or finish the profile later.
+  /// Used by "Use a different account" and the phone's Back button, which
+  /// would otherwise close the app.
+  Future<void> _confirmLeave() async {
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
+        title: Text(t(ctx, 'Leave sign-up?', 'الخروج من التسجيل؟')),
+        content: Text(t(
+          ctx,
+          "You'll be signed out. Sign in again any time to finish your profile.",
+          'سيتم تسجيل خروجك. يمكنك تسجيل الدخول مرة أخرى في أي وقت لإكمال ملفك الشخصي.',
+        )),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(t(ctx, 'Stay', 'البقاء'))),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.critical),
+            child: Text(t(ctx, 'Sign out', 'تسجيل الخروج')),
+          ),
+        ],
+      ),
+    );
+    if (leave != true || !mounted) return;
+    await context.read<AuthService>().signOut();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.read<AuthService>();
@@ -178,208 +211,224 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     final email = user?.email ?? '';
     final lang = context.watch<LangProvider>().lang;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: AppSpacing.xxl),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && !_submitting) _confirmLeave();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: AppSpacing.xxl),
 
-                Center(
-                  child: Column(
-                    children: [
-                      // The profile photo comes from the sign-in provider (Google/
-                      // Apple). There is no photo-upload API, so this is display
-                      // only — it is not tappable.
-                      Builder(builder: (context) {
-                        final photoUrl = user?.photoURL;
-                        final initial = _nameController.text.trim().isNotEmpty
-                            ? _nameController.text.trim()[0].toUpperCase()
-                            : '?';
-                        return CircleAvatar(
-                          radius: 40,
-                          backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
-                          child: photoUrl == null ? Text(initial, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)) : null,
-                        );
-                      }),
-                      const SizedBox(height: AppSpacing.lg),
-                      Text(
-                        t(context, 'Complete your profile', 'أكمل ملفك الشخصي'),
-                        style: Theme.of(context).textTheme.headlineLarge,
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        t(context, 'Just a few details to get started', 'بضع تفاصيل فقط للبدء'),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
+                  Center(
+                    child: Column(
+                      children: [
+                        // The profile photo comes from the sign-in provider (Google/
+                        // Apple). There is no photo-upload API, so this is display
+                        // only — it is not tappable.
+                        Builder(builder: (context) {
+                          final photoUrl = user?.photoURL;
+                          final name = _nameController.text.trim();
+                          return CircleAvatar(
+                            radius: 40,
+                            backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+                            child: photoUrl != null
+                                ? null
+                                : name.isNotEmpty
+                                ? Text(name[0].toUpperCase(), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold))
+                                : const Icon(Icons.person_outline, size: 40),
+                          );
+                        }),
+                        const SizedBox(height: AppSpacing.lg),
+                        Text(
+                          t(context, 'Complete your profile', 'أكمل ملفك الشخصي'),
+                          style: Theme.of(context).textTheme.headlineLarge,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          t(context, 'Just a few details to get started', 'بضع تفاصيل فقط للبدء'),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+
+                  // Email (read-only, from Google OAuth)
+                  Text(t(context, 'Email', 'البريد الإلكتروني'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceWarm,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.mail_outline, color: AppColors.textMuted, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            email,
+                            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                          ),
+                        ),
+                        Icon(Icons.lock_outline, color: AppColors.textMuted, size: 16),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // Full name
+                  Text(t(context, 'Full Name', 'الاسم الكامل'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextFormField(
+                    controller: _nameController,
+                    textInputAction: TextInputAction.next,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: _inputDecoration(t(context, 'Enter your full name', 'أدخل اسمك الكامل'), Icons.person_outline),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return t(context, 'Name is required', 'الاسم مطلوب');
+                      if (v.trim().length < 2) return t(context, 'At least 2 characters', 'حرفان على الأقل');
+                      if (v.trim().length > 120) return t(context, 'Maximum 120 characters', 'الحد الأقصى 120 حرفًا');
+                      if (RegExp(r'\d').hasMatch(v)) return t(context, 'Name cannot contain numbers', 'لا يمكن أن يحتوي الاسم على أرقام');
+                      if (!v.trim().contains(' ')) return t(context, 'Enter first and last name', 'أدخل الاسم الأول والأخير');
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // Phone number
+                  Text(t(context, 'Phone Number', 'رقم الهاتف'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextFormField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.done,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(11),
                     ],
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xxl),
-
-                // Email (read-only, from Google OAuth)
-                Text(t(context, 'Email', 'البريد الإلكتروني'), style: Theme.of(context).textTheme.labelLarge),
-                const SizedBox(height: AppSpacing.sm),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceWarm,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.mail_outline, color: AppColors.textMuted, size: 20),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          email,
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                    decoration: _inputDecoration('01012345678', Icons.phone_outlined).copyWith(
+                      prefixIcon: Padding(
+                        padding: const EdgeInsets.only(left: 16, right: 8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('\u{1F1EA}\u{1F1EC}', style: const TextStyle(fontSize: 20)),
+                            const SizedBox(width: 6),
+                            Text('+20', style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            )),
+                            Container(
+                              width: 1,
+                              height: 20,
+                              margin: const EdgeInsets.only(left: 8),
+                              color: AppColors.border,
+                            ),
+                          ],
                         ),
                       ),
-                      Icon(Icons.lock_outline, color: AppColors.textMuted, size: 16),
-                    ],
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return t(context, 'Phone number is required', 'رقم الهاتف مطلوب');
+                      final digits = v.trim().replaceAll(RegExp(r'\D'), '');
+                      if (digits.length != 11) return t(context, 'Phone number must be 11 digits', 'يجب أن يتكون رقم الهاتف من 11 رقمًا');
+                      if (!RegExp(r'^01[0125]\d{8}$').hasMatch(digits)) {
+                        return t(context, 'Must start with 010, 011, 012, or 015', 'يجب أن يبدأ بـ 010 أو 011 أو 012 أو 015');
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.xl),
 
-                // Full name
-                Text(t(context, 'Full Name', 'الاسم الكامل'), style: Theme.of(context).textTheme.labelLarge),
-                const SizedBox(height: AppSpacing.sm),
-                TextFormField(
-                  controller: _nameController,
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: _inputDecoration(t(context, 'Enter your full name', 'أدخل اسمك الكامل'), Icons.person_outline),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return t(context, 'Name is required', 'الاسم مطلوب');
-                    if (v.trim().length < 2) return t(context, 'At least 2 characters', 'حرفان على الأقل');
-                    if (v.trim().length > 120) return t(context, 'Maximum 120 characters', 'الحد الأقصى 120 حرفًا');
-                    if (RegExp(r'\d').hasMatch(v)) return t(context, 'Name cannot contain numbers', 'لا يمكن أن يحتوي الاسم على أرقام');
-                    if (!v.trim().contains(' ')) return t(context, 'Enter first and last name', 'أدخل الاسم الأول والأخير');
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppSpacing.xl),
-
-                // Phone number
-                Text(t(context, 'Phone Number', 'رقم الهاتف'), style: Theme.of(context).textTheme.labelLarge),
-                const SizedBox(height: AppSpacing.sm),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.done,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(11),
-                  ],
-                  decoration: _inputDecoration('01012345678', Icons.phone_outlined).copyWith(
-                    prefixIcon: Padding(
-                      padding: const EdgeInsets.only(left: 16, right: 8),
+                  // City picker
+                  Text(t(context, 'City', 'المدينة'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  GestureDetector(
+                    onTap: _loadingCities ? null : _showCityPicker,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _showCityError && _selectedCity == null
+                              ? AppColors.critical
+                              : AppColors.border,
+                        ),
+                      ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('\u{1F1EA}\u{1F1EC}', style: const TextStyle(fontSize: 20)),
-                          const SizedBox(width: 6),
-                          Text('+20', style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                          )),
-                          Container(
-                            width: 1,
-                            height: 20,
-                            margin: const EdgeInsets.only(left: 8),
-                            color: AppColors.border,
+                          Icon(Icons.location_city_outlined, color: AppColors.textMuted, size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _loadingCities
+                                ? SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                                  )
+                                : Text(
+                                    _selectedCity != null
+                                        ? (lang == Lang.ar ? _selectedCity!['nameArabic'] : _selectedCity!['nameEnglish'])
+                                        : t(context, 'Search and select your city', 'ابحث واختر مدينتك'),
+                                    style: TextStyle(
+                                      color: _selectedCity != null
+                                          ? AppColors.textPrimary
+                                          : AppColors.textMuted,
+                                      fontSize: 14,
+                                    ),
+                                  ),
                           ),
+                          Icon(Icons.search, color: AppColors.textMuted, size: 20),
                         ],
                       ),
                     ),
                   ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return t(context, 'Phone number is required', 'رقم الهاتف مطلوب');
-                    final digits = v.trim().replaceAll(RegExp(r'\D'), '');
-                    if (digits.length != 11) return t(context, 'Phone number must be 11 digits', 'يجب أن يتكون رقم الهاتف من 11 رقمًا');
-                    if (!RegExp(r'^01[0125]\d{8}$').hasMatch(digits)) {
-                      return t(context, 'Must start with 010, 011, 012, or 015', 'يجب أن يبدأ بـ 010 أو 011 أو 012 أو 015');
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.xxl),
 
-                // City picker
-                Text(t(context, 'City', 'المدينة'), style: Theme.of(context).textTheme.labelLarge),
-                const SizedBox(height: AppSpacing.sm),
-                GestureDetector(
-                  onTap: _loadingCities ? null : _showCityPicker,
-                  child: Container(
+                  SizedBox(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: _showCityError && _selectedCity == null
-                            ? AppColors.critical
-                            : AppColors.border,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.location_city_outlined, color: AppColors.textMuted, size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _loadingCities
-                              ? SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                                )
-                              : Text(
-                                  _selectedCity != null
-                                      ? (lang == Lang.ar ? _selectedCity!['nameArabic'] : _selectedCity!['nameEnglish'])
-                                      : t(context, 'Search and select your city', 'ابحث واختر مدينتك'),
-                                  style: TextStyle(
-                                    color: _selectedCity != null
-                                        ? AppColors.textPrimary
-                                        : AppColors.textMuted,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                        ),
-                        Icon(Icons.search, color: AppColors.textMuted, size: 20),
-                      ],
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: _submitting ? null : _submit,
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(t(context, 'Get Started', 'ابدأ الآن')),
                     ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xxl),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: _submitting ? null : _submit,
-                    child: _submitting
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(t(context, 'Get Started', 'ابدأ الآن')),
+                  const SizedBox(height: AppSpacing.sm),
+                  Center(
+                    child: TextButton(
+                      key: const Key('completeProfileLeave'),
+                      onPressed: _submitting ? null : _confirmLeave,
+                      child: Text(t(context, 'Use a different account', 'استخدام حساب آخر')),
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xxl),
-              ],
+                  const SizedBox(height: AppSpacing.xl),
+                ],
+              ),
             ),
           ),
         ),
