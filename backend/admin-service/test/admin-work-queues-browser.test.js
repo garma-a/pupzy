@@ -373,7 +373,9 @@ describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
       await openDashboard(page);
 
       assert.equal(await page.$eval('h1', (element) => element.innerText), 'Inbox');
-      const tiles = await page.$$eval('[data-testid="pupzy-tiles"] a', (links) => links.map((link) => link.innerText));
+      const tiles = await page.$$eval('[data-testid="pupzy-tiles"] button', (links) =>
+        links.map((link) => link.innerText),
+      );
       assert.deepEqual(
         tiles.map((text) => text.split('\n')[1]),
         ['Open Post Reports', 'Open Comment Reports', 'Open Account Reports', 'Flagged posts', 'Pending review'],
@@ -399,10 +401,20 @@ describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
         'the filtered Inbox holds the tile count',
       );
       assert.match(flaggedCases[0].title, /Flagged browser case/);
-      assert.equal(
-        await page.$eval('[data-testid="pupzy-tile-flagged"]', (el) => el.getAttribute('aria-current')),
-        'true',
-      );
+      const pressed = (kind) =>
+        page.$eval(`[data-testid="pupzy-tile-${kind}"]`, (el) => el.getAttribute('aria-pressed'));
+      assert.equal(await pressed('flagged'), 'true');
+      assert.equal(await pressed('post_report'), 'false');
+      assert.equal(await page.$eval('[data-testid="pupzy-cases-heading"]', (el) => el.innerText), 'Flagged posts · 1');
+      await page.click('[data-testid="pupzy-tile-flagged"]');
+      await page.waitForFunction(() => !new URL(location.href).searchParams.has('kind'));
+      assert.equal(await pressed('flagged'), 'false', 'clicking the active tile goes back to all cases');
+      await page.click('[data-testid="pupzy-tile-flagged"]');
+      await page.waitForFunction(() => new URL(location.href).searchParams.get('kind') === 'flagged');
+      await page.click('[data-testid="pupzy-all-cases"]');
+      await page.waitForFunction(() => !new URL(location.href).searchParams.has('kind'));
+      await page.click('[data-testid="pupzy-tile-flagged"]');
+      await page.waitForFunction(() => document.querySelectorAll('[data-testid="pupzy-case"]').length === 1);
       console.log(`[bwg-05 evidence] flagged filter ${await recordEvidence(page, '02-flagged-filter')}`);
 
       // The same work is reachable as a Posts list with the same total.
@@ -480,6 +492,13 @@ describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
       assert.ok(flaggedCase, 'the flagged Post appears in the Inbox');
       assert.ok(pendingCase, 'the pending-moderation Post appears in the Inbox');
       assert.equal(pendingCase.kind, 'pending');
+      assert.match(pendingCase.text, /Automatic review/);
+      assert.equal(
+        (pendingCase.text.match(/Automatic review/g) ?? []).length,
+        1,
+        'Automatic review appears once on a system row',
+      );
+      assert.doesNotMatch(pendingCase.text, /Waiting for automatic review/);
       assert.equal(flaggedCase.count, '1 report', 'the flagged Post shows its one open Report');
       assert.equal(pendingCase.count, 'No reports', 'pending moderation is not represented as an open Report');
       const approved = cases.filter((row) => row.title === 'Approved case with an open report');
@@ -490,16 +509,11 @@ describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
       );
 
       await page.click('[data-testid="pupzy-tile-post_report"]');
-      await page.waitForFunction(
-        () =>
-          Array.from(document.querySelectorAll('[data-testid="pupzy-case"]')).every(
-            (row) => row.dataset.kind === 'post_report',
-          ) && document.querySelectorAll('[data-testid="pupzy-case"]').length === 2,
-      );
+      await page.waitForFunction(() => document.querySelectorAll('[data-testid="pupzy-case"]').length === 2);
       assert.deepEqual(
         new Set((await inboxCases(page)).map((row) => row.title)),
         new Set(['Flagged browser case', 'Approved case with an open report']),
-        'only Posts with unreviewed Reports are listed',
+        'only Posts with unreviewed Reports are listed, once each',
       );
 
       await openList(page, 'post_reports', { review_state: 'OPEN' });
@@ -652,11 +666,11 @@ describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
       );
       assert.match(await page.$eval('[data-testid="pupzy-pager"]', (el) => el.innerText), /Page 2 of 2/);
 
-      await page.click('[data-testid="pupzy-case"] [data-testid="pupzy-case-open"]');
+      await page.click('[data-testid="pupzy-case"][data-kind="post_report"] [data-testid="pupzy-case-open"]');
       await page.waitForSelector('[data-testid="pupzy-back-to-inbox"]', { timeout: 60000 });
       assert.match(
         page.url(),
-        new RegExp(`/admin/resources/post_reports/records/${fixture.openReportOnFlaggedId}/show`),
+        new RegExp(`/admin/resources/post_reports/records/${fixture.openReportOnApprovedId}/show`),
       );
       assert.equal(
         await page.$eval('[data-testid="pupzy-back-to-inbox"]', (el) => el.getAttribute('href')),
@@ -678,7 +692,7 @@ describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
       const remaining = await inboxCases(page);
       assert.deepEqual(
         remaining.map((row) => row.title),
-        ['Approved case with an open report'],
+        ['Flagged browser case'],
         'the reviewed case left the Inbox',
       );
       assert.equal(await tileCount(page, 'post_report'), '26');

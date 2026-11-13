@@ -240,10 +240,10 @@ describe('Moderation Inbox endpoint', () => {
     );
 
     const all = await getInbox();
-    assert.equal(all.inbox.total, 6);
+    assert.equal(all.inbox.total, 5, 'the flagged Post and its report are one row');
     assert.deepEqual(
       all.inbox.items.map((item) => item.kind),
-      ['flagged', 'pending', 'post_report', 'post_report', 'comment_report', 'account_report'],
+      ['flagged', 'pending', 'post_report', 'comment_report', 'account_report'],
       'all kinds in one list, oldest first',
     );
 
@@ -254,6 +254,7 @@ describe('Moderation Inbox endpoint', () => {
     assert.equal(byKind.account_report.avatar.pictureUrl, 'https://img.test/a.jpg');
     assert.equal(byKind.flagged.thumbnailUrl, 'https://img.test/flagged.jpg');
     assert.equal(byKind.flagged.reportCount, 1, 'a flagged Post shows its open reports');
+    assert.equal(byKind.flagged.reporter.name, 'Reporter Two');
     assert.equal(byKind.pending.reportCount, 0);
     assert.equal(byKind.pending.reporter, null);
     assert.equal(byKind.pending.kindLabel, 'Pending review');
@@ -269,10 +270,49 @@ describe('Moderation Inbox endpoint', () => {
     ]) {
       const filtered = await getInbox({ kind });
       assert.equal(filtered.inbox.total, expected, kind);
-      assert.ok(filtered.inbox.items.every((item) => item.kind === kind));
+      assert.ok(
+        filtered.inbox.items.every((item) => (kind === 'post_report' ? item.reportCount > 0 : item.kind === kind)),
+        `${kind}: every row matches the filter`,
+      );
     }
     const unknown = await getInbox({ kind: 'everything' });
-    assert.equal(unknown.inbox.total, 6, 'an unknown kind shows everything');
+    assert.equal(unknown.inbox.total, 5, 'an unknown kind shows everything');
+  });
+
+  it('shows a flagged Post with open reports as one row that matches several filters', async () => {
+    const flagged = await post('Flagged and reported', {
+      moderationStatus: 'FLAGGED',
+      createdAt: hoursAgo(50),
+    });
+    await database.pool.query(`UPDATE posts SET moderated_at = $2, moderation_reason = 'Possible scam' WHERE id = $1`, [
+      flagged,
+      hoursAgo(40),
+    ]);
+    const oldest = await postReport(flagged, userIds.r1, hoursAgo(30), { reason: 'SCAM' });
+    await postReport(flagged, userIds.r2, hoursAgo(5));
+
+    const all = await getInbox();
+    assert.equal(all.inbox.total, 1, 'exactly one row for the Post');
+    const [row] = all.inbox.items;
+    assert.equal(row.kind, 'flagged');
+    assert.equal(row.reportCount, 2);
+    assert.equal(row.reasonLabel, 'Scam');
+    assert.equal(row.reporter.name, 'Reporter One', 'the oldest report');
+    assert.deepEqual(row.target, { resource: 'posts', id: flagged }, 'opens the review workspace');
+    assert.equal(
+      Math.abs(new Date(row.since).getTime() - hoursAgo(40).getTime()) < 5_000,
+      true,
+      'sorted by the earlier of the flag time (moderated_at) and the oldest report',
+    );
+    void oldest;
+
+    for (const kind of ['flagged', 'post_report']) {
+      const filtered = await getInbox({ kind });
+      assert.equal(filtered.inbox.total, 1, kind);
+      assert.equal(filtered.inbox.items[0].targetId, flagged);
+      assert.equal(filtered.inbox.items[0].reportCount, 2);
+    }
+    assert.equal((await getInbox({ kind: 'pending' })).inbox.total, 0);
   });
 
   it('counts the same open work in the tiles as the lists show', async () => {

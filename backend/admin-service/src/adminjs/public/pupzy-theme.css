@@ -2832,3 +2832,28 @@ td[data-property-name='audience'] {
 .pupzy-post-review .pupzy-back-link {
   margin: 0;
 }
+
+/* Inbox tiles are buttons that select a filter. */
+button.pupzy-tile {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pupzy-tile[aria-pressed='true'] {
+  border-color: var(--pupzy-primary);
+  background: var(--pupzy-warning-light);
+  box-shadow: inset 0 0 0 1px var(--pupzy-primary);
+}
+.pupzy-link-button[aria-pressed='true'] {
+  color: var(--pupzy-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.pupzy-case-system {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--pupzy-text-secondary);
+}

@@ -51,7 +51,7 @@ describe('Admin dashboard handler work queues', () => {
     assert.match(caseQuery, /reviewed_at IS NULL/);
     assert.match(caseQuery, /ORDER BY latest DESC/);
     assert.doesNotMatch(caseQuery, /report_count\b\s*(>|=|FROM)/);
-    assert.doesNotMatch(caseQuery, /FROM comment_reports|FROM posts/, 'a filter queries only its own kind');
+    assert.doesNotMatch(caseQuery, /comment_reports|account_reports/, 'a filter queries only its own kinds');
     assert.equal(result.inbox.kind, 'post_report');
     assert.equal(result.inbox.order, 'newest');
     assert.deepEqual(result.inbox.items, []);

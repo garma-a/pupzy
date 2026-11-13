@@ -93,9 +93,11 @@ function CaseRow({ item, search, rootPath, onOpen }) {
         <span className="pupzy-case-title" dir="auto" title={item.title}>
           {item.title}
         </span>
-        <span className="pupzy-case-reason" data-testid="pupzy-case-reason" dir="auto">
-          {item.reasonLabel}
-        </span>
+        {item.reasonLabel ? (
+          <span className="pupzy-case-reason" data-testid="pupzy-case-reason" dir="auto">
+            {item.reasonLabel}
+          </span>
+        ) : null}
       </div>
       <div className="pupzy-case-reporter">
         {item.reporter ? (
@@ -106,7 +108,21 @@ function CaseRow({ item, search, rootPath, onOpen }) {
             </span>
           </>
         ) : (
-          <span className="pupzy-case-muted">Automatic review</span>
+          <span className="pupzy-case-system" data-testid="pupzy-case-system">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              aria-hidden="true"
+            >
+              <rect x="5" y="8" width="14" height="10" rx="2" />
+              <path d="M12 4v4M9 12.5h.01M15 12.5h.01M9.5 15.5h5" />
+            </svg>
+            Automatic review
+          </span>
         )}
       </div>
       <time className="pupzy-case-age" dateTime={new Date(item.since).toISOString()} title={exact}>
@@ -188,6 +204,7 @@ export default function Inbox() {
   const countOf = (queueId) => Number(queues.find((queue) => queue.id === queueId)?.count ?? 0);
   const inbox = data?.inbox;
   const closedReports = queueHref({ resource: 'post_reports', filters: { review_state: 'REVIEWED' } }, rootPath);
+  const activeTile = TILES.find((tile) => tile.kind === kind);
   const nothingAtAll = inbox && inbox.total === 0 && kind === 'all';
 
   return (
@@ -236,44 +253,49 @@ export default function Inbox() {
         </div>
       ) : null}
 
-      <nav className="pupzy-tiles" aria-label="Filter the inbox" data-testid="pupzy-tiles">
+      <div className="pupzy-tiles" role="group" aria-label="Filter the inbox" data-testid="pupzy-tiles">
         {TILES.map((tile) => {
           const active = kind === tile.kind;
           const count = countOf(tile.queue);
           return (
-            <a
+            <button
               key={tile.kind}
+              type="button"
               className="pupzy-tile"
-              href={`${rootPath}${inboxSearch({ kind: active ? 'all' : tile.kind, order })}`}
-              aria-current={active ? 'true' : undefined}
+              aria-pressed={active}
               data-active={active}
               data-alert={count > 0}
               data-testid={`pupzy-tile-${tile.kind}`}
-              onClick={(event) => {
-                if (!isPlainClick(event)) return;
-                event.preventDefault();
-                go({ kind: active ? 'all' : tile.kind });
-              }}
+              onClick={() => go({ kind: active ? 'all' : tile.kind })}
             >
               <strong data-testid={`pupzy-tile-count-${tile.kind}`}>{data ? count.toLocaleString() : '–'}</strong>
               <span>{tile.label}</span>
-            </a>
+            </button>
           );
         })}
-      </nav>
+      </div>
 
       <section aria-labelledby="pupzy-cases-heading" className="pupzy-cases-section">
         <div className="pupzy-cases-toolbar">
-          <h2 id="pupzy-cases-heading">
-            {kind === 'all' ? 'All open cases' : TILES.find((tile) => tile.kind === kind)?.label}
-            {inbox ? <span className="pupzy-case-muted"> · {inbox.total.toLocaleString()}</span> : null}
+          <h2 id="pupzy-cases-heading" data-testid="pupzy-cases-heading">
+            {activeTile ? activeTile.label : 'All open cases'}
+            {data ? (
+              <span className="pupzy-case-muted">
+                {' '}
+                · {(activeTile ? countOf(activeTile.queue) : (inbox?.total ?? 0)).toLocaleString()}
+              </span>
+            ) : null}
           </h2>
           <div className="pupzy-cases-controls">
-            {kind !== 'all' ? (
-              <button className="pupzy-link-button" onClick={() => go({ kind: 'all' })}>
-                Show all
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className="pupzy-link-button"
+              aria-pressed={kind === 'all'}
+              data-testid="pupzy-all-cases"
+              onClick={() => go({ kind: 'all' })}
+            >
+              All cases
+            </button>
             <div className="pupzy-segmented" role="group" aria-label="Sort order">
               {[
                 ['oldest', 'Oldest first'],

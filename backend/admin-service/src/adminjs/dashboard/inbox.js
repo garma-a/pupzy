@@ -26,35 +26,67 @@ export function parseInboxQuery(query = {}) {
 
 /**
  * One row per target. Open reports on the same Post, Comment or account are
- * grouped (`GROUP BY` the target) and the case opens the oldest one. A flagged
- * or pending Post is its own row.
+ * grouped (`GROUP BY` the target) and the case opens the oldest one. A Post that
+ * is flagged or pending review AND has open reports is still ONE row: the
+ * reports are joined to it. `post_state` is 'flagged', 'pending' or NULL.
  */
-const CASE_SQL = {
-  post_report: `
-    SELECT 'post_report'::text AS kind, post_id AS target_id,
-           (array_agg(id ORDER BY created_at, id))[1] AS case_id,
-           count(*)::int AS report_count, min(created_at) AS since, max(created_at) AS latest
-    FROM post_reports WHERE reviewed_at IS NULL GROUP BY post_id`,
-  comment_report: `
-    SELECT 'comment_report'::text, comment_id,
-           (array_agg(id ORDER BY created_at, id))[1],
-           count(*)::int, min(created_at), max(created_at)
-    FROM comment_reports WHERE reviewed_at IS NULL GROUP BY comment_id`,
-  account_report: `
-    SELECT 'account_report'::text, reported_user_id,
-           (array_agg(id ORDER BY created_at, id))[1],
-           count(*)::int, min(created_at), max(created_at)
-    FROM account_reports WHERE reviewed_at IS NULL GROUP BY reported_user_id`,
-  flagged: `
-    SELECT 'flagged'::text, id, id, 0, created_at, created_at
-    FROM posts WHERE moderation_status = 'FLAGGED' AND status = 'ACTIVE'`,
-  pending: `
-    SELECT 'pending'::text, id, id, 0, created_at, created_at
-    FROM posts WHERE moderation_status = 'PENDING_AUTO_REVIEW' AND status = 'ACTIVE'`,
+const OPEN_POST_REPORTS = `
+  SELECT post_id, count(*)::int AS n, (array_agg(id ORDER BY created_at, id))[1] AS case_id,
+         min(created_at) AS first_at, max(created_at) AS last_at
+  FROM post_reports WHERE reviewed_at IS NULL GROUP BY post_id`;
+const reviewPosts = (states) => `
+  SELECT id, CASE moderation_status WHEN 'FLAGGED' THEN 'flagged' ELSE 'pending' END AS state,
+         COALESCE(moderated_at, created_at) AS flag_at
+  FROM posts WHERE status = 'ACTIVE' AND moderation_status IN (${states})`;
+const BOTH_STATES = `'FLAGGED', 'PENDING_AUTO_REVIEW'`;
+const POST_COLUMNS = `
+  SELECT 'post'::text, COALESCE(r.post_id, p.id), r.case_id, COALESCE(r.n, 0),
+         LEAST(r.first_at, p.flag_at), GREATEST(r.last_at, p.flag_at), p.state`;
+const COLUMNS = '(kind, target_id, case_id, report_count, since, latest, post_state)';
+
+const POST_SQL = {
+  // Every open report, with the Post's review state when it has one.
+  all: `${POST_COLUMNS} FROM (${OPEN_POST_REPORTS}) r FULL JOIN (${reviewPosts(BOTH_STATES)}) p ON p.id = r.post_id`,
+  post_report: `${POST_COLUMNS} FROM (${OPEN_POST_REPORTS}) r LEFT JOIN (${reviewPosts(BOTH_STATES)}) p ON p.id = r.post_id`,
+  // Flagged or pending Posts, with their open reports when they have any.
+  flagged: postsWithReports(`'FLAGGED'`),
+  pending: postsWithReports(`'PENDING_AUTO_REVIEW'`),
 };
 
-const casesCte = (kind) =>
-  `WITH cases(kind, target_id, case_id, report_count, since, latest) AS (${(kind === 'all' ? KIND_NAMES : [kind]).map((name) => CASE_SQL[name]).join('\n    UNION ALL')}\n    )`;
+function postsWithReports(states) {
+  return `
+  SELECT 'post'::text, p.id, r.case_id, COALESCE(r.n, 0),
+         LEAST(r.first_at, p.flag_at), GREATEST(r.last_at, p.flag_at), p.state
+  FROM (${reviewPosts(states)}) p
+  LEFT JOIN LATERAL (${OPEN_POST_REPORTS.replace('WHERE reviewed_at IS NULL', 'WHERE reviewed_at IS NULL AND post_id = p.id')}) r ON true`;
+}
+
+const CASE_SQL = {
+  comment_report: `
+    SELECT 'comment_report'::text, comment_id, (array_agg(id ORDER BY created_at, id))[1],
+           count(*)::int, min(created_at), max(created_at), NULL::text
+    FROM comment_reports WHERE reviewed_at IS NULL GROUP BY comment_id`,
+  account_report: `
+    SELECT 'account_report'::text, reported_user_id, (array_agg(id ORDER BY created_at, id))[1],
+           count(*)::int, min(created_at), max(created_at), NULL::text
+    FROM account_reports WHERE reviewed_at IS NULL GROUP BY reported_user_id`,
+};
+
+/** The SQL branches that make up a filter. Posts are one branch, however many filters they match. */
+function branchesFor(kind) {
+  switch (kind) {
+    case 'all':
+      return [POST_SQL.all, CASE_SQL.comment_report, CASE_SQL.account_report];
+    case 'post_report':
+    case 'flagged':
+    case 'pending':
+      return [POST_SQL[kind]];
+    default:
+      return [CASE_SQL[kind]];
+  }
+}
+
+const casesCte = (kind) => `WITH cases${COLUMNS} AS (${branchesFor(kind).join('\n    UNION ALL')}\n    )`;
 
 /** Only used when a link points past the last page. */
 export const buildInboxCountSql = ({ kind }) => `${casesCte(kind)} SELECT count(*)::int AS total FROM cases`;
@@ -64,7 +96,7 @@ export function buildInboxPageSql({ kind, order }) {
   const orderBy = order === 'newest' ? 'latest DESC' : 'since ASC';
   return `
     ${casesCte(kind)}
-    SELECT kind, target_id, case_id, report_count, since, latest, count(*) OVER ()::int AS total
+    SELECT kind, target_id, case_id, report_count, since, latest, post_state, count(*) OVER ()::int AS total
     FROM cases
     ORDER BY ${orderBy}, kind, target_id
     LIMIT ${INBOX_PAGE_SIZE} OFFSET $1`;
@@ -72,16 +104,14 @@ export function buildInboxPageSql({ kind, order }) {
 
 const PHOTO_SQL = `(SELECT m.public_url FROM post_media m WHERE m.post_id = p.id ORDER BY m.display_order, m.created_at LIMIT 1)`;
 const COMMENT_IMAGE_SQL = `(SELECT m.storage_key FROM comment_media m WHERE m.comment_id = c.id ORDER BY m.display_order LIMIT 1)`;
-const OPEN_POST_REPORTS_SQL = `(SELECT count(*)::int FROM post_reports x WHERE x.post_id = p.id AND x.reviewed_at IS NULL)`;
 
 /** Details of every case on the page, one query per kind (never one per row). */
 const DETAIL_SQL = {
   post_report: `
     SELECT r.id AS case_id, r.reason, r.reporter_id, ${USER_NAME_SQL} AS reporter_name, u.profile_picture_url AS reporter_picture,
-           p.id AS target_id, p.title, ${PHOTO_SQL} AS photo
+           r.post_id AS target_id
     FROM post_reports r
     LEFT JOIN users u ON u.id = r.reporter_id
-    LEFT JOIN posts p ON p.id = r.post_id
     WHERE r.id = ANY($1::uuid[])`,
   comment_report: `
     SELECT r.id AS case_id, r.reason, r.reporter_id, ${USER_NAME_SQL} AS reporter_name, u.profile_picture_url AS reporter_picture,
@@ -102,7 +132,7 @@ const DETAIL_SQL = {
     LEFT JOIN users t ON t.id = r.reported_user_id
     WHERE r.id = ANY($1::uuid[])`,
   post: `
-    SELECT p.id AS target_id, p.title, p.moderation_reason, ${PHOTO_SQL} AS photo, ${OPEN_POST_REPORTS_SQL} AS open_reports
+    SELECT p.id AS target_id, p.title, p.moderation_reason, ${PHOTO_SQL} AS photo
     FROM posts p
     WHERE p.id = ANY($1::uuid[])`,
 };
@@ -110,31 +140,35 @@ const DETAIL_SQL = {
 const person = (id, name, pictureUrl) =>
   id ? { id, name: name ?? 'Deleted account', pictureUrl: pictureUrl ?? null } : null;
 
+const POST_KIND = { flagged: 'flagged', pending: 'pending' };
+
 function toItem(row, detail, env) {
+  const kind = row.kind === 'post' ? (POST_KIND[row.post_state] ?? 'post_report') : row.kind;
   const base = {
     key: `${row.kind}:${row.target_id}`,
-    kind: row.kind,
-    kindLabel: INBOX_KINDS[row.kind].label,
+    kind,
+    kindLabel: INBOX_KINDS[kind].label,
     targetId: row.target_id,
     reportCount: row.report_count,
     since: row.since,
-    reporter: null,
-    reason: null,
   };
-  const target = { resource: INBOX_KINDS[row.kind].resource, id: row.case_id };
+  const reporter = person(detail?.reporter_id, detail?.reporter_name, detail?.reporter_picture);
 
-  if (row.kind === 'post_report') {
+  if (row.kind === 'post') {
+    // A flagged or pending Post opens its review workspace, which lists the reports too.
+    const inWorkspace = kind !== 'post_report';
     return {
       ...base,
-      target,
-      title: detail?.title ?? 'Post not found',
-      thumbnailUrl: detail?.photo ?? null,
+      target: inWorkspace ? { resource: 'posts', id: row.target_id } : { resource: 'post_reports', id: row.case_id },
+      title: detail?.post?.title ?? 'Post not found',
+      thumbnailUrl: detail?.post?.photo ?? null,
       avatar: null,
-      reasonLabel: reportReasonLabel(detail?.reason),
-      reporter: person(detail?.reporter_id, detail?.reporter_name, detail?.reporter_picture),
+      reasonLabel: row.case_id ? reportReasonLabel(detail?.reason) : detail?.post?.moderation_reason || null,
+      reporter,
     };
   }
-  if (row.kind === 'comment_report') {
+  const target = { resource: INBOX_KINDS[kind].resource, id: row.case_id };
+  if (kind === 'comment_report') {
     const imageUrl = detail?.photo_key ? resolveCommentMediaUrl(detail.photo_key, env) : null;
     return {
       ...base,
@@ -145,30 +179,17 @@ function toItem(row, detail, env) {
         ? null
         : { name: detail?.author_name ?? 'Deleted account', pictureUrl: detail?.author_picture ?? null },
       reasonLabel: reportReasonLabel(detail?.reason),
-      reporter: person(detail?.reporter_id, detail?.reporter_name, detail?.reporter_picture),
-    };
-  }
-  if (row.kind === 'account_report') {
-    return {
-      ...base,
-      target,
-      title: detail?.target_name ?? 'Deleted account',
-      thumbnailUrl: null,
-      avatar: { name: detail?.target_name ?? 'Deleted account', pictureUrl: detail?.target_picture ?? null },
-      reasonLabel: reportReasonLabel(detail?.reason),
-      reporter: person(detail?.reporter_id, detail?.reporter_name, detail?.reporter_picture),
+      reporter,
     };
   }
   return {
     ...base,
-    target: { resource: 'posts', id: row.target_id },
-    title: detail?.title ?? 'Post not found',
-    thumbnailUrl: detail?.photo ?? null,
-    avatar: null,
-    reportCount: detail?.open_reports ?? 0,
-    reasonLabel:
-      detail?.moderation_reason ||
-      (row.kind === 'flagged' ? 'Flagged by automatic review' : 'Waiting for automatic review'),
+    target,
+    title: detail?.target_name ?? 'Deleted account',
+    thumbnailUrl: null,
+    avatar: { name: detail?.target_name ?? 'Deleted account', pictureUrl: detail?.target_picture ?? null },
+    reasonLabel: reportReasonLabel(detail?.reason),
+    reporter,
   };
 }
 
@@ -176,7 +197,7 @@ const indexBy = (rows, field) => new Map(rows.map((row) => [row[field], row]));
 
 /**
  * One page of the Moderation Inbox: 1 query for the page of cases, then at most
- * one query per kind present on the page for their details.
+ * four batched detail queries (Post reports, Comment reports, account reports, Posts).
  */
 export async function loadInbox(pool, query = {}, env = process.env) {
   const params = parseInboxQuery(query);
@@ -192,33 +213,29 @@ export async function loadInbox(pool, query = {}, env = process.env) {
   }
 
   const total = rows[0]?.total ?? 0;
-  const idsOf = (kind, field) => rows.filter((row) => row.kind === kind).map((row) => row[field]);
-  const reportKinds = ['post_report', 'comment_report', 'account_report'];
-  const postIds = rows.filter((row) => row.kind === 'flagged' || row.kind === 'pending').map((row) => row.target_id);
-
-  const details = Object.fromEntries(
-    await Promise.all([
-      ...reportKinds.map(async (kind) => {
-        const ids = idsOf(kind, 'case_id');
-        if (ids.length === 0) return [kind, new Map()];
-        const { rows: detailRows } = await pool.query(DETAIL_SQL[kind], [ids]);
-        return [kind, indexBy(detailRows, 'case_id')];
-      }),
-      (async () => {
-        if (postIds.length === 0) return ['post', new Map()];
-        const { rows: detailRows } = await pool.query(DETAIL_SQL.post, [postIds]);
-        return ['post', indexBy(detailRows, 'target_id')];
-      })(),
-    ]),
-  );
-
-  const items = rows.map((row) =>
-    toItem(
-      row,
-      reportKinds.includes(row.kind) ? details[row.kind].get(row.case_id) : details.post.get(row.target_id),
-      env,
+  const postRows = rows.filter((row) => row.kind === 'post');
+  const caseIds = (kind) => rows.filter((row) => row.kind === kind && row.case_id).map((row) => row.case_id);
+  const fetchBy = async (sql, ids, field) => {
+    if (ids.length === 0) return new Map();
+    const { rows: detailRows } = await pool.query(sql, [ids]);
+    return indexBy(detailRows, field);
+  };
+  const [reportDetails, commentDetails, accountDetails, postDetails] = await Promise.all([
+    fetchBy(DETAIL_SQL.post_report, caseIds('post'), 'case_id'),
+    fetchBy(DETAIL_SQL.comment_report, caseIds('comment_report'), 'case_id'),
+    fetchBy(DETAIL_SQL.account_report, caseIds('account_report'), 'case_id'),
+    fetchBy(
+      DETAIL_SQL.post,
+      postRows.map((row) => row.target_id),
+      'target_id',
     ),
-  );
+  ]);
+
+  const items = rows.map((row) => {
+    if (row.kind === 'comment_report') return toItem(row, commentDetails.get(row.case_id), env);
+    if (row.kind === 'account_report') return toItem(row, accountDetails.get(row.case_id), env);
+    return toItem(row, { ...reportDetails.get(row.case_id), post: postDetails.get(row.target_id) }, env);
+  });
 
   return {
     items,
