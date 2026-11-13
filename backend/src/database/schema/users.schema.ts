@@ -196,6 +196,13 @@ export const users = pgTable(
     /** Prevents full-table scans when listing users in a city. */
     homeCityIdx: index('idx_users_home_city').on(table.homeCityId),
 
+    /**
+     * Keyset walk of one City's accounts in id order: the Announcement fan-out
+     * and its recipient count read `home_city_id = $city AND id > $cursor
+     * ORDER BY id LIMIT n` without sorting or scanning other Cities.
+     */
+    homeCityKeysetIdx: index('idx_users_home_city_id').on(table.homeCityId, table.id),
+
     bannedIdx: index('idx_users_banned')
       .on(table.bannedAt)
       .where(sql`is_banned = true`),

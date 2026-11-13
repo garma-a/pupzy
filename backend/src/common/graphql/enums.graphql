@@ -167,6 +167,7 @@ enum NotificationType {
   POST_REOPENED
   RESCUE_COMPLETED
   RESCUE_REOPENED
+  ADMIN_ANNOUNCEMENT
 }
 
 "Personality trait tag for an adoption pet."
