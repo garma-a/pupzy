@@ -50,7 +50,7 @@ export const ENUMS = {
     'RESCUE_COMPLETED',
     'RESCUE_REOPENED',
   ],
-  vetClinicSource: ['OSM', 'GOOGLE_PLACES', 'MANUAL'],
+  vetClinicSource: ['OSM', 'GOOGLE_PLACES', 'WEB_RESEARCH', 'MANUAL'],
   cityLifecycleStatus: ['OFFICIAL', 'LEGACY', 'RETIRED'],
   adminRole: ['ADMIN', 'SUPER_ADMIN'],
   moderationActionType: [

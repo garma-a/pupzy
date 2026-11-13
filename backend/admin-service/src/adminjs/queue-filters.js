@@ -15,6 +15,7 @@ const VIRTUAL_FILTERS = Object.freeze({
     report_type: LOST_SUBTYPE_VALUES,
     queue: Object.freeze(['completed']),
   }),
+  vet_clinics: Object.freeze({ phone_state: Object.freeze(['missing', 'present']) }),
   post_reports: Object.freeze({ review_state: REPORT_REVIEW_STATE_VALUES }),
   comment_reports: Object.freeze({ review_state: REPORT_REVIEW_STATE_VALUES }),
   account_reports: Object.freeze({ review_state: REPORT_REVIEW_STATE_VALUES }),
@@ -71,6 +72,11 @@ function applyReportReviewState(query, value) {
  * was recognized.
  */
 export function applyVirtualFilter(query, { tableName, key, value, knex, schemaName }) {
+  if (tableName === 'vet_clinics' && key === 'phone_state') {
+    if (!['missing', 'present'].includes(value)) return false;
+    query.whereRaw(`NULLIF(btrim(phone_number), '') IS ${value === 'present' ? 'NOT ' : ''}NULL`);
+    return true;
+  }
   if (tableName === 'posts' && key === 'report_type') {
     if (!LOST_SUBTYPE_VALUES.includes(value)) return false;
     const subquery = schemaName ? knex('lost_posts').withSchema(schemaName) : knex('lost_posts');

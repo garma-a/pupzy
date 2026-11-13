@@ -1,0 +1,9 @@
+[out:json][timeout:180];
+area["ISO3166-1"="EG"]["admin_level"="2"]->.egypt;
+(
+  nwr["amenity"="veterinary"](area.egypt);
+  nwr["healthcare"="veterinary"](area.egypt);
+  nwr["shop"="pet"](area.egypt);
+  nwr[~"^name(:.*)?$"~"بيطر|[Vv][Ee][Tt]|[Aa]nimal [Hh]ospital"](area.egypt);
+);
+out center tags;

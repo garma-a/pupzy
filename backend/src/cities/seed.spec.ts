@@ -2,6 +2,7 @@
 import { seedOfficialCities } from './seed';
 import { getOfficialCatalog, type CityCatalogRecord } from './catalog';
 import { cities } from '../database/schema/cities.schema';
+import { adminUsers, vetClinics } from '../database/schema';
 import { runDatabaseSeed } from '../database/seed';
 
 describe('seedOfficialCities', () => {
@@ -167,31 +168,39 @@ describe('seedOfficialCities', () => {
     expect(retiredRow.status).toBe('RETIRED');
   });
 
-  it('runs database seed and resolves vet clinic city assignments against official cities only', async () => {
-    const mockDbSeed: any = {
-      transaction: jest.fn().mockImplementation(async (cb) => cb(mockTx)),
-      insert: jest.fn().mockReturnValue({
-        values: jest.fn().mockReturnValue({
-          onConflictDoNothing: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([{ id: 'vet-clinic-1' }]),
-          }),
+  it('seeds official cities and the admin, leaving vet clinics to the release migration', async () => {
+    const adminInsert = {
+      values: jest.fn().mockReturnValue({
+        onConflictDoNothing: jest.fn().mockReturnValue({
+          returning: jest.fn().mockResolvedValue([{ id: 'admin-1', email: 'admin@pupzy.local' }]),
         }),
       }),
-      execute: jest.fn().mockResolvedValue({
-        rows: [{ id: '01916327-0000-7000-8000-000000000001' }],
-      }),
+    };
+    const mockDbSeed: any = {
+      transaction: jest.fn().mockImplementation(async (cb) => cb(mockTx)),
+      insert: jest.fn().mockReturnValue(adminInsert),
+      execute: jest.fn(),
     };
 
-    await runDatabaseSeed(mockDbSeed);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    try {
+      await runDatabaseSeed(mockDbSeed, {
+        admin: { email: 'admin@pupzy.local', password: 'SuperSecureAdminPassword123!' },
+      });
+    } finally {
+      logSpy.mockRestore();
+    }
 
+    // Official cities are written inside the seed transaction.
     expect(mockDbSeed.transaction).toHaveBeenCalled();
-    // Verify spatial execute query filters on status = 'OFFICIAL'
-    expect(mockDbSeed.execute).toHaveBeenCalled();
-    const queryCall = mockDbSeed.execute.mock.calls[0][0];
-    const queryString = queryCall.queryChunks
-      ? queryCall.queryChunks.map((chunk: any) => chunk?.value ?? chunk).join('')
-      : JSON.stringify(queryCall);
-    expect(queryString).toContain('OFFICIAL');
+    expect(insertedBatches.length).toBeGreaterThan(0);
+    // The admin is the only direct insert, and it targets admin_users.
+    expect(mockDbSeed.insert).toHaveBeenCalledTimes(1);
+    expect(mockDbSeed.insert).toHaveBeenCalledWith(adminUsers);
+    expect(mockDbSeed.insert).not.toHaveBeenCalledWith(vetClinics);
+    expect(mockTx.insert).not.toHaveBeenCalledWith(vetClinics);
+    // No vet city assignment queries.
+    expect(mockDbSeed.execute).not.toHaveBeenCalled();
   });
 
   describe('Cache invalidation on seed', () => {

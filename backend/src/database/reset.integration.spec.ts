@@ -1,4 +1,5 @@
 import { loadOfficialCatalog } from '../cities/catalog';
+import { readData } from '../vet-clinics/catalog';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { Pool, type QueryResult } from 'pg';
 import * as bcrypt from 'bcryptjs';
@@ -6,6 +7,7 @@ import { runDatabasePreflight, isLoopbackHost, isLocalHost } from './preflight';
 import { runDatabaseReset } from './reset';
 
 describe('Canonical Baseline Database Reset Integration', () => {
+  const expectedClinicCount = readData<unknown[]>('egypt-vet-clinics.json').length;
   jest.setTimeout(120_000);
 
   let container: StartedPostgreSqlContainer;
@@ -474,8 +476,9 @@ describe('Canonical Baseline Database Reset Integration', () => {
       // Verify reset report summary
       expect(resetResult.citiesCount).toBe(loadOfficialCatalog().records.length);
       expect(resetResult.governoratesCount).toBe(27);
-      expect(resetResult.vetClinicsCount).toBe(16);
-      expect(resetResult.catalogRevision).toBe(2); // Initial revision1 plus the0066 catalog release.
+      expect(resetResult.vetClinicsCount).toBe(expectedClinicCount);
+      // Initial 1, +1 for the 0066 catalog release, +1 for the 0068 vet clinic release.
+      expect(resetResult.catalogRevision).toBe(3);
       expect(resetResult.adminCreated).toBe(true);
       expect(resetResult.usersCount).toBe(0);
       expect(resetResult.postsCount).toBe(0);
@@ -531,14 +534,13 @@ describe('Canonical Baseline Database Reset Integration', () => {
       const distinctGovs = new Set(officialCitiesRes.rows.map((c) => c.governorate));
       expect(distinctGovs.size).toBe(27);
 
-      // Verify the 16 checked-in Imported Vet Clinics are linked to valid official cities
+      // Verify the reviewed vet clinic release are linked to valid official cities
       const clinicsRes = await pool.query<{
         id: string;
         name_english: string | null;
         name_arabic: string | null;
         city_id: string;
         source: string;
-        osm_id: string;
         has_coordinates: boolean;
       }>(`
         SELECT
@@ -547,16 +549,14 @@ describe('Canonical Baseline Database Reset Integration', () => {
           name_arabic,
           city_id,
           source,
-          osm_id::text,
           (coordinates IS NOT NULL) AS has_coordinates
         FROM vet_clinics
       `);
 
-      expect(clinicsRes.rows.length).toBe(16);
+      expect(clinicsRes.rows.length).toBe(expectedClinicCount);
       for (const clinic of clinicsRes.rows) {
         expect(clinic.city_id).toBeTruthy();
-        expect(clinic.source).toBe('OSM');
-        expect(clinic.osm_id).toBeTruthy();
+        expect(['OSM', 'WEB_RESEARCH']).toContain(clinic.source);
         expect(clinic.has_coordinates).toBe(true);
       }
 
@@ -616,7 +616,7 @@ describe('Canonical Baseline Database Reset Integration', () => {
       const revRes = await pool.query<{ id: number; revision: number }>(`
         SELECT id, revision FROM city_catalog_revisions
       `);
-      expect(revRes.rows).toEqual([{ id: 1, revision: 2 }]);
+      expect(revRes.rows).toEqual([{ id: 1, revision: 3 }]);
     });
   });
 });

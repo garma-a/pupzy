@@ -21,6 +21,12 @@ describe('VetClinicsRepository', () => {
     addressEnglish: '123 Main St',
     addressArabic: '١٢٣ شارع رئيسي',
     website: 'https://happypaws.eg',
+    facebookUrl: null,
+    is24Hours: false,
+    isApproximateLocation: false,
+    locationPrecision: 'street',
+    governorate: 'Cairo',
+    governorateArabic: 'القاهرة',
     latitude: 30.0444,
     longitude: 31.2357,
     distanceKm: 1.2,
@@ -108,7 +114,13 @@ describe('VetClinicsRepository', () => {
       mockDb.select.mockReturnValue(mockQueryBuilder);
 
       const result = await repository.findNearest(30.0444, 31.2357, 3);
-      expect(mockDb.select).toHaveBeenCalled();
+      expect(mockDb.select).toHaveBeenCalledWith(
+        expect.objectContaining({
+          is24Hours: vetClinics.is24Hours,
+          facebookUrl: vetClinics.facebookUrl,
+          locationPrecision: vetClinics.locationPrecision,
+        }),
+      );
       expect(mockQueryBuilder.from).toHaveBeenCalledWith(vetClinics);
       expect(mockQueryBuilder.where).toHaveBeenCalledWith(eq(vetClinics.isActive, true));
       expect(mockQueryBuilder.limit).toHaveBeenCalledWith(3);
@@ -126,7 +138,13 @@ describe('VetClinicsRepository', () => {
       mockDb.select.mockReturnValue(mockQueryBuilder);
 
       const result = await repository.findNearestForCity('city-cairo', 15);
-      expect(mockDb.select).toHaveBeenCalled();
+      expect(mockDb.select).toHaveBeenCalledWith(
+        expect.objectContaining({
+          is24Hours: vetClinics.is24Hours,
+          facebookUrl: vetClinics.facebookUrl,
+          locationPrecision: vetClinics.locationPrecision,
+        }),
+      );
       expect(mockQueryBuilder.from).toHaveBeenCalledWith(vetClinics);
       expect(mockQueryBuilder.innerJoin).toHaveBeenCalledWith(cities, eq(cities.id, 'city-cairo'));
       expect(mockQueryBuilder.where).toHaveBeenCalledWith(eq(vetClinics.isActive, true));

@@ -1410,3 +1410,17 @@ describe('AdminJS Vet Clinics Resource', () => {
     });
   });
 });
+
+it('exposes hours/Facebook editing and an active/missing-phone work queue', async () => {
+  const { options } = buildVetClinicsResource({ table: () => ({}) });
+  assert.equal(options.properties.is_24_hours.type, 'boolean');
+  assert.ok(options.showProperties.includes('facebook_url'));
+  assert.ok(options.showProperties.includes('is_24_hours'));
+  assert.ok(options.filterProperties.includes('is_active'));
+  assert.ok(options.filterProperties.includes('phone_state'));
+  const result = await options.actions.needsPhone.handler({}, null, {
+    resource: { id: () => 'vet_clinics' },
+    h: { resourceUrl: () => '/admin/resources/vet_clinics' },
+  });
+  assert.equal(result.redirectUrl, '/admin/resources/vet_clinics?filters.is_active=false&filters.phone_state=missing');
+});
