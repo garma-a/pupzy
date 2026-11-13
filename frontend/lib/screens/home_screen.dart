@@ -17,6 +17,7 @@ import '../services/safety_events.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/distance_label.dart';
+import '../widgets/nearby_vets_section.dart';
 import '../utils/upvote_wording.dart';
 import '../widgets/adaptive_search_bar.dart';
 import '../widgets/adopt_card_button.dart';
@@ -1113,10 +1114,7 @@ class _VetsNearYouSheetState extends State<_VetsNearYouSheet> {
                   else
                     ..._clinics.take(3).map((clinic) {
                       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                      final name = (isArabic ? clinic.nameArabic : clinic.nameEnglish) ??
-                          clinic.nameEnglish ??
-                          clinic.nameArabic ??
-                          t(context, 'Vet clinic', 'عيادة بيطرية');
+                      final address = clinic.addressFor(isArabic);
                       return Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                         child: Container(
@@ -1139,10 +1137,12 @@ class _VetsNearYouSheetState extends State<_VetsNearYouSheet> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                    VetClinicName(clinic: clinic),
                                     Text(
-                                      '${formatDistanceKm(clinic.distanceKm)} ${t(context, 'km away', 'كم')}',
-                                      style: Theme.of(context).textTheme.bodySmall,
+                                      '${vetClinicDistanceLabel(context, clinic)}${address != null ? ' · $address' : ''}',
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontFeatures: distanceFontFeatures),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),

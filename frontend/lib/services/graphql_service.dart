@@ -127,9 +127,8 @@ class GraphQLService {
     }
   ''';
 
-  static const String nearbyVetClinicsQuery = r'''
-    query NearbyVetClinics($cityId: ID!) {
-      nearbyVetClinics(cityId: $cityId) {
+  /// The clinic fields every server has.
+  static const String _vetClinicFields = '''
         id
         nameEnglish
         nameArabic
@@ -140,10 +139,30 @@ class GraphQLService {
         longitude
         distanceKm
         googleMapsUrl
-        whatsappPhoneUrl
+        whatsappPhoneUrl''';
+
+  /// Fields added by the vet clinic release (backend #36). Servers before it
+  /// reject a query that names them, so each clinic query has a version
+  /// without them (see [_queryWithVetFallback]).
+  static const String _vetClinicReleaseFields = '''
+        addressEnglish
+        addressArabic
+        is24Hours
+        facebookUrl
+        isApproximateLocation''';
+
+  static String _withVetClinicFields(String template, {required bool release}) =>
+      template.replaceFirst('__VET_CLINIC_FIELDS__', release ? '$_vetClinicFields\n$_vetClinicReleaseFields' : _vetClinicFields);
+
+  static const String _nearbyVetClinicsTemplate = r'''
+    query NearbyVetClinics($cityId: ID!) {
+      nearbyVetClinics(cityId: $cityId) {
+__VET_CLINIC_FIELDS__
       }
     }
   ''';
+  static final String nearbyVetClinicsQuery = _withVetClinicFields(_nearbyVetClinicsTemplate, release: true);
+  static final String legacyNearbyVetClinicsQuery = _withVetClinicFields(_nearbyVetClinicsTemplate, release: false);
 
   static const String completeProfileMutation = r'''
     mutation CompleteProfile($input: CompleteProfileInput!) {
@@ -403,7 +422,7 @@ class GraphQLService {
     }
   ''';
 
-  static const String postDetailQuery = r'''
+  static const String _postDetailTemplate = r'''
     query PostDetail($id: ID!) {
       post(id: $id) {
         id
@@ -445,21 +464,13 @@ class GraphQLService {
           productPostCount
         }
         nearestVetClinics {
-          id
-          nameEnglish
-          nameArabic
-          phoneNumber
-          address
-          website
-          latitude
-          longitude
-          distanceKm
-          googleMapsUrl
-          whatsappPhoneUrl
+__VET_CLINIC_FIELDS__
         }
       }
     }
   ''';
+  static final String postDetailQuery = _withVetClinicFields(_postDetailTemplate, release: true);
+  static final String legacyPostDetailQuery = _withVetClinicFields(_postDetailTemplate, release: false);
 
   static const String rescuePostDetailQuery = r'''
     query RescuePostDetail($postId: ID!) {
@@ -819,17 +830,30 @@ class GraphQLService {
     return list;
   }
 
+  bool _serverLacksVetClinicFields = false;
+
+  /// Runs [query]; if the server rejects the clinic release fields (it
+  /// predates them), runs [legacyQuery] instead and keeps doing so for the
+  /// rest of the session. Lets the app ship before or after the backend: a
+  /// rejected field would otherwise fail the whole query, including the
+  /// post detail page that carries the nearest clinics.
+  Future<QueryResult> _queryWithVetFallback(String query, String legacyQuery, Map<String, dynamic> variables) async {
+    QueryOptions options(String document) =>
+        QueryOptions(document: gql(document), variables: variables, fetchPolicy: FetchPolicy.networkOnly);
+    if (!_serverLacksVetClinicFields) {
+      final result = await client.value.query(options(query));
+      final rejected = result.exception?.graphqlErrors.any((e) => e.message.contains('on type "VetClinic"')) ?? false;
+      if (!rejected) return result;
+      _serverLacksVetClinicFields = true;
+    }
+    return client.value.query(options(legacyQuery));
+  }
+
   /// Fetches up to 15 vet clinics nearest to a city's center, sorted by
   /// distance — used by the Home "Vets near you" sheet and its "View all
   /// vets" screen.
   Future<(List<VetClinic> clinics, String? errorMessage)> fetchNearbyVetClinics({required String cityId}) async {
-    final result = await client.value.query(
-      QueryOptions(
-        document: gql(nearbyVetClinicsQuery),
-        variables: {'cityId': cityId},
-        fetchPolicy: FetchPolicy.networkOnly,
-      ),
-    );
+    final result = await _queryWithVetFallback(nearbyVetClinicsQuery, legacyNearbyVetClinicsQuery, {'cityId': cityId});
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (<VetClinic>[], _serverErrorMessage(result.exception));
@@ -1493,9 +1517,7 @@ class GraphQLService {
   /// for a detail screen. Callers should follow up with the matching
   /// extension-type fetch based on [PostDetail.postType].
   Future<(PostDetail? post, String? errorMessage)> fetchPostDetail(String id) async {
-    final result = await client.value.query(
-      QueryOptions(document: gql(postDetailQuery), variables: {'id': id}, fetchPolicy: FetchPolicy.networkOnly),
-    );
+    final result = await _queryWithVetFallback(postDetailQuery, legacyPostDetailQuery, {'id': id});
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
