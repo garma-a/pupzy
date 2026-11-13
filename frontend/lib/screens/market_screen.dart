@@ -15,7 +15,7 @@ import '../services/graphql_service.dart';
 import '../services/safety_events.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
-import '../utils/price_label.dart';
+import '../widgets/price_tag.dart';
 import '../widgets/adaptive_search_bar.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/distance_filter.dart';
@@ -540,19 +540,21 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(p.title,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
+                                          // Price first: it's what shoppers scan the grid for.
                                           if (p.isFree != null) ...[
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              priceLabel(context, isFree: p.isFree!, amount: p.priceAmount, currency: p.priceCurrency),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 14),
-                                            ),
+                                            PriceTag(isFree: p.isFree!, amount: p.priceAmount, currency: p.priceCurrency),
+                                            const SizedBox(height: 3),
                                           ],
+                                          Text(
+                                            p.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                              color: AppColors.textSecondary,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 13,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
