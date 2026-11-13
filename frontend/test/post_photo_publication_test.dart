@@ -110,6 +110,19 @@ void main() {
     tester.view.physicalSize = const Size(2000, 3600);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
+    // Windows can't delete a file that is still open. The photo preview reads
+    // the file, and in a widget test that read only finishes when the test
+    // lets real time pass and pumps. Close the form and let pending reads
+    // finish before tearDown deletes the temp folder.
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox());
+      imageCache.clear();
+      imageCache.clearLiveImages();
+      for (var i = 0; i < 10; i++) {
+        await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
+        await tester.pump();
+      }
+    });
     await tester.pumpWidget(
       safetyTestApp(
         graphql: graphql,
