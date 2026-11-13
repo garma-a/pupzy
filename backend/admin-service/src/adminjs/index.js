@@ -8,6 +8,7 @@ import { buildDashboardHandler } from './dashboard/dashboard-handler.js';
 import { pupzyTheme } from './theme.js';
 import { PROPERTY_LABELS } from './property-labels.js';
 import { buildAdminUsersResource } from './resources/admin-users.resource.js';
+import { buildAnnouncementsResource } from './resources/announcements.resource.js';
 import { buildAdoptionApplicationsResource } from './resources/adoption-applications.resource.js';
 import { buildAdoptionPostsResource } from './resources/adoption-posts.resource.js';
 import { buildCitiesResource } from './resources/cities.resource.js';
@@ -58,6 +59,7 @@ export const ADMIN_RESOURCE_TABLES = Object.freeze([
   'admin_users',
   'moderation_actions',
   'vet_clinic_location_audits',
+  'announcements',
 ]);
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -127,6 +129,26 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'RecordStatus',
       path.join(currentDirectory, 'components', 'record-status-component.jsx'),
     ),
+    AnnouncementCompose: componentLoader.add(
+      'AnnouncementCompose',
+      path.join(currentDirectory, 'components', 'announcement-compose-component.jsx'),
+    ),
+    AnnouncementShow: componentLoader.add(
+      'AnnouncementShow',
+      path.join(currentDirectory, 'components', 'announcement-show-component.jsx'),
+    ),
+    AnnouncementText: componentLoader.add(
+      'AnnouncementText',
+      path.join(currentDirectory, 'components', 'announcement-text-component.jsx'),
+    ),
+    AnnouncementAudience: componentLoader.add(
+      'AnnouncementAudience',
+      path.join(currentDirectory, 'components', 'announcement-audience-component.jsx'),
+    ),
+    AnnouncementPush: componentLoader.add(
+      'AnnouncementPush',
+      path.join(currentDirectory, 'components', 'announcement-push-component.jsx'),
+    ),
   };
 
   const { db, sqlAdapterPool } = await buildAdminSqlDatabase(
@@ -164,6 +186,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     buildAdminUsersResource(db, components),
     buildModerationActionsResource(db, components, pool),
     buildVetClinicLocationAuditsResource(db, components),
+    buildAnnouncementsResource(db, pool, components),
   ];
 
   const resources = rawResources.map((resource) => {
@@ -202,6 +225,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
           properties: PROPERTY_LABELS,
           resources: {
             posts: { actions: { show: 'Review Post', list: 'Posts' } },
+            announcements: { actions: { new: 'New announcement', list: 'Announcements', show: 'Announcement' } },
             post_reports: { actions: { removePost: 'Remove Post', banAuthor: 'Ban Author' } },
             comment_reports: {
               actions: { hideComment: 'Hide Comment', removeComment: 'Remove Comment', banAuthor: 'Ban Author' },

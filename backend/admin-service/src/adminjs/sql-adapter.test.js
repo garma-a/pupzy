@@ -94,7 +94,7 @@ describe('AdminJS SQL adapter compatibility', () => {
     }
   });
 
-  it('exports ADMIN_RESOURCE_TABLES with exactly the 22 domain tables', () => {
+  it('exports ADMIN_RESOURCE_TABLES with exactly the 23 domain tables', () => {
     const expectedTables = [
       'users',
       'posts',
@@ -118,6 +118,7 @@ describe('AdminJS SQL adapter compatibility', () => {
       'admin_users',
       'moderation_actions',
       'vet_clinic_location_audits',
+      'announcements',
     ];
     assert.deepEqual([...ADMIN_RESOURCE_TABLES], expectedTables);
     assert.equal(ADMIN_RESOURCE_TABLES.includes('saved_searches'), false);

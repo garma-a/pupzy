@@ -15,6 +15,10 @@ export const POLYMORPHIC_TARGETS = Object.freeze({
     resourceId: 'users',
     sql: `SELECT id, full_name, full_name_arabic, email, profile_picture_url FROM users WHERE id = ANY($1::uuid[])`,
   }),
+  ANNOUNCEMENT: Object.freeze({
+    resourceId: 'announcements',
+    sql: 'SELECT id, title_en FROM announcements WHERE id = ANY($1::uuid[])',
+  }),
   CONTACT_REQUEST: Object.freeze({
     resourceId: 'contact_requests',
     sql: 'SELECT id FROM contact_requests WHERE id = ANY($1::uuid[])',

@@ -34,6 +34,7 @@ const DELETED_LABELS = {
   posts: 'Post not found',
   comments: 'Deleted comment',
   admin_users: 'Deleted admin',
+  announcements: 'Deleted announcement',
   contact_requests: 'Deleted contact request',
   adoption_applications: 'Deleted application',
 };
@@ -54,6 +55,8 @@ export function referenceTitle(resourceId, params, id, fallbackTitle) {
       return userDisplayName(params, id);
     case 'admin_users':
       return text(params?.full_name) ?? text(params?.email) ?? formatShortUuid(id, true);
+    case 'announcements':
+      return text(params?.title_en) ?? formatShortUuid(id, true);
     case 'posts':
       return text(params?.title) ?? formatShortUuid(id, true);
     case 'comments':

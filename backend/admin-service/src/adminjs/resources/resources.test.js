@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import { ENUMS } from '../enums.js';
 import { ADMIN_RESOURCE_TABLES } from '../index.js';
 import { buildAdminUsersResource } from './admin-users.resource.js';
+import { buildAnnouncementsResource } from './announcements.resource.js';
 import { buildAdoptionApplicationsResource } from './adoption-applications.resource.js';
 import { buildAdoptionPostsResource } from './adoption-posts.resource.js';
 import { buildCitiesResource } from './cities.resource.js';
@@ -58,13 +59,14 @@ function resources() {
     buildAdminUsersResource(db, components),
     buildModerationActionsResource(db, components),
     buildVetClinicLocationAuditsResource(db, components),
+    buildAnnouncementsResource(db, pool, components),
   ];
 }
 
 describe('AdminJS resource configuration', () => {
-  it('includes all 22 registered domain tables', () => {
+  it('includes all 23 registered domain tables', () => {
     const list = resources();
-    assert.equal(list.length, 22);
+    assert.equal(list.length, 23);
     const names = list.map((r) => r.resource.name);
     assert.deepEqual(names, [...ADMIN_RESOURCE_TABLES]);
   });
@@ -117,6 +119,8 @@ describe('AdminJS resource configuration', () => {
       ['admin_users', 'role', ENUMS.adminRole],
       ['moderation_actions', 'action_type', ENUMS.moderationActionType],
       ['moderation_actions', 'target_type', ENUMS.moderationTargetType],
+      ['announcements', 'status', ENUMS.announcementStatus],
+      ['announcements', 'audience', ENUMS.announcementAudience],
       ['comments', 'status', ENUMS.commentStatus],
     ];
     for (const [table, property, expected] of expectations) {
