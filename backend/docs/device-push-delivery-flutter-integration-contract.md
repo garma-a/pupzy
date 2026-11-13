@@ -212,6 +212,7 @@ Every notification type below has durable push coverage. `data` always contains 
 | `NEW_REPLY` | A user replies to a Comment | Parent Comment author | `relatedPostId`, `relatedCommentId` | `New reply` | `${actorName} replied to your comment` |
 | `COMMENT_BOOSTED` | A user boosts a Comment or Reply | Comment/Reply author | `relatedPostId`, `relatedCommentId` | `Comment boosted` | `${actorName} boosted your comment` / `...your reply` |
 | `COMMENT_PINNED` | The Post owner pins a Comment | Comment author | `relatedPostId`, `relatedCommentId` | `Comment pinned` | `Your comment was pinned on "${postTitle}"` |
+| `ADMIN_ANNOUNCEMENT` | A super admin sends an Announcement | Every eligible account (or one City's) with notifications on and a registered device | none (no Post to open) | The title the admin wrote, in the recipient's language | The message the admin wrote, in the recipient's language. See `06-flutter-admin-announcements-handoff.md`. |
 
 Not pushed:
 
