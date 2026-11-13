@@ -5,6 +5,7 @@ import { Database } from '@adminjs/sql';
 
 import { DashboardStatsCache } from './dashboard/dashboard-cache.js';
 import { buildDashboardHandler } from './dashboard/dashboard-handler.js';
+import { navigationFor, withResourceLabels } from './navigation.js';
 import { pupzyTheme } from './theme.js';
 import { PROPERTY_LABELS } from './property-labels.js';
 import { buildAdminUsersResource } from './resources/admin-users.resource.js';
@@ -81,6 +82,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
   componentLoader.override(
     'DefaultDatetimeShowProperty',
     path.join(currentDirectory, 'components', 'default-datetime-show-component.jsx'),
+  );
+  componentLoader.override(
+    'SidebarResourceSection',
+    path.join(currentDirectory, 'components', 'sidebar-resource-section-component.jsx'),
   );
   componentLoader.override(
     'RecordsTable',
@@ -190,6 +195,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
   ];
 
   const resources = rawResources.map((resource) => {
+    const navigation = navigationFor(resource.resource.tableName);
     const properties = { ...resource.options.properties };
     for (const name of ['status', 'moderation_status', 'urgency', 'review_outcome']) {
       if (!properties[name]?.availableValues) continue;
@@ -199,7 +205,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       };
     }
     return attachPopulatedSanitizer(
-      attachCacheInvalidation({ ...resource, options: { ...resource.options, properties } }, cache),
+      attachCacheInvalidation(
+        { ...resource, options: { ...resource.options, properties, ...(navigation ? { navigation } : {}) } },
+        cache,
+      ),
     );
   });
 
@@ -223,7 +232,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
         en: {
           actions: { show: 'Details', list: 'Records' },
           properties: PROPERTY_LABELS,
-          resources: {
+          resources: withResourceLabels({
             posts: { actions: { show: 'Review Post', list: 'Posts' } },
             announcements: {
               actions: { new: 'New announcement', list: 'Announcements', show: 'Announcement' },
@@ -234,7 +243,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
               actions: { hideComment: 'Hide Comment', removeComment: 'Remove Comment', banAuthor: 'Ban Author' },
             },
             account_reports: { actions: { banUser: 'Ban User' } },
-          },
+          }),
           components: {
             Login: {
               welcomeHeader: 'Welcome to Pupzy',
