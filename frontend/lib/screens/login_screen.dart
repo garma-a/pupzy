@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
@@ -9,8 +10,10 @@ import '../localization/lang_provider.dart';
 import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/language_toggle.dart';
 import 'app_shell.dart';
 import 'complete_profile_screen.dart';
+import 'legal_document_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   /// When set, the screen opens straight into the "verify your email" state
@@ -41,10 +44,18 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _pendingVerificationEmail = widget.pendingVerificationEmail;
+    _termsTap = TapGestureRecognizer()..onTap = () => openLegalDocument(context, LegalDocumentKind.terms);
+    _privacyTap = TapGestureRecognizer()..onTap = () => openLegalDocument(context, LegalDocumentKind.privacy);
   }
+
+  /// Taps on the Terms of Service and Privacy Policy links under the form.
+  late final TapGestureRecognizer _termsTap;
+  late final TapGestureRecognizer _privacyTap;
 
   @override
   void dispose() {
+    _termsTap.dispose();
+    _privacyTap.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -342,11 +353,33 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.xl),
-            child: _pendingVerificationEmail != null ? _buildVerificationPending(context) : _buildForm(context),
-          ),
+        child: Column(
+          children: [
+            // Language can be chosen before signing in; the choice is kept on
+            // the device and sent to the account once signed in (AppShell).
+            Padding(
+              padding: const EdgeInsetsDirectional.only(top: AppSpacing.sm, end: AppSpacing.lg),
+              child: Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: SizedBox(
+                  width: 168,
+                  child: LanguageToggle(
+                    compact: true,
+                    lang: context.read<LangProvider>().lang,
+                    onChanged: (lang) => context.read<LangProvider>().setLang(lang),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.xl),
+                  child: _pendingVerificationEmail != null ? _buildVerificationPending(context) : _buildForm(context),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -385,6 +418,30 @@ class _LoginScreenState extends State<LoginScreen> {
         TextButton(onPressed: _resendVerification, child: Text(t(context, 'Resend email', 'إعادة إرسال البريد'))),
         TextButton(onPressed: _useDifferentAccount, child: Text(t(context, 'Use a different account', 'استخدام حساب آخر'))),
       ],
+    );
+  }
+
+  /// "By continuing, you agree to our Terms of Service and Privacy Policy",
+  /// with both names as links that open the document in the app.
+  Widget _legalNotice(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodySmall;
+    final linkStyle = style?.copyWith(
+      color: AppColors.primary,
+      fontWeight: FontWeight.w600,
+      decoration: TextDecoration.underline,
+      decorationColor: AppColors.primary,
+    );
+    return Text.rich(
+      TextSpan(
+        style: style,
+        children: [
+          TextSpan(text: t(context, 'By continuing, you agree to our\n', 'بالمتابعة، فإنك توافق على ')),
+          TextSpan(text: LegalDocumentKind.terms.title(context), style: linkStyle, recognizer: _termsTap),
+          TextSpan(text: t(context, ' and ', ' و')),
+          TextSpan(text: LegalDocumentKind.privacy.title(context), style: linkStyle, recognizer: _privacyTap),
+        ],
+      ),
+      textAlign: TextAlign.center,
     );
   }
 
@@ -606,15 +663,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
-        Text(
-          t(
-            context,
-            'By continuing, you agree to our\nTerms of Service and Privacy Policy',
-            'بالمتابعة، فإنك توافق على شروط الخدمة وسياسة الخصوصية الخاصة بنا',
-          ),
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        _legalNotice(context),
       ],
     );
   }
