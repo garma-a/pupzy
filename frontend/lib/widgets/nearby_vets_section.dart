@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../localization/lang_provider.dart';
 import '../models/vet_clinic.dart';
 import '../theme/app_theme.dart';
+import '../utils/distance_label.dart';
 
 /// Real "nearby vets" list backed by `Post.nearestVetClinics` — shown on
 /// RESCUE/LOST/ADOPTION detail screens. Renders nothing for PRODUCT posts,
@@ -62,7 +63,7 @@ class NearbyVetsSection extends StatelessWidget {
                     children: [
                       Text(name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
                       Text(
-                        '${clinic.distanceKm.toStringAsFixed(1)} ${t(context, 'km away', 'كم')}${clinic.address != null ? ' · ${clinic.address}' : ''}',
+                        '${formatDistanceKm(clinic.distanceKm)} ${t(context, 'km away', 'كم')}${clinic.address != null ? ' · ${clinic.address}' : ''}',
                         style: Theme.of(context).textTheme.bodySmall,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

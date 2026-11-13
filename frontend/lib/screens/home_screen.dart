@@ -16,6 +16,7 @@ import '../services/graphql_service.dart';
 import '../services/safety_events.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/distance_label.dart';
 import '../utils/upvote_wording.dart';
 import '../widgets/adaptive_search_bar.dart';
 import '../widgets/adopt_card_button.dart';
@@ -900,7 +901,10 @@ class _HomeSearchResultTile extends StatelessWidget {
                       ),
                       if (post.distanceKm != null) ...[
                         const SizedBox(width: 6),
-                        Text('${post.distanceKm!.toStringAsFixed(1)} ${t(context, 'km', 'كم')}', style: Theme.of(context).textTheme.bodySmall),
+                        Text(
+                          '${formatDistanceKm(post.distanceKm!)} ${t(context, 'km', 'كم')}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontFeatures: distanceFontFeatures),
+                        ),
                       ],
                     ],
                   ),
@@ -1137,7 +1141,7 @@ class _VetsNearYouSheetState extends State<_VetsNearYouSheet> {
                                   children: [
                                     Text(name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
                                     Text(
-                                      '${clinic.distanceKm.toStringAsFixed(1)} ${t(context, 'km away', 'كم')}',
+                                      '${formatDistanceKm(clinic.distanceKm)} ${t(context, 'km away', 'كم')}',
                                       style: Theme.of(context).textTheme.bodySmall,
                                     ),
                                   ],
@@ -1241,7 +1245,16 @@ class _HomeUrgentBanner extends StatelessWidget {
           if (post.distanceKm != null)
             Column(
               children: [
-                Text(post.distanceKm!.toStringAsFixed(1), style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 30, color: AppColors.textPrimary)),
+                Text(
+                  formatDistanceKm(post.distanceKm!),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    height: 1.15,
+                    fontFeatures: distanceFontFeatures,
+                  ),
+                ),
                 Text(t(context, 'km away', 'كم'), style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
@@ -1358,8 +1371,14 @@ class _HomeRescueCard extends StatelessWidget {
                 ? Row(
                     children: [
                       Text(
-                        post.distanceKm!.toStringAsFixed(1),
-                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24, fontWeight: FontWeight.w800),
+                        formatDistanceKm(post.distanceKm!),
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                          height: 1.15,
+                          fontFeatures: distanceFontFeatures,
+                        ),
                       ),
                       const SizedBox(width: 3),
                       Text(t(context, 'km', 'كم'), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted)),
