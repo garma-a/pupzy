@@ -1,4 +1,5 @@
 import { isAnyAdmin } from '../rbac.js';
+import { resolveCommentMediaUrl } from '../comment-media-url.js';
 import { reportReviewStatus } from '../report-status.js';
 
 /**
@@ -6,7 +7,7 @@ import { reportReviewStatus } from '../report-status.js';
  * else email, else a short id. NULL only when the user row is missing, which is
  * the only case the workspace may call "Deleted account".
  */
-const USER_NAME_SQL = `CASE WHEN u.id IS NULL THEN NULL ELSE COALESCE(
+export const USER_NAME_SQL = `CASE WHEN u.id IS NULL THEN NULL ELSE COALESCE(
   NULLIF(btrim(u.full_name), ''), NULLIF(btrim(u.full_name_arabic), ''), u.email, 'User ' || left(u.id::text, 8)
 ) END`;
 
@@ -137,17 +138,7 @@ export function normalizeDiscussionPage(value) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 }
 
-/**
- * Derives the read-only public URL of Comment media from its immutable storage
- * key, matching the backend's delivery policy.
- */
-export function resolveCommentMediaUrl(storageKey, env = process.env) {
-  if (typeof storageKey !== 'string') return null;
-  const cleanKey = storageKey.replace(/^\/+/, '');
-  if (!cleanKey) return null;
-  const base = (env?.COMMENT_MEDIA_CDN_BASE || env?.R2_PUBLIC_URL || 'https://cdn.pupzy.net').replace(/\/+$/, '');
-  return `${base}/${cleanKey}`;
-}
+export { resolveCommentMediaUrl };
 
 export function formatPostAge(createdAt, now = Date.now()) {
   const created = new Date(createdAt).getTime();

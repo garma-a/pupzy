@@ -5,6 +5,7 @@ import {
   readModerationReason,
   runModerationAction,
 } from './helpers.js';
+import { commentMediaPurgeUrls } from '../comment-media-url.js';
 import { isAnyAdmin } from '../rbac.js';
 
 function getRecordProperty(record, property) {
@@ -16,36 +17,8 @@ function getRecordProperty(record, property) {
   return record.params?.[property];
 }
 
-/**
- * Resolves CDN purge URLs according to configured delivery policy.
- * - Primary default: https://cdn.pupzy.net
- * - Fallback / override: COMMENT_MEDIA_CDN_BASE (or R2_PUBLIC_URL)
- * - Domain transitions: COMMENT_MEDIA_DOMAIN_TRANSITION=true / COMMENT_MEDIA_PREVIOUS_CDN_BASE
- */
-export function getCommentMediaPurgeUrls(storageKey) {
-  const primaryBase = 'https://cdn.pupzy.net';
-  const configuredBase = process.env.COMMENT_MEDIA_CDN_BASE || process.env.R2_PUBLIC_URL || primaryBase;
-  const cleanKey = storageKey.replace(/^\/+/, '');
-  const cleanConfigured = configuredBase.replace(/\/+$/, '');
-  const cleanPrimary = primaryBase.replace(/\/+$/, '');
-
-  const urls = new Set();
-  urls.add(`${cleanConfigured}/${cleanKey}`);
-
-  const transitionEnv = process.env.COMMENT_MEDIA_DOMAIN_TRANSITION;
-  const isTransition =
-    transitionEnv === 'true' || transitionEnv === '1' || Boolean(process.env.COMMENT_MEDIA_PREVIOUS_CDN_BASE);
-
-  if (isTransition) {
-    urls.add(`${cleanPrimary}/${cleanKey}`);
-    const prev = process.env.COMMENT_MEDIA_PREVIOUS_CDN_BASE;
-    if (prev) {
-      urls.add(`${prev.replace(/\/+$/, '')}/${cleanKey}`);
-    }
-  }
-
-  return Array.from(urls);
-}
+/** Resolves CDN purge URLs according to configured delivery policy (see `comment-media-url.js`). */
+export const getCommentMediaPurgeUrls = commentMediaPurgeUrls;
 
 function buildCommentAction(pool, component, definition, cache) {
   return {
@@ -138,46 +111,6 @@ export function buildCommentActions(pool, component, cache) {
       },
       cache,
     ),
-    inspectMedia: {
-      actionType: 'record',
-      icon: 'Image',
-      isAccessible: isAnyAdmin,
-      isVisible: (context) => {
-        const record = context?.record;
-        if (!record) return false;
-        const status = getRecordProperty(record, 'status');
-        return status === 'IMAGE_HIDDEN' || status === 'HIDDEN' || status === 'ACTIVE';
-      },
-      handler: async (request, _response, context) => {
-        const { record, currentAdmin } = context;
-        const commentId = record.id();
-        const { rows: media } = await pool.query(
-          `SELECT id, storage_key, width, height, file_size_bytes, display_order, file_content_type, created_at
-           FROM comment_media
-           WHERE comment_id = $1
-           ORDER BY display_order ASC`,
-          [commentId],
-        );
-        const { rows: reports } = await pool.query(
-          `SELECT id, reporter_id, reason, details, reviewed_at, created_at
-           FROM comment_reports
-           WHERE comment_id = $1
-           ORDER BY created_at DESC`,
-          [commentId],
-        );
-
-        if (record.params) {
-          record.params.comment_media = JSON.stringify(media);
-          record.params.comment_reports = JSON.stringify(reports);
-        }
-
-        return {
-          record: record.toJSON(currentAdmin),
-          media,
-          reports,
-        };
-      },
-    },
     removeComment: buildCommentAction(
       pool,
       component,

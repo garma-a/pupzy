@@ -3988,4 +3988,98 @@ describe('AdminJS HTTP security and resource behavior', () => {
       assert.equal(shown.record.populated.reported_user_id.params.email, 'user@example.com');
     });
   });
+  describe('comment evidence on the Comment and Comment Report pages', () => {
+    const apiGet = async (path) =>
+      (await fetch(`${baseUrl}/admin/api/resources/${path}`, { headers: { cookie: superCookie } })).json();
+
+    it('returns the full text, image URLs, author, Post and every report for a Comment and for its Comment Report', async () => {
+      const previousBase = process.env.COMMENT_MEDIA_CDN_BASE;
+      process.env.COMMENT_MEDIA_CDN_BASE = 'https://media.example.test/';
+      try {
+        const { rows: arabic } = await database.pool.query(
+          `INSERT INTO users (firebase_user_id, email, full_name_arabic) VALUES ('evidence-arabic', 'evidence-arabic@example.com', 'هنا إبراهيم') RETURNING id`,
+        );
+        const postId = await insertPost(database.pool, {
+          userId: principals.userId,
+          cityId: principals.cityId,
+          title: 'Evidence post',
+          postType: 'RESCUE',
+        });
+        const { rows: parent } = await database.pool.query(
+          `INSERT INTO comments (post_id, author_id, text, status) VALUES ($1, $2, 'Parent comment text', 'ACTIVE') RETURNING id`,
+          [postId, principals.userId],
+        );
+        const { rows: reply } = await database.pool.query(
+          `INSERT INTO comments (post_id, author_id, parent_id, text, status)
+           VALUES ($1, $2, $3, 'رد على التعليق مع صورتين', 'IMAGE_HIDDEN') RETURNING id`,
+          [postId, arabic[0].id, parent[0].id],
+        );
+        for (const [order, key] of [
+          [0, 'comments/evidence/one.webp'],
+          [1, '/comments/evidence/two.webp'],
+        ]) {
+          await database.pool.query(
+            `INSERT INTO comment_media (comment_id, storage_key, sha256, width, height, file_size_bytes, file_content_type, display_order)
+             VALUES ($1, $2, repeat('c', 64), 300, 100, 1000, 'image/webp', $3)`,
+            [reply[0].id, key, order],
+          );
+        }
+        const { rows: reports } = await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason, details)
+           VALUES ($1, $2, 'SPAM', 'first report') RETURNING id`,
+          [reply[0].id, principals.userId],
+        );
+        await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason, reviewed_at) VALUES ($1, $2, 'OTHER', now())`,
+          [reply[0].id, arabic[0].id],
+        );
+
+        const queries = [];
+        const originalQuery = database.pool.query;
+        database.pool.query = function (...args) {
+          queries.push(String(args[0]?.text ?? args[0]));
+          return originalQuery.apply(this, args);
+        };
+        let shown;
+        let reportShown;
+        try {
+          shown = await apiGet(`comments/records/${reply[0].id}/show`);
+          reportShown = await apiGet(`comment_reports/records/${reports[0].id}/show`);
+        } finally {
+          database.pool.query = originalQuery;
+        }
+        assert.equal(queries.filter((sql) => sql.includes('FROM comment_media')).length, 2, 'one media query per page');
+
+        for (const response of [shown, reportShown]) {
+          const evidence = JSON.parse(response.record.params.comment_evidence);
+          assert.equal(evidence.text, 'رد على التعليق مع صورتين');
+          assert.deepEqual(
+            evidence.media.map((item) => item.url),
+            [
+              'https://media.example.test/comments/evidence/one.webp',
+              'https://media.example.test/comments/evidence/two.webp',
+            ],
+          );
+          assert.equal(evidence.media[0].hiddenFromUsers, true);
+          assert.equal(evidence.imagesHidden, true);
+          assert.equal(evidence.author.name, 'هنا إبراهيم');
+          assert.equal(evidence.post.title, 'Evidence post');
+          assert.equal(evidence.parent.excerpt, 'Parent comment text');
+          assert.equal(evidence.reports.length, 2);
+          assert.equal(evidence.reports.filter((report) => report.isOpen).length, 1);
+          assert.ok(!JSON.stringify(evidence).includes('storage_key'));
+        }
+        assert.equal(JSON.parse(shown.record.params.comment_evidence).currentReportId, null);
+        assert.equal(JSON.parse(reportShown.record.params.comment_evidence).currentReportId, reports[0].id);
+        assert.equal(
+          shown.record.recordActions.some((action) => action.name === 'inspectMedia'),
+          false,
+          'the dead Inspect Media action is gone',
+        );
+      } finally {
+        if (previousBase === undefined) delete process.env.COMMENT_MEDIA_CDN_BASE;
+        else process.env.COMMENT_MEDIA_CDN_BASE = previousBase;
+      }
+    });
+  });
 });

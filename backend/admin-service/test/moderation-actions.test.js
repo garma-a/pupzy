@@ -14,6 +14,7 @@ import {
   buildPostReportReviewAction,
 } from '../src/adminjs/actions/review-report.actions.js';
 import { computeStats } from '../src/adminjs/dashboard/dashboard-cache.js';
+import { loadCommentEvidence } from '../src/adminjs/review/comment-evidence.js';
 import { TestDatabaseHelper, insertPost, seedPrincipals } from './test-database.helper.js';
 
 const database = new TestDatabaseHelper();
@@ -1422,7 +1423,7 @@ describe('dashboard queries', () => {
       assert.match(response.notice?.message, /Only hidden comments can be restored/);
     });
 
-    it('inspectMedia returns ordered media and reports for hidden comments', async () => {
+    it('comment evidence returns ordered media and reports for hidden comments', async () => {
       const postId = await insertPost(database.pool, { ...principals, title: 'Inspect media post' });
       const commentRes = await database.pool.query(
         `INSERT INTO comments (post_id, author_id, text, status)
@@ -1445,22 +1446,18 @@ describe('dashboard queries', () => {
         [commentId, principals.userId],
       );
 
-      const actions = buildCommentActions(database.pool, 'ModerationAction');
-      const result = await actions.inspectMedia.handler(
-        { method: 'get' },
-        null,
-        context(commentId, principals.adminId),
+      const evidence = (await loadCommentEvidence(database.pool, [commentId], {})).get(commentId);
+
+      assert.equal(evidence.media.length, 2);
+      assert.deepEqual(
+        evidence.media.map((item) => item.url),
+        ['https://cdn.pupzy.net/comments/c1/img1.webp', 'https://cdn.pupzy.net/comments/c1/img2.webp'],
       );
+      assert.equal(evidence.imagesHidden, true);
 
-      assert.equal(result.media.length, 2);
-      assert.equal(result.media[0].display_order, 0);
-      assert.equal(result.media[0].storage_key, 'comments/c1/img1.webp');
-      assert.equal(result.media[1].display_order, 1);
-      assert.equal(result.media[1].storage_key, 'comments/c1/img2.webp');
-
-      assert.equal(result.reports.length, 1);
-      assert.equal(result.reports[0].reason, 'INAPPROPRIATE_CONTENT');
-      assert.equal(result.reports[0].reviewed_at, null);
+      assert.equal(evidence.reports.length, 1);
+      assert.equal(evidence.reports[0].reason, 'INAPPROPRIATE_CONTENT');
+      assert.equal(evidence.reports[0].isOpen, true);
     });
 
     it('removeComment on parent with visible replies decrements post comment_count by 1 + replies, clears pins, and sets reply_count to 0', async () => {

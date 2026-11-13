@@ -28,7 +28,11 @@ describe('AdminJS Comments Resource & Actions (Ticket 09)', () => {
     assert.deepEqual(resource.options.filterProperties, ['status', 'post_id', 'author_id', 'created_at']);
     assert.ok(resource.options.actions.restoreComment, 'Must define restoreComment action');
     assert.ok(resource.options.actions.removeComment, 'Must define removeComment action');
-    assert.ok(resource.options.actions.inspectMedia, 'Must define inspectMedia action');
+    assert.equal(
+      resource.options.actions.inspectMedia,
+      undefined,
+      'the Comment page shows images and reports itself, so there is no separate Inspect Media action',
+    );
     assert.equal(resource.options.actions.new.isAccessible, false);
     assert.equal(resource.options.actions.delete.isAccessible, false);
   });
@@ -45,45 +49,6 @@ describe('AdminJS Comments Resource & Actions (Ticket 09)', () => {
       assert.equal(restoreComment.isVisible({ record: { params: { status: 'HIDDEN' } } }), true);
     });
 
-    it('inspectMedia is visible for ACTIVE, IMAGE_HIDDEN, and HIDDEN comments', () => {
-      const { inspectMedia } = actions;
-      assert.equal(inspectMedia.isVisible({ record: { params: { status: 'ACTIVE' } } }), true);
-      assert.equal(inspectMedia.isVisible({ record: { params: { status: 'IMAGE_HIDDEN' } } }), true);
-      assert.equal(inspectMedia.isVisible({ record: { params: { status: 'HIDDEN' } } }), true);
-      assert.equal(inspectMedia.isVisible({ record: { params: { status: 'DELETED' } } }), false);
-      assert.equal(inspectMedia.isVisible({ record: { params: { status: 'REMOVED' } } }), false);
-    });
-
-    it('inspectMedia handler queries media and reports without exposing public URLs', async () => {
-      const mockMedia = [
-        { id: 'm1', storage_key: 'comments/c1/1.webp', display_order: 0 },
-        { id: 'm2', storage_key: 'comments/c1/2.webp', display_order: 1 },
-      ];
-      const mockReports = [{ id: 'r1', reporter_id: 'u1', reason: 'INAPPROPRIATE_CONTENT', reviewed_at: null }];
-      const testPool = {
-        query: async (sql) => {
-          if (sql.includes('comment_media')) return { rows: mockMedia };
-          if (sql.includes('comment_reports')) return { rows: mockReports };
-          return { rows: [] };
-        },
-      };
-      const testActions = buildCommentActions(testPool, components.ModerationAction);
-      const mockRecord = {
-        id: () => 'comment-1',
-        params: { id: 'comment-1', status: 'IMAGE_HIDDEN' },
-        toJSON: (admin) => ({ id: 'comment-1', status: 'IMAGE_HIDDEN' }),
-      };
-      const result = await testActions.inspectMedia.handler(
-        { method: 'get' },
-        {},
-        { record: mockRecord, currentAdmin: { id: 'admin-1', role: 'SUPERADMIN' } },
-      );
-      assert.deepEqual(result.media, mockMedia);
-      assert.deepEqual(result.reports, mockReports);
-      assert.equal(mockRecord.params.comment_media, JSON.stringify(mockMedia));
-      assert.equal(mockRecord.params.comment_reports, JSON.stringify(mockReports));
-    });
-
     it('removeComment is visible for all non-REMOVED statuses', () => {
       const { removeComment } = actions;
       assert.equal(removeComment.isVisible({ record: { params: { status: 'ACTIVE' } } }), true);
@@ -92,5 +57,18 @@ describe('AdminJS Comments Resource & Actions (Ticket 09)', () => {
       assert.equal(removeComment.isVisible({ record: { params: { status: 'DELETED' } } }), true);
       assert.equal(removeComment.isVisible({ record: { params: { status: 'REMOVED' } } }), false);
     });
+  });
+
+  it('shows the evidence first on the Comment page and keeps the text in it', () => {
+    const resource = buildCommentsResource(db, pool, { ...components, CommentEvidence: 'EvidenceMock' });
+    assert.equal(resource.options.showProperties[0], 'comment_evidence');
+    assert.equal(resource.options.properties.comment_evidence.components.show, 'EvidenceMock');
+    assert.equal(resource.options.showProperties.includes('text'), false);
+    const plain = buildCommentsResource(db, pool, components);
+    assert.equal(
+      plain.options.showProperties.includes('text'),
+      true,
+      'without the component the plain text field stays',
+    );
   });
 });

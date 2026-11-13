@@ -1,5 +1,6 @@
 import { buildCommentReportReviewAction } from '../actions/review-report.actions.js';
 import { ENUMS } from '../enums.js';
+import { COMMENT_EVIDENCE_PARAM, attachCommentEvidence } from '../review/comment-evidence.js';
 import { virtualFilterOptions } from '../queue-filters.js';
 import {
   attachReferenceLink,
@@ -20,6 +21,15 @@ export function buildCommentReportsResource(db, components = {}, pool, cache) {
     ...virtualFilterOptions('comment_reports'),
   };
 
+  const hasEvidence = Boolean(components?.CommentEvidence);
+  if (hasEvidence) {
+    properties[COMMENT_EVIDENCE_PARAM] = {
+      isVisible: { list: false, show: true, edit: false, filter: false },
+      isDisabled: true,
+      components: { show: components.CommentEvidence },
+    };
+  }
+
   attachShortUuid(properties, ['id'], components, ['list', 'show']);
   attachReferenceLink(properties, ['comment_id', 'reporter_id'], components, ['list', 'show']);
 
@@ -27,6 +37,7 @@ export function buildCommentReportsResource(db, components = {}, pool, cache) {
     sort: { sortBy: 'created_at', direction: 'desc' },
     listProperties: ['id', 'review_status', 'comment_id', 'reporter_id', 'reason', 'reviewed_at', 'created_at'],
     showProperties: [
+      ...(hasEvidence ? [COMMENT_EVIDENCE_PARAM] : []),
       'review_status',
       'id',
       'comment_id',
@@ -39,7 +50,15 @@ export function buildCommentReportsResource(db, components = {}, pool, cache) {
     filterProperties: ['reason', 'comment_id', 'reporter_id', 'reviewed_at', 'created_at', 'review_state'],
     actions: {
       list: { after: stripPopulatedPasswordHashes },
-      show: { after: stripPopulatedPasswordHashes },
+      show: {
+        after: [
+          stripPopulatedPasswordHashes,
+          attachCommentEvidence(pool, {
+            commentIdOf: (params) => params.comment_id,
+            reportIdOf: (params) => params.id,
+          }),
+        ],
+      },
       reviewWithNoAction: buildCommentReportReviewAction(pool, components?.ModerationAction, cache),
     },
   });

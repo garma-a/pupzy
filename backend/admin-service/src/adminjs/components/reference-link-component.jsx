@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
-import { ViewHelpers } from 'adminjs';
-import { useNavigate } from 'react-router';
 
 import { deletedLabel, referenceTitle } from '../reference-title.js';
 import { formatShortUuid } from './short-uuid.js';
-import { Avatar } from './avatar-component.jsx';
+import { RecordLink } from './record-link.jsx';
 import ShowField from './show-field.jsx';
 
-const helpers = new ViewHelpers();
 const MUTED = { color: '#B8A499' };
 
 function CopyId({ value }) {
@@ -55,7 +52,6 @@ export default function ReferenceLink(props) {
 }
 
 function ReferenceValue({ property, record, where }) {
-  const navigate = useNavigate();
   const value = record?.params?.[property?.path];
   if (value === undefined || value === null || value === '') return <span style={MUTED}>—</span>;
 
@@ -85,37 +81,15 @@ function ReferenceValue({ property, record, where }) {
   }
 
   const title = referenceTitle(resourceId, populated.params, id, populated.title);
-  const href = helpers.recordActionUrl({ resourceId, recordId: id, actionName: 'show' });
-  const onClick = (event) => {
-    // Never let the list row navigate; a plain click moves within the admin app.
-    event.stopPropagation();
-    if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
-      event.preventDefault();
-      navigate(href);
-    }
-  };
-
   return (
     <span style={wrap}>
-      <a
-        href={href}
-        onClick={onClick}
-        data-testid="pupzy-reference-link"
-        data-reference-resource={resourceId}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          minWidth: 0,
-          color: '#C4622D',
-          textDecoration: 'none',
-        }}
-      >
-        {resourceId === 'users' ? <Avatar name={title} src={populated.params?.profile_picture_url} size={22} /> : null}
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>
-          {title}
-        </span>
-      </a>
+      <RecordLink
+        resourceId={resourceId}
+        recordId={id}
+        title={title}
+        pictureUrl={populated.params?.profile_picture_url}
+        showAvatar={resourceId === 'users'}
+      />
       {copy}
     </span>
   );

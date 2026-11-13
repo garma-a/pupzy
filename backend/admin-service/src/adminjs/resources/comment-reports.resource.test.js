@@ -60,7 +60,7 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
 
   it('strips populated password hashes from list and show after hooks', () => {
     const resource = buildCommentReportsResource(db);
-    const showAfter = resource.options.actions.show.after;
+    const [showAfter] = [resource.options.actions.show.after].flat();
     const response = {
       record: {
         params: { id: 'report-1' },
@@ -88,5 +88,13 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
     const resource = buildCommentReportsResource(db);
     const available = resource.options.properties.reason.availableValues.map((v) => v.value);
     assert.deepEqual(available, ENUMS.reportReason);
+  });
+});
+
+describe('Comment Report evidence', () => {
+  it('shows the reported Comment above the report fields', () => {
+    const resource = buildCommentReportsResource(db, { CommentEvidence: 'EvidenceMock' });
+    assert.equal(resource.options.showProperties[0], 'comment_evidence');
+    assert.equal(resource.options.properties.comment_evidence.components.show, 'EvidenceMock');
   });
 });

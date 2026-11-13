@@ -1169,11 +1169,14 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
           const container = first.parentElement.parentElement.parentElement;
           return [...container.children].map((row) => ({
             label: row.querySelector('label')?.innerText.trim() ?? null,
+            hasEvidence: Boolean(row.querySelector('[data-testid="pupzy-comment-evidence"]')),
             text: row.innerText.trim(),
           }));
         });
         assert.ok(rows.length > 3, `${resourceId} show page has fields`);
         for (const row of rows) {
+          // The Comment evidence block carries its own "Comment" heading.
+          if (row.hasEvidence) continue;
           assert.ok(row.label, `${resourceId}: a value has no label: ${JSON.stringify(row.text.slice(0, 60))}`);
         }
         if (resourceId !== 'users') {
@@ -1191,6 +1194,168 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
     } finally {
       await page.close();
     }
+  });
+
+  describe('comment evidence', () => {
+    async function seedEvidenceComment({ text, status = 'ACTIVE', images = 2, parentId = null }) {
+      const { rows } = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, parent_id, text, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, now() - interval '2 hours') RETURNING id`,
+        [fixture.flaggedId, fixture.commenterId, parentId, text, status],
+      );
+      for (let index = 0; index < images; index += 1) {
+        await insertCommentMedia(rows[0].id, `comments/evidence/${rows[0].id}-${index}-photo-wide.svg`);
+      }
+      return rows[0].id;
+    }
+
+    const waitForImages = (page, count) =>
+      page.waitForFunction(
+        (expected) =>
+          [...document.querySelectorAll('[data-testid="pupzy-comment-images"] img')].filter(
+            (image) => image.complete && image.naturalWidth > 0,
+          ).length === expected,
+        { timeout: 30000 },
+        count,
+      );
+
+    it('shows a rescue Comment with its images and opens them in a keyboard-driven lightbox', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        const commentId = await seedEvidenceComment({ text: 'Rescue evidence with two photos' });
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(`${baseUrl}/admin/resources/comments/records/${commentId}/show`, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="pupzy-comment-evidence"]', { timeout: 60000 });
+        await waitForImages(page, 2);
+        assert.equal(
+          await page.$$eval('[data-testid="pupzy-comment-images"] [data-testid="pupzy-media-thumb"]', (n) => n.length),
+          2,
+        );
+        assert.match(
+          await page.$eval('[data-testid="pupzy-comment-text"]', (n) => n.innerText),
+          /Rescue evidence with two photos/,
+        );
+        assert.equal(
+          await page.$('[data-testid="pupzy-image-hidden-badge"]'),
+          null,
+          'an active Comment shows no hidden marker',
+        );
+        assert.equal(
+          await page.$('[data-testid="action-inspectMedia"]'),
+          null,
+          'there is no dead Inspect Media button',
+        );
+        console.log(`[fix4 evidence] comment show ${await recordEvidence(page, 'fix4-comment-show')}`);
+
+        await page.click('[data-testid="pupzy-media-thumb"]');
+        await page.waitForSelector('[data-testid="pupzy-image-dialog"]');
+        const dialogText = () => page.$eval('[data-testid="pupzy-image-dialog"]', (n) => n.innerText);
+        assert.match(await dialogText(), /1 of 2/);
+        console.log(`[fix4 evidence] lightbox ${await recordEvidence(page, 'fix4-lightbox')}`);
+        await page.keyboard.press('ArrowRight');
+        await page.waitForFunction(() =>
+          document.querySelector('[data-testid="pupzy-image-dialog"]')?.innerText.includes('2 of 2'),
+        );
+        await page.keyboard.press('ArrowLeft');
+        await page.waitForFunction(() =>
+          document.querySelector('[data-testid="pupzy-image-dialog"]')?.innerText.includes('1 of 2'),
+        );
+        await page.keyboard.press('Escape');
+        await page.waitForFunction(() => !document.querySelector('[data-testid="pupzy-image-dialog"]'));
+        assert.equal(
+          await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+          'pupzy-media-thumb',
+          'closing returns focus to the thumbnail',
+        );
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+
+    it('shows the reported Comment, its images and every report on the Comment Report page', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        const commentId = await seedEvidenceComment({ text: 'Evidence for the report page', status: 'IMAGE_HIDDEN' });
+        const first = await insertUser('evidence-first');
+        const second = await insertUser('evidence-second');
+        const { rows } = await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason, details) VALUES ($1, $2, 'SPAM', 'first details') RETURNING id`,
+          [commentId, first],
+        );
+        await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason, details, reviewed_at) VALUES ($1, $2, 'OTHER', 'second details', now())`,
+          [commentId, second],
+        );
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(`${baseUrl}/admin/resources/comment_reports/records/${rows[0].id}/show`, {
+          waitUntil: 'networkidle0',
+        });
+        await page.waitForSelector('[data-testid="pupzy-comment-evidence"]', { timeout: 60000 });
+        await waitForImages(page, 2);
+        const text = await page.$eval('[data-testid="pupzy-comment-evidence"]', (n) => n.innerText);
+        assert.match(text, /Evidence for the report page/);
+        assert.match(text, /Images hidden from users/);
+        assert.equal(await page.$$eval('[data-testid="pupzy-image-hidden-badge"]', (n) => n.length), 2);
+        assert.match(text, /Reports on this comment \(2\)/);
+        assert.match(text, /first details/);
+        assert.match(text, /second details/);
+        assert.match(text, /This report/);
+        assert.equal(await page.$$eval('[data-testid="pupzy-comment-report"]', (n) => n.length), 2);
+        assert.equal(
+          await page.$$eval('[data-testid="pupzy-comment-report-link"]', (n) => n.length),
+          1,
+          'only the other report links away',
+        );
+        const evidenceTop = await page.$eval(
+          '[data-testid="pupzy-comment-evidence"]',
+          (n) => n.getBoundingClientRect().top,
+        );
+        const statusTop = await page.$eval('[data-testid="pupzy-report-status"]', (n) => n.getBoundingClientRect().top);
+        assert.ok(evidenceTop < statusTop, 'the evidence sits above the report fields');
+        console.log(`[fix4 evidence] comment report show ${await recordEvidence(page, 'fix4-comment-report-show')}`);
+
+        await page.click('[data-testid="pupzy-comment-post"]');
+        await page.waitForFunction(
+          (id) => window.location.pathname.includes(`/resources/posts/records/${id}/show`),
+          {},
+          fixture.flaggedId,
+        );
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+
+    it('renders an Arabic Comment right to left and links a Reply to its parent', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        const parentId = await seedEvidenceComment({ text: 'Parent in English', images: 0 });
+        const replyId = await seedEvidenceComment({ text: 'رأيت هذا الكلب بالقرب من الجسر أمس', images: 1, parentId });
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(`${baseUrl}/admin/resources/comments/records/${replyId}/show`, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="pupzy-comment-text"]', { timeout: 60000 });
+        assert.equal(
+          await page.$eval('[data-testid="pupzy-comment-text"]', (n) => getComputedStyle(n).direction),
+          'rtl',
+        );
+        assert.equal(await page.$eval('[data-testid="pupzy-comment-parent"]', (n) => n.innerText), 'Parent in English');
+        await page.click('[data-testid="pupzy-comment-parent"]');
+        await page.waitForFunction(
+          (id) => window.location.pathname.includes(`/resources/comments/records/${id}/show`),
+          {},
+          parentId,
+        );
+        await page.waitForSelector('[data-testid="pupzy-comment-text"]');
+        assert.equal(
+          await page.$eval('[data-testid="pupzy-comment-text"]', (n) => getComputedStyle(n).direction),
+          'ltr',
+        );
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
   });
 
   it('shows the dashboard empty state when no review work remains', async () => {

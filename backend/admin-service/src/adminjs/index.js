@@ -111,6 +111,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'PostMediaPreview',
       path.join(currentDirectory, 'components', 'post-media-preview-component.jsx'),
     ),
+    CommentEvidence: componentLoader.add(
+      'CommentEvidence',
+      path.join(currentDirectory, 'components', 'comment-evidence-component.jsx'),
+    ),
     ReportStatus: componentLoader.add(
       'ReportStatus',
       path.join(currentDirectory, 'components', 'report-status-component.jsx'),
