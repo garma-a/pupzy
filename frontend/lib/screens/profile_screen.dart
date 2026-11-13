@@ -13,6 +13,7 @@ import '../services/graphql_service.dart';
 import '../services/push_service.dart';
 import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
+import '../utils/full_name.dart';
 import '../utils/webp_compress.dart';
 import '../widgets/language_toggle.dart';
 import '../widgets/pill_toggle.dart';
@@ -843,7 +844,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-    await widget.onSave(widget.nameController.text.trim(), widget.phoneController.text.trim());
+    await widget.onSave(normalizeFullName(widget.nameController.text), widget.phoneController.text.trim());
     if (mounted) setState(() => _saving = false);
   }
 
@@ -997,13 +998,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     textInputAction: TextInputAction.next,
                     maxLength: 120,
                     decoration: _fieldDecoration(hint: t(context, 'Enter your full name', 'أدخل اسمك الكامل'), icon: Icons.person_outline),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return t(context, 'Name is required', 'الاسم مطلوب');
-                      if (v.trim().length < 2) return t(context, 'At least 2 characters', 'حرفان على الأقل');
-                      if (RegExp(r'\d').hasMatch(v)) return t(context, 'Name cannot contain numbers', 'لا يمكن أن يحتوي الاسم على أرقام');
-                      if (!v.trim().contains(' ')) return t(context, 'Enter first and last name', 'أدخل الاسم الأول والأخير');
-                      return null;
-                    },
+                    // A name saved before these rules stays editable: only a
+                    // changed name has to meet them.
+                    validator: (v) => normalizeFullName(v ?? '') == normalizeFullName(_initialName) && _initialName.isNotEmpty
+                        ? null
+                        : validateFullName(context, v),
                   ),
                   const SizedBox(height: 4),
                   Text(

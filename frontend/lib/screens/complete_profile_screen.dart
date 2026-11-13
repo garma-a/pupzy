@@ -8,6 +8,7 @@ import '../localization/lang_provider.dart';
 import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/full_name.dart';
 import '../widgets/city_picker_sheet.dart';
 import 'app_shell.dart';
 import 'login_screen.dart';
@@ -114,7 +115,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         : '+20$rawDigits';
 
     final (result, errorMessage) = await graphql.completeProfile(
-      fullName: _nameController.text.trim(),
+      fullName: normalizeFullName(_nameController.text),
       phoneNumber: phone,
       cityId: _selectedCity!['id'] as String,
       latitude: _position?.latitude,
@@ -126,7 +127,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
 
     if (result != null) {
       try {
-        await context.read<AuthService>().updateDisplayName(_nameController.text.trim());
+        await context.read<AuthService>().updateDisplayName(normalizeFullName(_nameController.text));
       } catch (_) {
         // Non-critical — the backend already has the name; this only
         // affects Firebase-sourced UI (e.g. the top bar avatar initial).
@@ -297,14 +298,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     textInputAction: TextInputAction.next,
                     textCapitalization: TextCapitalization.words,
                     decoration: _inputDecoration(t(context, 'Enter your full name', 'أدخل اسمك الكامل'), Icons.person_outline),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return t(context, 'Name is required', 'الاسم مطلوب');
-                      if (v.trim().length < 2) return t(context, 'At least 2 characters', 'حرفان على الأقل');
-                      if (v.trim().length > 120) return t(context, 'Maximum 120 characters', 'الحد الأقصى 120 حرفًا');
-                      if (RegExp(r'\d').hasMatch(v)) return t(context, 'Name cannot contain numbers', 'لا يمكن أن يحتوي الاسم على أرقام');
-                      if (!v.trim().contains(' ')) return t(context, 'Enter first and last name', 'أدخل الاسم الأول والأخير');
-                      return null;
-                    },
+                    validator: (v) => validateFullName(context, v),
                   ),
                   const SizedBox(height: AppSpacing.xl),
 
