@@ -61,6 +61,22 @@ export function reportStatusProperty(components) {
   };
 }
 
+/**
+ * Gives foreign-key columns the `ReferenceLink` component: the referenced
+ * record's readable name, linked to its page. `ShortUuid` stays for a record's
+ * own `id`.
+ */
+export function attachReferenceLink(properties, fieldNames, components, locations = ['list', 'show']) {
+  if (!components?.ReferenceLink) return;
+  for (const field of fieldNames) {
+    const existing = properties[field] || {};
+    const newComponents = { ...(existing.components || {}) };
+    if (locations.includes('list')) newComponents.list = components.ReferenceLink;
+    if (locations.includes('show')) newComponents.show = components.ReferenceLink;
+    properties[field] = { ...existing, components: newComponents };
+  }
+}
+
 export function buildReadOnlyResource(db, table, navigation, properties = {}, extra = {}) {
   const { actions = {}, ...otherOptions } = extra;
 
