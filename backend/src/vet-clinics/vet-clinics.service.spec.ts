@@ -22,7 +22,15 @@ describe('VetClinicsService', () => {
     nameArabic: 'عيادة المخالب السعيدة',
     phoneNumber: '+201001234567',
     address: '123 Main St, Maadi',
+    cityId: 'city-1',
+    addressEnglish: '123 Main St, Maadi',
+    addressArabic: null,
     website: 'https://happypaws.eg',
+    facebookUrl: null,
+    is24Hours: false,
+    locationPrecision: 'street',
+    governorate: 'Cairo',
+    governorateArabic: 'القاهرة',
     latitude: 29.9602,
     longitude: 31.2569,
     distanceKm: 1.25,
@@ -48,6 +56,46 @@ describe('VetClinicsService', () => {
     };
 
     service = new VetClinicsService(mockRepository as VetClinicsRepository, mockCacheManager as Cache);
+  });
+
+  it.each(['exact', 'street'])('keeps coordinate handoff for %s locations', async (locationPrecision) => {
+    mockRepository.findNearestForCity = jest.fn().mockResolvedValue([{ ...mockClinicResult, locationPrecision }]);
+    const [result] = await service.nearbyVetClinicsForCity('city-1');
+    expect(result.isApproximateLocation).toBe(false);
+    expect(result.googleMapsUrl).toBe('https://www.google.com/maps/search/?api=1&query=29.9602%2C31.2569');
+  });
+  it('uses Arabic names, address and governorate for an area search', async () => {
+    mockRepository.findNearestForCity = jest
+      .fn()
+      .mockResolvedValue([{ ...mockClinicResult, locationPrecision: 'area', addressArabic: '١٢ شارع النصر، المعادي' }]);
+    const [result] = await service.nearbyVetClinicsForCity('city-1');
+    expect(result.isApproximateLocation).toBe(true);
+    expect(result.googleMapsUrl).toBe(
+      'https://www.google.com/maps/search/?api=1&query=' +
+        encodeURIComponent('عيادة المخالب السعيدة, ١٢ شارع النصر، المعادي, القاهرة'),
+    );
+  });
+  it('uses English and omits null parts for an area search without Arabic', async () => {
+    mockRepository.findNearestForCity = jest.fn().mockResolvedValue([
+      {
+        ...mockClinicResult,
+        locationPrecision: 'area',
+        nameArabic: null,
+        address: null,
+        addressEnglish: null,
+        governorate: null,
+      },
+    ]);
+    const [result] = await service.nearbyVetClinicsForCity('city-1');
+    expect(decodeURIComponent(result.googleMapsUrl.split('query=')[1])).toBe('Happy Paws Clinic');
+  });
+  it('maps the additive hours and Facebook fields from repository results', async () => {
+    mockRepository.findNearestForCity = jest
+      .fn()
+      .mockResolvedValue([{ ...mockClinicResult, is24Hours: true, facebookUrl: 'https://www.facebook.com/clinic' }]);
+    const [result] = await service.nearbyVetClinicsForCity('city-1');
+    expect(result.is24Hours).toBe(true);
+    expect(result.facebookUrl).toBe('https://www.facebook.com/clinic');
   });
 
   it('returns empty array immediately for PRODUCT posts without querying DB or cache', async () => {
@@ -128,6 +176,9 @@ describe('VetClinicsService', () => {
       addressEnglish: null,
       addressArabic: null,
       website: null,
+      facebookUrl: null,
+      is24Hours: false,
+      isApproximateLocation: false,
       latitude: 29.96,
       longitude: 31.25,
       distanceKm: 0.5,
@@ -186,6 +237,9 @@ describe('VetClinicsService', () => {
       addressEnglish: null,
       addressArabic: null,
       website: null,
+      facebookUrl: null,
+      is24Hours: false,
+      isApproximateLocation: false,
       latitude: 29.96,
       longitude: 31.25,
       distanceKm: 0.5,
@@ -231,6 +285,11 @@ describe('VetClinicsService', () => {
       addressEnglish: '123 Nile St, Maadi',
       addressArabic: '١٢٣ شارع النيل، المعادي',
       website: null,
+      facebookUrl: null,
+      is24Hours: false,
+      locationPrecision: 'street',
+      governorate: 'Cairo',
+      governorateArabic: 'القاهرة',
       latitude: 29.96,
       longitude: 31.25,
       distanceKm: 0.8,
@@ -264,6 +323,11 @@ describe('VetClinicsService', () => {
       addressEnglish: null,
       addressArabic: null,
       website: null,
+      facebookUrl: null,
+      is24Hours: false,
+      locationPrecision: 'street',
+      governorate: 'Cairo',
+      governorateArabic: 'القاهرة',
       latitude: 31.2,
       longitude: 29.9,
       distanceKm: 2.1,

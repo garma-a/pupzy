@@ -38,6 +38,7 @@ import {
   index,
   uniqueIndex,
   customType,
+  check,
 } from 'drizzle-orm/pg-core';
 import { sql, isNotNull } from 'drizzle-orm';
 import { cities } from './cities.schema';
@@ -64,6 +65,7 @@ export const geometryPoint = customType<{
 export const vetClinicSourceEnum = pgEnum('vet_clinic_source', [
   'OSM', // OpenStreetMap Overpass API — primary seed source
   'GOOGLE_PLACES', // Google Places API — optional enrichment pass
+  'WEB_RESEARCH', // Reviewed open-web evidence
   'MANUAL', // Hand-curated entry via AdminJS
 ]);
 
@@ -94,8 +96,12 @@ export const vetClinics = pgTable(
     addressEnglish: text('address_english'),
     addressArabic: text('address_arabic'),
     website: text('website'),
+    facebookUrl: text('facebook_url'),
+    is24Hours: boolean('is_24_hours').notNull().default(false),
+    sourceKey: varchar('source_key', { length: 255 }).unique(),
 
     // ── Location Provenance ──────────────────────────────────────────────────
+    locationPrecision: varchar('location_precision', { length: 10 }).notNull().default('street'),
     locationProvenance: varchar('location_provenance', { length: 50 }),
     locationCapturedAt: timestamp('location_captured_at', { withTimezone: true }),
 
@@ -109,6 +115,22 @@ export const vetClinics = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
+    locationPrecisionCheck: check(
+      'chk_vet_clinics_location_precision',
+      sql`${table.locationPrecision} IN ('exact', 'street', 'area')`,
+    ),
+    phoneCheck: check(
+      'chk_vet_clinics_phone',
+      sql`${table.phoneNumber} IS NULL OR ${table.phoneNumber} ~ '^\\+20(1[0125][0-9]{8}|2[0-9]{8}|3[0-9]{7}|(13|40|45|46|47|48|50|55|57|62|64|65|66|68|69|82|84|86|88|92|93|95|96|97)[0-9]{7})$'`,
+    ),
+    websiteCheck: check(
+      'chk_vet_clinics_website',
+      sql`${table.website} IS NULL OR ${table.website} ~* '^https?://[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:[0-9]{1,5})?([/?#][^[:space:]]*)?$'`,
+    ),
+    facebookCheck: check(
+      'chk_vet_clinics_facebook',
+      sql`${table.facebookUrl} IS NULL OR ${table.facebookUrl} ~* '^https?://[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:[0-9]{1,5})?([/?#][^[:space:]]*)?$'`,
+    ),
     coordinatesGistIdx: index('idx_vet_clinics_coordinates').using('gist', table.coordinates),
 
     osmIdUniqueIdx: uniqueIndex('idx_vet_clinics_osm_id').on(table.osmId).where(isNotNull(table.osmId)),

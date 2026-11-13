@@ -980,6 +980,9 @@ export interface VetClinic {
   city?: Nullable<City>;
   cityId?: Nullable<string>;
   website?: Nullable<string>;
+  facebookUrl?: Nullable<string>;
+  is24Hours: boolean;
+  isApproximateLocation: boolean;
   latitude: number;
   longitude: number;
   distanceKm: number;

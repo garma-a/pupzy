@@ -139,3 +139,17 @@ describe('Admin work-queue virtual filters', () => {
     }
   });
 });
+
+it('filters Vet Clinics needing a phone using SQL NULL/blank semantics', async () => {
+  const sql = createAdminSqlClient({ connectionString: 'postgresql://test:test@127.0.0.1:5432/test' });
+  try {
+    assert.deepEqual(virtualFilterNames('vet_clinics'), ['phone_state']);
+    const query = sql('vet_clinics').where('is_active', false);
+    assert.equal(applyVirtualFilter(query, { tableName: 'vet_clinics', key: 'phone_state', value: 'missing' }), true);
+    assert.match(query.toSQL().sql, /NULLIF\(btrim\(phone_number\), ''\) IS NULL/);
+    assert.deepEqual(query.toSQL().bindings, [false]);
+    assert.equal(applyVirtualFilter(query, { tableName: 'vet_clinics', key: 'phone_state', value: 'unknown' }), false);
+  } finally {
+    await sql.destroy();
+  }
+});

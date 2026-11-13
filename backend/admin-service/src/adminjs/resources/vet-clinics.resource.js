@@ -1,3 +1,4 @@
+import { virtualFilterOptions } from '../queue-filters.js';
 import { ENUMS } from '../enums.js';
 import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
 import { searchVetClinicAddress } from './vet-clinics.geocoder.js';
@@ -80,9 +81,13 @@ export function buildVetClinicsResource(db, poolOrComponents = {}, componentsOrC
   const connectionContext = pool || knex;
 
   const properties = {
+    ...virtualFilterOptions('vet_clinics'),
     id: { isTitle: false, isDisabled: true },
     name_english: { isTitle: true },
     name_arabic: {},
+    is_24_hours: { type: 'boolean' },
+    facebook_url: {},
+    source_key: { isDisabled: true, isVisible: { list: false, show: true, edit: false, filter: false } },
     city_id: {},
     source: enumProperty(ENUMS.vetClinicSource),
     coordinates: {
@@ -115,6 +120,7 @@ export function buildVetClinicsResource(db, poolOrComponents = {}, componentsOrC
     address_arabic: {
       isVisible: { list: true, show: true, edit: true, filter: false },
     },
+    location_precision: { isVisible: { list: false, filter: true, show: true, edit: false } },
     location_provenance: {
       isVisible: { list: false, show: true, edit: false, filter: true },
     },
@@ -141,6 +147,15 @@ export function buildVetClinicsResource(db, poolOrComponents = {}, componentsOrC
       actions: {
         ...noDeleteActions,
         list: { after: stripPopulatedPasswordHashes },
+        needsPhone: {
+          actionType: 'resource',
+          icon: 'Phone',
+          component: false,
+          handler: async (_request, _response, { h, resource }) => ({
+            redirectUrl:
+              h.resourceUrl({ resourceId: resource.id() }) + '?filters.is_active=false&filters.phone_state=missing',
+          }),
+        },
         show: { after: stripPopulatedPasswordHashes },
         new: {
           handler: async (request, response, context) => {
@@ -268,6 +283,9 @@ export function buildVetClinicsResource(db, poolOrComponents = {}, componentsOrC
         'address_arabic',
         'phone_number',
         'website',
+        'facebook_url',
+        'is_24_hours',
+        'source_key',
         'coordinates',
         'source',
         'osm_id',
@@ -278,7 +296,16 @@ export function buildVetClinicsResource(db, poolOrComponents = {}, componentsOrC
         'created_at',
         'updated_at',
       ],
-      filterProperties: ['name_english', 'city_id', 'source', 'location_provenance', 'is_active'],
+      filterProperties: [
+        'name_english',
+        'city_id',
+        'source',
+        'location_provenance',
+        'is_active',
+        'phone_number',
+        'is_24_hours',
+        'phone_state',
+      ],
     },
   };
 }

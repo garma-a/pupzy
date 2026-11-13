@@ -68,14 +68,31 @@ type VetClinic {
   Clinic website URL. Null when OSM had no website tag.
   """
   website: String
+  """
+  Clinic Facebook page URL. Null when no page was recorded.
+  """
+  facebookUrl: String
 
   """
-  WGS-84 latitude of the clinic (DD format). Used for the Google Maps deep-link.
+  True only when the source explicitly states 24-hour operation.
+  """
+  is24Hours: Boolean!
+
+  """
+  True when the stored point represents the address area rather than the clinic.
+  googleMapsUrl searches by name and address for these clinics.
+  """
+  isApproximateLocation: Boolean!
+
+  """
+  WGS-84 latitude of the stored point (DD format).
+  For approximate locations this is the matched City centre.
   """
   latitude: Float!
 
   """
-  WGS-84 longitude of the clinic (DD format). Used for the Google Maps deep-link.
+  WGS-84 longitude of the stored point (DD format).
+  For approximate locations this is the matched City centre.
   """
   longitude: Float!
 
@@ -83,6 +100,7 @@ type VetClinic {
   Geodesic distance in kilometres from the post location to this clinic.
   Computed with ST_Distance(::geography) on the WGS-84 ellipsoid for accuracy
   at any distance on Earth. Rounded to 2 decimal places.
+  Approximate locations measure distance to the matched City centre.
 
   For RESCUE/LOST posts: distance from exact post GPS coordinates.
   For ADOPTION posts: distance from the post's city center_point.
@@ -90,7 +108,7 @@ type VetClinic {
   distanceKm: Float!
 
   """
-  Pre-built Google Maps deep-link: https://www.google.com/maps/search/?api=1&query=lat%2Clon
+  Pre-built Google Maps search link using coordinates, or name and address for area locations.
   Open with Flutter's url_launcher package — no Google Maps SDK required.
   """
   googleMapsUrl: String!

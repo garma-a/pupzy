@@ -1,0 +1,9 @@
+[
+  {
+    "governorate": "New Valley",
+    "decidedBy": "owner",
+    "decidedAt": "2026-11-12",
+    "reason": "Owner approved shipping without a New Valley clinic after reviewed Kharga, Dakhla and Farafra searches found no sourceable qualifying clinic. Keep the normal nearest-clinic distance results for users there; do not add speculative data.",
+    "ledger": "research-new-valley-stage3-ledger.json"
+  }
+]

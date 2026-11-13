@@ -22,6 +22,11 @@ export interface VetClinicProximityResult {
   addressEnglish: string | null;
   addressArabic: string | null;
   website: string | null;
+  facebookUrl: string | null;
+  is24Hours: boolean;
+  locationPrecision: string;
+  governorate: string | null;
+  governorateArabic: string | null;
   /** ST_Y(coordinates) — WGS-84 latitude */
   latitude: number;
   /** ST_X(coordinates) — WGS-84 longitude */
@@ -145,6 +150,13 @@ export class VetClinicsRepository {
         addressEnglish: vetClinics.addressEnglish,
         addressArabic: vetClinics.addressArabic,
         website: vetClinics.website,
+        facebookUrl: vetClinics.facebookUrl,
+        is24Hours: vetClinics.is24Hours,
+        locationPrecision: vetClinics.locationPrecision,
+        governorate: sql<string | null>`(SELECT governorate FROM cities WHERE id = ${vetClinics.cityId})`,
+        governorateArabic: sql<
+          string | null
+        >`(SELECT NULLIF(governorate_arabic, '') FROM cities WHERE id = ${vetClinics.cityId})`,
         latitude: sql<number>`ST_Y(${vetClinics.coordinates}::geometry)`.mapWith(Number),
         longitude: sql<number>`ST_X(${vetClinics.coordinates}::geometry)`.mapWith(Number),
         distanceKm: sql<number>`
@@ -186,6 +198,13 @@ export class VetClinicsRepository {
         addressEnglish: vetClinics.addressEnglish,
         addressArabic: vetClinics.addressArabic,
         website: vetClinics.website,
+        facebookUrl: vetClinics.facebookUrl,
+        is24Hours: vetClinics.is24Hours,
+        locationPrecision: vetClinics.locationPrecision,
+        governorate: sql<string | null>`(SELECT governorate FROM cities WHERE id = ${vetClinics.cityId})`,
+        governorateArabic: sql<
+          string | null
+        >`(SELECT NULLIF(governorate_arabic, '') FROM cities WHERE id = ${vetClinics.cityId})`,
         latitude: sql<number>`ST_Y(${vetClinics.coordinates}::geometry)`.mapWith(Number),
         longitude: sql<number>`ST_X(${vetClinics.coordinates}::geometry)`.mapWith(Number),
         distanceKm: sql<number>`

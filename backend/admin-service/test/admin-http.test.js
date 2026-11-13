@@ -1885,7 +1885,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
     // 5a. Seed Vet Clinics with Legacy and Retired Cities
     const historicalVetClinicRes = await database.pool.query(
       `INSERT INTO vet_clinics (name_english, name_arabic, city_id, phone_number, address_english, address_arabic, coordinates)
-       VALUES ('Historical Heritage Clinic', 'عيادة تراثية قديمة', $1, '01000000001', '10 Heritage St', '١٠ شارع التراث', ST_SetSRID(ST_MakePoint(31.20, 29.98), 4326))
+       VALUES ('Historical Heritage Clinic', 'عيادة تراثية قديمة', $1, '+201000000001', '10 Heritage St', '١٠ شارع التراث', ST_SetSRID(ST_MakePoint(31.20, 29.98), 4326))
        RETURNING id`,
       [legacyCityId],
     );
@@ -1893,7 +1893,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
 
     const retiredClinicRes = await database.pool.query(
       `INSERT INTO vet_clinics (name_english, name_arabic, city_id, phone_number, address_english, address_arabic, coordinates)
-       VALUES ('Historical Retired Clinic', 'عيادة ملغاة تاريخية', $1, '01000000002', '20 Retired St', '٢٠ شارع ملغي', ST_SetSRID(ST_MakePoint(32.55, 29.97), 4326))
+       VALUES ('Historical Retired Clinic', 'عيادة ملغاة تاريخية', $1, '+201000000002', '20 Retired St', '٢٠ شارع ملغي', ST_SetSRID(ST_MakePoint(32.55, 29.97), 4326))
        RETURNING id`,
       [retiredCityId],
     );
@@ -1925,9 +1925,12 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal(vcRetData.record.populated.city_id.params.status, 'RETIRED');
 
     // 5c. Vet Clinic list view renders populated historical city titles
-    const vcListRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/actions/list`, {
-      headers: { cookie: superCookie },
-    });
+    const vcListRes = await fetch(
+      `${baseUrl}/admin/api/resources/vet_clinics/actions/list?filters.name_english=Historical`,
+      {
+        headers: { cookie: superCookie },
+      },
+    );
     assert.equal(vcListRes.status, 200);
     const vcListData = await vcListRes.json();
     const foundHistoricalVetClinic = vcListData.records.find((r) => r.id === historicalVetClinicId);
@@ -1949,7 +1952,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          phone_number: '01099998888',
+          phone_number: '+201099998888',
         }),
       },
     );
@@ -1960,7 +1963,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
       historicalVetClinicId,
     ]);
     assert.equal(checkClinic.rows[0].city_id, legacyCityId);
-    assert.equal(checkClinic.rows[0].phone_number, '01099998888');
+    assert.equal(checkClinic.rows[0].phone_number, '+201099998888');
 
     // 5e. Creating a new clinic with Legacy or Retired city is rejected
     const vcFailCreateLegacyRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/actions/new`, {

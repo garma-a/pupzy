@@ -1,0 +1,3 @@
+backend/src/vet-clinics/data/egypt-vet-clinics.json linguist-generated=true
+backend/drizzle/migrations/0068_release_egypt_vet_clinics.sql linguist-generated=true
+backend/drizzle/migrations/meta/*_snapshot.json linguist-generated=true
