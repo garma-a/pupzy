@@ -25,7 +25,7 @@ import { buildPostUpvotesResource } from './resources/post-upvotes.resource.js';
 import { buildPostsResource } from './resources/posts.resource.js';
 import { buildProductPostsResource } from './resources/product-posts.resource.js';
 import { buildRescuePostsResource } from './resources/rescue-posts.resource.js';
-import { attachCacheInvalidation } from './resources/resource-helpers.js';
+import { attachCacheInvalidation, attachPopulatedSanitizer } from './resources/resource-helpers.js';
 import { QueueAwareSqlResource, buildAdminSqlDatabase } from './sql-adapter.js';
 import { buildUsersResource } from './resources/users.resource.js';
 import { buildVetClinicsResource } from './resources/vet-clinics.resource.js';
@@ -159,7 +159,9 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
         components: { ...properties[name].components, list: components.RecordStatus, show: components.RecordStatus },
       };
     }
-    return attachCacheInvalidation({ ...resource, options: { ...resource.options, properties } }, cache);
+    return attachPopulatedSanitizer(
+      attachCacheInvalidation({ ...resource, options: { ...resource.options, properties } }, cache),
+    );
   });
 
   const dashboardHandler = buildDashboardHandler(pool, cache);

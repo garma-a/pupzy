@@ -3879,6 +3879,43 @@ describe('AdminJS HTTP security and resource behavior', () => {
       assert.equal(shown.record.populated.post_id.params.title, 'Reference title post');
     });
 
+    it('never leaks private user columns through populated references, in any list or show response', async () => {
+      await database.pool.query(
+        `UPDATE users SET phone_number = '+201000000000', last_known_location = ST_SetSRID(ST_MakePoint(31.2, 30.0), 4326)
+         WHERE id = $1`,
+        [principals.userId],
+      );
+      const postId = await insertPost(database.pool, {
+        userId: principals.userId,
+        cityId: principals.cityId,
+        title: 'Privacy check',
+        moderationStatus: 'FLAGGED',
+      });
+      const { rows } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason, reviewed_at, reviewed_by_admin_id, review_outcome)
+         VALUES ($1, $2, 'SPAM', now(), $3, 'NO_ACTION') RETURNING id`,
+        [postId, principals.userId, principals.adminId],
+      );
+      await database.pool.query(
+        `INSERT INTO moderation_actions (admin_user_id, action_type, target_type, target_id) VALUES ($1, 'USER_UNBANNED', 'USER', $2)`,
+        [principals.adminId, principals.userId],
+      );
+
+      const responses = [
+        await apiGet('post_reports/actions/list'),
+        await apiGet(`post_reports/records/${rows[0].id}/show`),
+        await apiGet('moderation_actions/actions/list'),
+        await apiGet('posts/actions/list'),
+      ];
+      for (const response of responses) {
+        const populated = JSON.stringify((response.records ?? [response.record]).map((record) => record.populated));
+        assert.doesNotMatch(populated, /phone_number|last_known_location|password_hash|firebase_user_id/);
+      }
+      const report = responses[1].record.populated;
+      assert.equal(report.reporter_id.params.email, 'user@example.com', 'a reference keeps what it needs');
+      assert.equal(report.reviewed_by_admin_id.params.full_name, 'Test Admin');
+    });
+
     it('resolves Moderation Action targets by type with one query per type and flags rows that no longer exist', async () => {
       const postIds = [];
       for (const title of ['Audit one', 'Audit two', 'Audit three']) {

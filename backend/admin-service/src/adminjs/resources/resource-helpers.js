@@ -135,3 +135,68 @@ export function attachCacheInvalidation(resourceDef, cache) {
     },
   };
 }
+
+/**
+ * Columns of a referenced record that a list or show response may carry.
+ * AdminJS populates a whole row, which for a User includes `phone_number` and
+ * `last_known_location`; a reference only ever needs a name, an email and a
+ * picture. Anything not listed is removed. Other tables only lose
+ * `password_hash`.
+ */
+const POPULATED_ALLOW_LISTS = Object.freeze({
+  users: [
+    'id',
+    'email',
+    'full_name',
+    'full_name_arabic',
+    'profile_picture_url',
+    'is_verified',
+    'is_banned',
+    'home_city_id',
+  ],
+  admin_users: ['id', 'email', 'full_name', 'role', 'is_active'],
+});
+
+function sanitizeRecordPopulated(record, referenceByPath) {
+  for (const [path, populatedRecord] of Object.entries(record?.populated ?? {})) {
+    if (!populatedRecord?.params) continue;
+    const resourceId = populatedRecord.resourceId ?? referenceByPath.get(path);
+    const allowed = POPULATED_ALLOW_LISTS[resourceId];
+    if (allowed) {
+      for (const column of Object.keys(populatedRecord.params)) {
+        if (!allowed.includes(column)) delete populatedRecord.params[column];
+      }
+    } else {
+      delete populatedRecord.params.password_hash;
+    }
+    sanitizeRecordPopulated(populatedRecord, new Map());
+  }
+}
+
+/** `after` hook: strips private columns from every `record.populated.*` entry. */
+export function sanitizePopulatedRecords(response, _request, context) {
+  const referenceByPath = new Map();
+  for (const property of context?.resource?.properties?.() ?? []) {
+    const reference = property.reference?.();
+    if (reference) referenceByPath.set(property.name(), reference);
+  }
+  for (const record of response?.records ?? (response?.record ? [response.record] : [])) {
+    sanitizeRecordPopulated(record, referenceByPath);
+  }
+  return response;
+}
+
+const POPULATING_ACTIONS = ['list', 'show', 'search', 'edit', 'new'];
+
+/** Applies `sanitizePopulatedRecords` last to every action that returns populated records. */
+export function attachPopulatedSanitizer(resourceDef) {
+  const options = { ...(resourceDef.options ?? {}) };
+  const actions = { ...(options.actions ?? {}) };
+  for (const actionName of POPULATING_ACTIONS) {
+    const existing = actions[actionName];
+    if (existing?.isAccessible === false) continue;
+    const after = existing?.after ? [existing.after].flat() : [];
+    actions[actionName] = { ...existing, after: [...after, sanitizePopulatedRecords] };
+  }
+  return { ...resourceDef, options: { ...options, actions } };
+}
