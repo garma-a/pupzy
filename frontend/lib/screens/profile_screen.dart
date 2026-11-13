@@ -13,6 +13,7 @@ import '../services/graphql_service.dart';
 import '../services/push_service.dart';
 import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
+import '../utils/egypt_phone.dart';
 import '../utils/full_name.dart';
 import '../utils/webp_compress.dart';
 import '../widgets/language_toggle.dart';
@@ -74,7 +75,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
     final nameController = TextEditingController(text: _user?['fullName'] ?? '');
     final existingPhone = (_user?['phoneNumber'] as String?) ?? '';
     final phoneController = TextEditingController(
-      text: existingPhone.replaceAll(RegExp(r'^\+20'), '0').replaceAll(RegExp(r'\D'), ''),
+      text: egyptMobileForField(existingPhone),
     );
     final cityField = lang == Lang.ar ? 'nameArabic' : 'nameEnglish';
     showModalBottomSheet(
@@ -91,8 +92,8 @@ class _ProfileSheetState extends State<ProfileSheet> {
             final graphql = context.read<GraphQLService>();
             String? e164Phone;
             if (phone.isNotEmpty) {
-              final digits = phone.replaceAll(RegExp(r'\D'), '');
-              e164Phone = digits.startsWith('0') ? '+2$digits' : '+20$digits';
+              // With or without the leading 0, or with +20: always +201XXXXXXXXX.
+              e164Phone = egyptMobileE164(phone);
             }
             final result = await graphql.updateProfile(fullName: name, phoneNumber: e164Phone);
             if (!mounted) return;
@@ -1023,18 +1024,10 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     onFieldSubmitted: (_) => _saving ? null : _save(),
                     inputFormatters: [
                       FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(11),
+                      LengthLimitingTextInputFormatter(maxEgyptPhoneDigits),
                     ],
                     decoration: _fieldDecoration(hint: 'e.g. 01012345678', icon: Icons.phone_outlined),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return null;
-                      final digits = v.trim().replaceAll(RegExp(r'\D'), '');
-                      if (digits.length != 11) return t(context, 'Phone number must be 11 digits', 'يجب أن يتكون رقم الهاتف من 11 رقمًا');
-                      if (!RegExp(r'^01[0125]\d{8}$').hasMatch(digits)) {
-                        return t(context, 'Must start with 010, 011, 012, or 015', 'يجب أن يبدأ بـ 010 أو 011 أو 012 أو 015');
-                      }
-                      return null;
-                    },
+                    validator: (v) => validateEgyptMobile(context, v, required: false),
                   ),
                   const SizedBox(height: 4),
                   Text(
