@@ -1296,6 +1296,12 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         const text = await page.$eval('[data-testid="pupzy-comment-evidence"]', (n) => n.innerText);
         assert.match(text, /Evidence for the report page/);
         assert.match(text, /Images hidden from users/);
+        assert.doesNotMatch(text, /Image hidden/, 'one badge, not two saying the same thing');
+        assert.match(
+          await page.$eval('[data-testid="pupzy-comment-report-reporter"]', (node) => node.parentElement.innerText),
+          /Reported by[\s\S]+·\s+\d{1,2} \w{3} \d{4}, \d{2}:\d{2}/,
+          'the reporter and date read as one line',
+        );
         assert.equal(await page.$$eval('[data-testid="pupzy-image-hidden-badge"]', (n) => n.length), 2);
         assert.match(text, /Reports on this comment \(2\)/);
         assert.match(text, /first details/);

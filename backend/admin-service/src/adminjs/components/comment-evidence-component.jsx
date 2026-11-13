@@ -16,7 +16,15 @@ function parse(value) {
 
 function formatDateTime(value) {
   const date = value ? new Date(value) : null;
-  return date && !Number.isNaN(date.getTime()) ? date.toLocaleString() : '—';
+  return date && !Number.isNaN(date.getTime())
+    ? date.toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : '—';
 }
 
 function Meta({ label, children }) {
@@ -44,23 +52,32 @@ function ReportItem({ report, isCurrent }) {
         </Text>
       ) : null}
       <div
-        className="pupzy-discussion-meta pupzy-report-footer"
-        style={{ justifyContent: 'flex-start', gap: 12, flexWrap: 'wrap' }}
+        className="pupzy-report-footer"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          flexWrap: 'wrap',
+          marginTop: 8,
+        }}
       >
-        <Text color="grey60" fontSize="sm">
-          Reported by
-        </Text>
-        <RecordLink
-          resourceId="users"
-          recordId={report.reporter.id}
-          title={report.reporter.name}
-          pictureUrl={report.reporter.pictureUrl}
-          showAvatar
-          testId="pupzy-comment-report-reporter"
-        />
-        <Text color="grey60" fontSize="sm">
-          on {formatDateTime(report.createdAt)}
-        </Text>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <Text color="grey60" fontSize="sm" as="span">
+            Reported by
+          </Text>
+          <RecordLink
+            resourceId="users"
+            recordId={report.reporter.id}
+            title={report.reporter.name}
+            pictureUrl={report.reporter.pictureUrl}
+            showAvatar
+            testId="pupzy-comment-report-reporter"
+          />
+          <Text color="grey60" fontSize="sm" as="span">
+            · {formatDateTime(report.createdAt)}
+          </Text>
+        </span>
         {isCurrent ? null : (
           <RecordLink
             resourceId="comment_reports"
@@ -90,14 +107,12 @@ export default function CommentEvidence({ record }) {
       <div className="pupzy-discussion-meta" style={{ marginBottom: 12 }}>
         <H4 mb="0">{evidence.isReply ? 'Reply' : 'Comment'}</H4>
         <Badge variant={evidence.status === 'ACTIVE' ? 'success' : 'warning'} data-testid="pupzy-comment-status">
-          {evidence.statusLabel}
+          {evidence.imagesHidden
+            ? 'Images hidden from users'
+            : evidence.hidden
+              ? 'Hidden from users'
+              : evidence.statusLabel}
         </Badge>
-        {evidence.imagesHidden ? (
-          <Badge variant="warning" data-testid="pupzy-comment-images-hidden">
-            Images hidden from users
-          </Badge>
-        ) : null}
-        {evidence.hidden ? <Badge variant="warning">Hidden from users</Badge> : null}
       </div>
 
       <div style={{ display: 'grid', gap: 6, marginBottom: 12 }}>
