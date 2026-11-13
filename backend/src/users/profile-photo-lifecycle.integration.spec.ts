@@ -644,6 +644,42 @@ describe('Profile Photo Lifecycle Integration (Ticket 17)', () => {
     expect(afterRemoval.profilePhotoStorageKey).toBeNull();
   });
 
+  it('keeps an administrator removal (admin service) from being undone by a later provider synchronization', async () => {
+    const ownedUser = await seedUser({
+      profilePictureUrl: 'https://cdn.pupzy.net/avatars/owned.webp',
+      profilePhotoStorageKey: 'avatars/owned.webp',
+      profilePhotoChangedAt: new Date('2026-11-01T00:00:00Z'),
+    });
+
+    // The admin service's "Remove Profile Photo" runs exactly this state change in one
+    // transaction (admin-service/src/adminjs/actions/remove-profile-photo.action.js),
+    // mirroring UsersRepository.clearProfilePhoto.
+    await dbHelper.db.transaction(async (tx) => {
+      await tx.insert(mediaDeletionWork).values({
+        storageKey: 'avatars/owned.webp',
+        cdnUrl: '',
+        status: 'PENDING',
+        attempts: 0,
+      });
+      await tx.execute(sql`
+        UPDATE users
+        SET profile_picture_url = NULL, profile_photo_storage_key = NULL,
+            profile_photo_changed_at = now(), updated_at = now()
+        WHERE id = ${ownedUser.id}
+      `);
+    });
+
+    const afterSync = await usersService.findOrCreate({
+      firebaseUserId: `firebase-${generateUuidV7()}`,
+      email: ownedUser.email,
+      photoUrl: 'https://provider.example/restored.png',
+      emailVerified: true,
+    });
+    expect(afterSync.profilePictureUrl).toBeNull();
+    expect(afterSync.profilePhotoStorageKey).toBeNull();
+    expect(afterSync.profilePhotoChangedAt).not.toBeNull();
+  });
+
   it('never lets provider synchronization overwrite an owned photo', async () => {
     const ownedUser = await seedUser({ profilePictureUrl: 'https://provider.example/initial.png' });
     const { mediaId } = await stageProfilePhoto(validWebp, ownedUser);

@@ -64,6 +64,7 @@ const MODERATION_ACTION_LABELS = {
   POST_RESTORED: 'Post restored',
   USER_BANNED: 'User banned',
   USER_UNBANNED: 'User unbanned',
+  USER_PROFILE_PHOTO_REMOVED: 'Profile photo removed',
   COMMENT_RESTORED: 'Comment restored',
   COMMENT_REMOVED: 'Comment removed',
   POST_REPORT_REVIEWED_NO_ACTION: 'Post Report reviewed — no action',

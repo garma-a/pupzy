@@ -43,6 +43,8 @@ export const POST_RESOLUTION_ACTIONS = {
 export const ACTION_CONSEQUENCES = {
   removePost:
     'Removes the Post from discovery and notifies the owner with this reason. Media and discussion are retained, and an administrator can restore the Post later.',
+  removeProfilePhoto:
+    "Clears this user's profile photo and queues the stored image for deletion. The user keeps their account and can upload a new photo; the sign-in provider's picture is not applied again.",
   removeComment:
     'Permanently removes this Comment, queues its images for deletion and closes its open Comment Reports. This cannot be undone.',
 };
@@ -52,6 +54,7 @@ export const ACTION_LABELS = {
   banUser: 'Ban User',
   flagPost: 'Flag Post',
   removePost: 'Remove Post',
+  removeProfilePhoto: 'Remove Profile Photo',
   removeComment: 'Remove Comment',
   reviewWithNoAction: 'Review with No Action',
 };

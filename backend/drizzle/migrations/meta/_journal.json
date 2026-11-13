@@ -484,6 +484,13 @@
       "when": 1794440914627,
       "tag": "0068_release_egypt_vet_clinics",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1794527314627,
+      "tag": "0069_add_admin_profile_photo_removal",
+      "breakpoints": true
     }
   ]
 }

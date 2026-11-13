@@ -2434,7 +2434,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
     // Approved fields were updated
     assert.equal(userRow.full_name, 'Sanctioned Updated User');
     assert.equal(userRow.full_name_arabic, 'اسم معتمد محدث');
-    assert.equal(userRow.profile_picture_url, 'https://example.com/avatar.jpg');
+    assert.equal(userRow.profile_picture_url, null, 'a photo URL typed into the edit form is ignored');
     assert.equal(userRow.language_preference, 'en');
     assert.equal(userRow.notifications_enabled, false);
     assert.equal(userRow.home_city_id, sidiGaberId);
@@ -4080,6 +4080,177 @@ describe('AdminJS HTTP security and resource behavior', () => {
         if (previousBase === undefined) delete process.env.COMMENT_MEDIA_CDN_BASE;
         else process.env.COMMENT_MEDIA_CDN_BASE = previousBase;
       }
+    });
+  });
+  describe('Remove Profile Photo', () => {
+    const headers = () => ({
+      cookie: `${superCookie}; ${superCsrf.cookie}`,
+      origin: baseUrl,
+      'x-xsrf-token': superCsrf.token,
+      'content-type': 'application/json',
+    });
+    const insertPhotoUser = async (
+      label,
+      { key = null, url = 'https://cdn.example.test/avatar.png', changedAt = null } = {},
+    ) =>
+      (
+        await database.pool.query(
+          `INSERT INTO users (firebase_user_id, email, full_name, profile_picture_url, profile_photo_storage_key, profile_photo_changed_at)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+          [`photo-${label}`, `photo-${label}@example.com`, `Photo ${label}`, url, key, changedAt],
+        )
+      ).rows[0].id;
+    const state = async (id) =>
+      (
+        await database.pool.query(
+          `SELECT profile_picture_url, profile_photo_storage_key, profile_photo_changed_at FROM users WHERE id = $1`,
+          [id],
+        )
+      ).rows[0];
+
+    it('clears the photo, sets the change marker, queues one deletion and audits it, only on POST', async () => {
+      const id = await insertPhotoUser('owned', { key: 'profiles/photo-owned.png' });
+      const url = `${baseUrl}/admin/api/resources/users/records/${id}`;
+
+      const show = await (await fetch(`${url}/show`, { headers: { cookie: superCookie } })).json();
+      const descriptor = show.record.recordActions.find((action) => action.name === 'removeProfilePhoto');
+      assert.ok(descriptor, 'a user with a photo is offered the action');
+      assert.equal(descriptor.component, 'ModerationAction');
+
+      const getResponse = await fetch(`${url}/removeProfilePhoto`, { headers: { cookie: superCookie } });
+      assert.equal(getResponse.status, 200);
+      assert.equal((await state(id)).profile_photo_storage_key, 'profiles/photo-owned.png', 'GET changes nothing');
+      assert.equal((await database.pool.query(`SELECT count(*)::int AS n FROM media_deletion_work`)).rows[0].n, 0);
+
+      const noReason = await fetch(`${url}/removeProfilePhoto`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ reason: '  ' }),
+      });
+      assert.equal((await noReason.json()).notice.type, 'error', 'a reason is required');
+      assert.equal((await state(id)).profile_photo_storage_key, 'profiles/photo-owned.png');
+
+      const response = await fetch(`${url}/removeProfilePhoto`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ reason: 'Inappropriate photo', alsoRemovePosts: false }),
+      });
+      assert.equal((await response.json()).notice.type, 'success');
+
+      const after = await state(id);
+      assert.equal(after.profile_picture_url, null);
+      assert.equal(after.profile_photo_storage_key, null);
+      assert.ok(after.profile_photo_changed_at, 'the change marker keeps the sign-in provider picture away');
+      const work = await database.pool.query(
+        `SELECT storage_key, cdn_url, status, attempts FROM media_deletion_work WHERE storage_key = 'profiles/photo-owned.png'`,
+      );
+      assert.deepEqual(work.rows, [
+        { storage_key: 'profiles/photo-owned.png', cdn_url: '', status: 'PENDING', attempts: 0 },
+      ]);
+      const audit = await database.pool.query(
+        `SELECT action_type, target_type, reason, admin_user_id FROM moderation_actions WHERE target_id = $1`,
+        [id],
+      );
+      assert.deepEqual(audit.rows, [
+        {
+          action_type: 'USER_PROFILE_PHOTO_REMOVED',
+          target_type: 'USER',
+          reason: 'Inappropriate photo',
+          admin_user_id: principals.adminId,
+        },
+      ]);
+
+      // Removing again is refused and queues nothing more.
+      const again = await fetch(`${url}/removeProfilePhoto`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ reason: 'Again' }),
+      });
+      assert.equal((await again.json()).notice.type, 'error');
+      assert.equal(
+        (
+          await database.pool.query(
+            `SELECT count(*)::int AS n FROM media_deletion_work WHERE storage_key = 'profiles/photo-owned.png'`,
+          )
+        ).rows[0].n,
+        1,
+      );
+    });
+
+    it('treats a provider-supplied picture like the app: cleared and marked, with nothing to delete', async () => {
+      const id = await insertPhotoUser('provider', { key: null, url: 'https://lh3.example.test/provider.png' });
+      const before = (await database.pool.query(`SELECT count(*)::int AS n FROM media_deletion_work`)).rows[0].n;
+      const response = await fetch(`${baseUrl}/admin/api/resources/users/records/${id}/removeProfilePhoto`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ reason: 'Not appropriate' }),
+      });
+      assert.equal((await response.json()).notice.type, 'success');
+      const after = await state(id);
+      assert.equal(after.profile_picture_url, null);
+      assert.ok(after.profile_photo_changed_at);
+      assert.equal((await database.pool.query(`SELECT count(*)::int AS n FROM media_deletion_work`)).rows[0].n, before);
+
+      // The app's login sync only applies the provider picture while the marker is unset,
+      // so it can no longer come back (UsersRepository.linkFirebaseUserId).
+      const relinked = await database.pool.query(
+        `UPDATE users
+         SET profile_picture_url = CASE WHEN profile_photo_changed_at IS NULL THEN 'https://lh3.example.test/provider.png' ELSE profile_picture_url END
+         WHERE id = $1 RETURNING profile_picture_url`,
+        [id],
+      );
+      assert.equal(relinked.rows[0].profile_picture_url, null);
+    });
+
+    it('is not offered to a user without a photo and cannot be forced', async () => {
+      const id = await insertPhotoUser('none', { url: null });
+      const show = await (
+        await fetch(`${baseUrl}/admin/api/resources/users/records/${id}/show`, { headers: { cookie: superCookie } })
+      ).json();
+      assert.equal(
+        show.record.recordActions.some((action) => action.name === 'removeProfilePhoto'),
+        false,
+      );
+      const response = await fetch(`${baseUrl}/admin/api/resources/users/records/${id}/removeProfilePhoto`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ reason: 'Try anyway' }),
+      });
+      assert.equal((await response.json()).notice.type, 'error');
+      assert.equal(
+        (await database.pool.query(`SELECT count(*)::int AS n FROM moderation_actions WHERE target_id = $1`, [id]))
+          .rows[0].n,
+        0,
+      );
+    });
+
+    it('lets a plain ADMIN remove a photo, and ignores a photo URL sent through the edit form', async () => {
+      const id = await insertPhotoUser('admin', { key: 'profiles/photo-admin.png' });
+      const edit = await fetch(`${baseUrl}/admin/api/resources/users/records/${id}/edit`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ full_name: 'Edited', profile_picture_url: 'https://evil.example/x.png' }),
+      });
+      assert.equal((await edit.json()).notice.type, 'success');
+      assert.equal(
+        (await state(id)).profile_picture_url,
+        'https://cdn.example.test/avatar.png',
+        'the edit left the photo alone',
+      );
+
+      const staffHeaders = {
+        cookie: `${staffCookie}; ${staffCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': staffCsrf.token,
+        'content-type': 'application/json',
+      };
+      const response = await fetch(`${baseUrl}/admin/api/resources/users/records/${id}/removeProfilePhoto`, {
+        method: 'POST',
+        headers: staffHeaders,
+        body: JSON.stringify({ reason: 'Staff removal' }),
+      });
+      assert.equal((await response.json()).notice.type, 'success');
+      assert.equal((await state(id)).profile_picture_url, null);
     });
   });
 });

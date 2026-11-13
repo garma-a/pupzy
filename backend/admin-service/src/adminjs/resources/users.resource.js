@@ -1,5 +1,6 @@
 import { ValidationError } from 'adminjs';
 import { buildBanUserAction, buildUnbanUserAction } from '../actions/ban-user.action.js';
+import { buildRemoveProfilePhotoAction } from '../actions/remove-profile-photo.action.js';
 import { attachReferenceLink, attachShortUuid, noDeleteActions, stripRecordParams } from './resource-helpers.js';
 
 const stripPrivateFields = (response) =>
@@ -24,7 +25,6 @@ export const stripPrivateFieldsAndShowUser = (response, request, context) => {
 export const ALLOWED_USER_EDIT_FIELDS = Object.freeze([
   'full_name',
   'full_name_arabic',
-  'profile_picture_url',
   'home_city_id',
   'language_preference',
   'notifications_enabled',
@@ -34,6 +34,9 @@ const ALLOWED_SET = new Set(ALLOWED_USER_EDIT_FIELDS);
 
 export const PROTECTED_USER_FIELDS = Object.freeze([
   'id',
+  'profile_picture_url',
+  'profile_photo_storage_key',
+  'profile_photo_changed_at',
   'firebase_user_id',
   'firebase_uid',
   'email',
@@ -143,7 +146,7 @@ export function buildUsersResource(db, pool, components, cache) {
     email: { isTitle: true, isDisabled: true },
     full_name: {},
     full_name_arabic: {},
-    profile_picture_url: {},
+    profile_picture_url: { isDisabled: true },
     is_verified: { isDisabled: true },
     home_city_id: {},
     phone_number: { isVisible: false },
@@ -167,6 +170,19 @@ export function buildUsersResource(db, pool, components, cache) {
     updated_at: { isDisabled: true },
   };
 
+  // The photo is a virtual read-only column: an avatar in lists and a large,
+  // enlargeable one on the user page. It is removed only by the
+  // "Remove Profile Photo" action, never by typing a URL.
+  const hasProfilePhoto = Boolean(components?.ProfilePhoto);
+  if (hasProfilePhoto) {
+    properties.profile_photo = {
+      isVisible: { list: true, show: true, edit: false, filter: false },
+      isDisabled: true,
+      isSortable: false,
+      components: { list: components.ProfilePhoto, show: components.ProfilePhoto },
+    };
+  }
+
   attachShortUuid(properties, ['id'], components, ['list', 'show']);
   attachReferenceLink(properties, ['banned_by_admin_id'], components, ['show']);
 
@@ -187,16 +203,27 @@ export function buildUsersResource(db, pool, components, cache) {
         },
         banUser: buildBanUserAction(pool, components?.ModerationAction, cache),
         unbanUser: buildUnbanUserAction(pool, components?.ModerationAction, cache),
+        removeProfilePhoto: buildRemoveProfilePhotoAction(pool, components?.ModerationAction, cache),
       },
       editProperties: [...ALLOWED_USER_EDIT_FIELDS],
-      listProperties: ['id', 'email', 'full_name', 'is_verified', 'is_banned', 'post_count', 'created_at'],
+      listProperties: [
+        ...(hasProfilePhoto ? ['profile_photo'] : []),
+        'id',
+        'email',
+        'full_name',
+        'is_verified',
+        'is_banned',
+        'post_count',
+        'created_at',
+      ],
       showProperties: [
+        ...(hasProfilePhoto ? ['profile_photo'] : []),
         'id',
         'firebase_user_id',
         'email',
         'full_name',
         'full_name_arabic',
-        'profile_picture_url',
+        ...(hasProfilePhoto ? [] : ['profile_picture_url']),
         'is_verified',
         'home_city_id',
         'post_count',

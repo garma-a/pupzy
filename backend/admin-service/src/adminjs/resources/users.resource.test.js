@@ -54,11 +54,15 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
     assert.deepEqual(resource.options.editProperties, [
       'full_name',
       'full_name_arabic',
-      'profile_picture_url',
       'home_city_id',
       'language_preference',
       'notifications_enabled',
     ]);
+    assert.equal(
+      resource.options.editProperties.includes('profile_picture_url'),
+      false,
+      'a photo is removed with its action, never by typing a URL',
+    );
   });
 
   it('wires ShortUuid component to id and banned_by_admin_id', () => {
@@ -130,9 +134,11 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
       // Intentionally editable profile fields
       full_name: 'Sanctioned Name',
       full_name_arabic: 'الاسم المعتمد',
-      profile_picture_url: 'https://example.com/avatar.jpg',
       language_preference: 'en',
       notifications_enabled: false,
+
+      // A photo URL typed into the form is ignored
+      profile_picture_url: 'https://example.com/avatar.jpg',
 
       // Malicious/tampered auth & identity fields
       id: 'hacked-uuid',
@@ -196,7 +202,6 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
     assert.deepEqual(result.payload, {
       full_name: 'Sanctioned Name',
       full_name_arabic: 'الاسم المعتمد',
-      profile_picture_url: 'https://example.com/avatar.jpg',
       language_preference: 'en',
       notifications_enabled: false,
     });
@@ -373,5 +378,27 @@ describe('User edit return target', () => {
       { h: {} },
     );
     assert.equal(response.redirectUrl, undefined);
+  });
+});
+
+describe('User profile photo columns and action', () => {
+  const withPhoto = buildUsersResource(db, pool, { ...components, ProfilePhoto: 'ProfilePhotoMock' });
+
+  it('shows the photo as the first list column and first show row, not as URL text', () => {
+    assert.equal(withPhoto.options.listProperties[0], 'profile_photo');
+    assert.equal(withPhoto.options.showProperties[0], 'profile_photo');
+    assert.equal(withPhoto.options.showProperties.includes('profile_picture_url'), false);
+    assert.equal(withPhoto.options.properties.profile_photo.components.list, 'ProfilePhotoMock');
+    assert.equal(withPhoto.options.properties.profile_photo.components.show, 'ProfilePhotoMock');
+    assert.equal(withPhoto.options.properties.profile_picture_url.isDisabled, true);
+  });
+
+  it('offers Remove Profile Photo only while the user has a photo', () => {
+    const action = withPhoto.options.actions.removeProfilePhoto;
+    assert.equal(action.component, 'ModerationAction');
+    assert.equal(action.isVisible({ record: { params: { profile_picture_url: 'https://x/a.png' } } }), true);
+    assert.equal(action.isVisible({ record: { params: { profile_picture_url: null } } }), false);
+    assert.equal(action.isVisible({ record: { params: { profile_picture_url: '  ' } } }), false);
+    assert.equal(action.isVisible({}), false);
   });
 });

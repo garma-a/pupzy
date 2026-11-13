@@ -194,6 +194,7 @@ describe('Database Migration Runner Integration', () => {
       ORDER BY enumsortorder
     `);
     expect(moderationActionEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_RESOLVED');
+    expect(moderationActionEnumRes.rows.map((row) => row.enumlabel)).toContain('USER_PROFILE_PHOTO_REMOVED');
 
     const notificationTypeEnumRes = await pool.query<{ enumlabel: string }>(`
       SELECT enumlabel

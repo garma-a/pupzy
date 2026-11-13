@@ -5,6 +5,7 @@
 export const PROPERTY_LABELS = Object.freeze({
   id: 'ID',
   review_status: 'Status',
+  profile_photo: 'Profile photo',
   post_id: 'Post',
   target_post_id: 'Post',
   related_post_id: 'Related Post',

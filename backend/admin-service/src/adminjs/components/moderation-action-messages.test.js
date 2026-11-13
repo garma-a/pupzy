@@ -6,6 +6,7 @@ import { buildUnbanUserAction } from '../actions/ban-user.action.js';
 import { buildCommentActions } from '../actions/moderate-comment.actions.js';
 import { buildPostActions } from '../actions/moderate-post.actions.js';
 import {
+  ACTION_CONSEQUENCES,
   ACTION_LABELS,
   CONFIRM_ONLY_ACTIONS,
   POST_RESOLUTION_ACTIONS as CONFIRMATION_COPY,
@@ -59,5 +60,10 @@ describe('Moderation action confirmation copy', () => {
 
   it('labels removeComment instead of falling back to the raw action name', () => {
     assert.equal(ACTION_LABELS.removeComment, 'Remove Comment');
+  });
+
+  it('words Remove Profile Photo for the shared form', () => {
+    assert.equal(ACTION_LABELS.removeProfilePhoto, 'Remove Profile Photo');
+    assert.match(ACTION_CONSEQUENCES.removeProfilePhoto, /queues the stored image for deletion/);
   });
 });

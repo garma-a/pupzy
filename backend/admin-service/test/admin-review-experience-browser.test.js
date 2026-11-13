@@ -1364,6 +1364,134 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
     });
   });
 
+  describe('profile photos', () => {
+    async function insertPhotoUser(label, { withPhoto = true } = {}) {
+      const { rows } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name, profile_picture_url, profile_photo_storage_key)
+         VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+        [
+          `bwg-photo-${label}`,
+          `photo-${label}@example.com`,
+          `Photo ${label}`,
+          withPhoto ? `${baseUrl}/admin/test-media/avatars-photo-wide.svg` : null,
+          withPhoto ? `profiles/${label}-photo-wide.svg` : null,
+        ],
+      );
+      return rows[0].id;
+    }
+
+    it('shows a large enlargeable avatar on the user page and removes the photo the way the app does', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        const userId = await insertPhotoUser('remove');
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(`${baseUrl}/admin/resources/users/records/${userId}/show`, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="pupzy-profile-photo-open"]', { timeout: 60000 });
+        const labelText = await page.$eval('body', (node) => node.innerText);
+        assert.match(labelText, /Profile photo/);
+        assert.doesNotMatch(labelText, /avatars-photo-wide\.svg/, 'the photo is not printed as URL text');
+        const size = await page.$eval(
+          '[data-testid="pupzy-profile-photo-open"] [data-testid="pupzy-avatar"]',
+          (node) => {
+            const box = node.getBoundingClientRect();
+            return { width: Math.round(box.width), radius: getComputedStyle(node).borderRadius };
+          },
+        );
+        assert.equal(size.width, 96);
+        assert.match(size.radius, /50%|48px/);
+        await page.waitForFunction(
+          () => document.querySelector('[data-testid="pupzy-profile-photo-open"] img')?.naturalWidth > 0,
+          { timeout: 30000 },
+        );
+        console.log(`[fix5 evidence] user with photo ${await recordEvidence(page, 'fix5-user-show-before')}`);
+
+        await page.click('[data-testid="pupzy-profile-photo-open"]');
+        await page.waitForSelector('[data-testid="pupzy-image-dialog"]');
+        await page.keyboard.press('Escape');
+        await page.waitForFunction(() => !document.querySelector('[data-testid="pupzy-image-dialog"]'));
+
+        await page.click('[data-testid="action-removeProfilePhoto"]');
+        await page.waitForSelector('#moderation-reason', { timeout: 60000 });
+        assert.equal(await page.$eval('h3', (node) => node.innerText), 'Remove Profile Photo');
+        assert.equal(
+          await page.$eval('[data-testid="moderation-action-submit"]', (node) => node.disabled),
+          true,
+          'a reason is required',
+        );
+        await page.type('#moderation-reason', 'Photo breaks the community rules');
+        await waitForEnabledSubmit(page);
+        await page.click('[data-testid="moderation-action-submit"]');
+        await page.waitForSelector('[data-testid="pupzy-profile-photo-none"]', { timeout: 60000 });
+        await page.waitForFunction(() => document.body.innerText.includes('Profile photo removed.'), {
+          timeout: 30000,
+        });
+        assert.match(
+          await page.$eval('[data-testid="pupzy-profile-photo-none"]', (node) => node.innerText),
+          /PR/,
+          'initials replace the photo',
+        );
+        assert.equal(
+          await page.$('[data-testid="action-removeProfilePhoto"]'),
+          null,
+          'the action goes away with the photo',
+        );
+        console.log(`[fix5 evidence] user after removal ${await recordEvidence(page, 'fix5-user-show-after')}`);
+
+        const { rows } = await database.pool.query(
+          `SELECT profile_picture_url, profile_photo_storage_key, profile_photo_changed_at FROM users WHERE id = $1`,
+          [userId],
+        );
+        assert.equal(rows[0].profile_picture_url, null);
+        assert.equal(rows[0].profile_photo_storage_key, null);
+        assert.ok(rows[0].profile_photo_changed_at);
+        const work = await database.pool.query(
+          `SELECT storage_key, status FROM media_deletion_work WHERE storage_key = 'profiles/remove-photo-wide.svg'`,
+        );
+        assert.deepEqual(work.rows, [{ storage_key: 'profiles/remove-photo-wide.svg', status: 'PENDING' }]);
+        const audit = await database.pool.query(
+          `SELECT action_type, reason FROM moderation_actions WHERE target_id = $1`,
+          [userId],
+        );
+        assert.deepEqual(audit.rows, [
+          { action_type: 'USER_PROFILE_PHOTO_REMOVED', reason: 'Photo breaks the community rules' },
+        ]);
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+
+    it('puts a small avatar first in the users list and falls back to initials without a photo', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        await insertPhotoUser('with');
+        await insertPhotoUser('without', { withPhoto: false });
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(`${baseUrl}/admin/resources/users`, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="pupzy-avatar"]', { timeout: 60000 });
+        const headers = await page.$$eval('table thead td', (nodes) => nodes.map((node) => node.innerText.trim()));
+        assert.equal(headers[1], 'Profile photo', 'the avatar is the first data column');
+        const rows = await page.$$eval('table tbody tr', (nodes) =>
+          nodes.map((row) => ({
+            text: row.innerText,
+            hasImage: Boolean(row.querySelector('[data-testid="pupzy-avatar"] img')),
+            size: Math.round(row.querySelector('[data-testid="pupzy-avatar"]').getBoundingClientRect().width),
+          })),
+        );
+        const withPhoto = rows.find((row) => row.text.includes('photo-with@example.com'));
+        const without = rows.find((row) => row.text.includes('photo-without@example.com'));
+        assert.equal(withPhoto.hasImage, true);
+        assert.equal(withPhoto.size, 32);
+        assert.equal(without.hasImage, false);
+        assert.match(without.text, /PW/, 'initials of "Photo without"');
+        console.log(`[fix5 evidence] users list ${await recordEvidence(page, 'fix5-users-list')}`);
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+  });
+
   it('shows the dashboard empty state when no review work remains', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {

@@ -66,6 +66,7 @@ export const ENUMS = {
     'COMMENT_REMOVED',
     'POST_REPORT_REVIEWED_NO_ACTION',
     'ACCOUNT_REPORT_REVIEWED_NO_ACTION',
+    'USER_PROFILE_PHOTO_REMOVED',
   ],
   moderationTargetType: ['POST', 'USER', 'COMMENT'],
   commentStatus: ['ACTIVE', 'IMAGE_HIDDEN', 'HIDDEN', 'DELETED', 'REMOVED'],

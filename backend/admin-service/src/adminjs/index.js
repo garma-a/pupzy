@@ -115,6 +115,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'CommentEvidence',
       path.join(currentDirectory, 'components', 'comment-evidence-component.jsx'),
     ),
+    ProfilePhoto: componentLoader.add(
+      'ProfilePhoto',
+      path.join(currentDirectory, 'components', 'profile-photo-component.jsx'),
+    ),
     ReportStatus: componentLoader.add(
       'ReportStatus',
       path.join(currentDirectory, 'components', 'report-status-component.jsx'),
