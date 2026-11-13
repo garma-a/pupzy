@@ -1,0 +1,561 @@
+{
+  "author": "lead review, 2026-11-12",
+  "purpose": "Independent completeness check for the Egypt Vet Clinic dataset. Compiled by the lead from public listings and clinic pages BEFORE reading the implementer's research. An entry passes when an ACTIVE clinic in the stated governorate matches nameEnglish, nameArabic or one of accept[] by exact normalized equality (article-insensitive, normalizeCitySearch-style), after removing one trailing branch qualifier in parentheses or after a dash from the dataset name. Chains are one entry per governorate. Do not edit entries to make the gate pass; if an entry is closed, not a pet clinic, or a duplicate, report it to the lead with evidence.",
+  "threshold": 0.9,
+  "entries": [
+    {
+      "nameEnglish": "American Vet Center",
+      "nameArabic": null,
+      "accept": ["American Veterinary Center"],
+      "governorate": "Cairo",
+      "area": "Zamalek / Maadi / Heliopolis / Rehab"
+    },
+    {
+      "nameEnglish": "British Animal Hospital",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Cairo",
+      "area": "Zamalek / Maadi"
+    },
+    {
+      "nameEnglish": "Pets Valley",
+      "nameArabic": null,
+      "accept": ["Pets Valley Clinic"],
+      "governorate": "Cairo",
+      "area": "Heliopolis"
+    },
+    {
+      "nameEnglish": "Island Vet Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Cairo",
+      "area": "Heliopolis"
+    },
+    {
+      "nameEnglish": "Advance Care Vet Clinic",
+      "nameArabic": null,
+      "accept": ["Advance Care Veterinary Clinic"],
+      "governorate": "Cairo",
+      "area": "Maadi"
+    },
+    {
+      "nameEnglish": "Pet Palace Veterinary Clinic",
+      "nameArabic": null,
+      "accept": ["Pet Palace"],
+      "governorate": "Cairo",
+      "area": "Fifth Settlement"
+    },
+    {
+      "nameEnglish": "Pet Zone Veterinary Clinic",
+      "nameArabic": null,
+      "accept": ["Pet Zone"],
+      "governorate": "Cairo",
+      "area": "Maadi / Heliopolis"
+    },
+    {
+      "nameEnglish": "Pet Cure Veterinary Clinic",
+      "nameArabic": null,
+      "accept": ["Pet Cure"],
+      "governorate": "Cairo",
+      "area": "New Cairo"
+    },
+    {
+      "nameEnglish": "Heliopolis Vet",
+      "nameArabic": null,
+      "accept": ["Heliopolis Vet Clinic"],
+      "governorate": "Cairo",
+      "area": "Heliopolis"
+    },
+    {
+      "nameEnglish": "Paris Vet Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Cairo",
+      "area": "Heliopolis"
+    },
+    {
+      "nameEnglish": "Pet Friends Veterinary Clinic",
+      "nameArabic": null,
+      "accept": ["Pet Friends"],
+      "governorate": "Cairo",
+      "area": "Fifth Settlement"
+    },
+    { "nameEnglish": "Pet Vet Clinic", "nameArabic": null, "accept": [], "governorate": "Cairo", "area": "Heliopolis" },
+    {
+      "nameEnglish": "Perfect Clinic Veterinary",
+      "nameArabic": null,
+      "accept": ["Perfect Vet Clinic"],
+      "governorate": "Cairo",
+      "area": "Nasr City"
+    },
+    {
+      "nameEnglish": "Pet Medical Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Cairo",
+      "area": "Nasr City"
+    },
+    {
+      "nameEnglish": "PETco Veterinary Hospital",
+      "nameArabic": null,
+      "accept": ["Petco"],
+      "governorate": "Cairo",
+      "area": "Nasr City"
+    },
+    {
+      "nameEnglish": "Paws & Claws Vet Clinic",
+      "nameArabic": null,
+      "accept": ["Paws and Claws"],
+      "governorate": "Cairo",
+      "area": "Maadi"
+    },
+    {
+      "nameEnglish": "Pets Care Clinic",
+      "nameArabic": "عيادة بيتس كير البيطرية",
+      "accept": [],
+      "governorate": "Cairo",
+      "area": "Nasr City"
+    },
+    {
+      "nameEnglish": "Happy Pets Clinic",
+      "nameArabic": "عيادة هابي بيتس",
+      "accept": [],
+      "governorate": "Cairo",
+      "area": "Nasr City"
+    },
+    {
+      "nameEnglish": "Lovely Pets Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Cairo",
+      "area": "Nasr City"
+    },
+    {
+      "nameEnglish": null,
+      "nameArabic": "العيادة البيطرية الحديثة",
+      "accept": [],
+      "governorate": "Cairo",
+      "area": "Fifth Settlement"
+    },
+
+    {
+      "nameEnglish": "American Vet Center",
+      "nameArabic": null,
+      "accept": ["American Veterinary Center"],
+      "governorate": "Giza",
+      "area": "Sheikh Zayed / 6th of October"
+    },
+    {
+      "nameEnglish": "British Animal Hospital",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Giza",
+      "area": "Mohandessin / Dokki / Sheikh Zayed / October"
+    },
+    {
+      "nameEnglish": "Pet Zone Veterinary Clinic",
+      "nameArabic": null,
+      "accept": ["Pet Zone"],
+      "governorate": "Giza",
+      "area": "Mohandessin"
+    },
+    {
+      "nameEnglish": "Pets Island Vet Center",
+      "nameArabic": null,
+      "accept": ["Pets Island"],
+      "governorate": "Giza",
+      "area": "Sheikh Zayed"
+    },
+    {
+      "nameEnglish": "Pet Cure Veterinary Clinic",
+      "nameArabic": null,
+      "accept": ["Pet Cure"],
+      "governorate": "Giza",
+      "area": "Sheikh Zayed"
+    },
+    {
+      "nameEnglish": "Pet Care Hospital",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Giza",
+      "area": "Sheikh Zayed"
+    },
+    {
+      "nameEnglish": "Pet Vet",
+      "nameArabic": null,
+      "accept": ["Pet Vet Veterinary Medical Center"],
+      "governorate": "Giza",
+      "area": "Dokki"
+    },
+    { "nameEnglish": "Pet Lovers Clinic", "nameArabic": null, "accept": [], "governorate": "Giza", "area": "Dokki" },
+    {
+      "nameEnglish": "Pets Bay Clinic",
+      "nameArabic": null,
+      "accept": ["Pets Bay"],
+      "governorate": "Giza",
+      "area": "Mohandessin"
+    },
+    {
+      "nameEnglish": "Cat And Dog Pet Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Giza",
+      "area": "Hadayek El Ahram"
+    },
+    {
+      "nameEnglish": "Pet Paradise Veterinary",
+      "nameArabic": null,
+      "accept": ["Pet Paradise"],
+      "governorate": "Giza",
+      "area": "Hadayek El Ahram"
+    },
+    {
+      "nameEnglish": "Petsy Care",
+      "nameArabic": null,
+      "accept": ["Petsy Care Veterinary Center"],
+      "governorate": "Giza",
+      "area": "Haram"
+    },
+    {
+      "nameEnglish": "Pets Beat Hospital",
+      "nameArabic": null,
+      "accept": ["Pets Beat"],
+      "governorate": "Giza",
+      "area": "Sheikh Zayed"
+    },
+    {
+      "nameEnglish": "CatDog Hospital",
+      "nameArabic": null,
+      "accept": ["Cat Dog Hospital"],
+      "governorate": "Giza",
+      "area": "6th of October"
+    },
+    {
+      "nameEnglish": "Animalista Veterinary Center",
+      "nameArabic": null,
+      "accept": ["Animalista"],
+      "governorate": "Giza",
+      "area": "6th of October"
+    },
+    {
+      "nameEnglish": "6th Of October Center For Veterinary Services",
+      "nameArabic": "مركز السادس من أكتوبر للخدمات البيطرية",
+      "accept": [],
+      "governorate": "Giza",
+      "area": "6th of October"
+    },
+    { "nameEnglish": "Go Vet", "nameArabic": "عيادة جو فيت", "accept": [], "governorate": "Giza", "area": "Faisal" },
+    { "nameEnglish": null, "nameArabic": "عيادة فيصل البيطرية", "accept": [], "governorate": "Giza", "area": "Faisal" },
+    {
+      "nameEnglish": null,
+      "nameArabic": "مستشفى الهضبة البيطري",
+      "accept": [],
+      "governorate": "Giza",
+      "area": "Hadayek El Ahram"
+    },
+    {
+      "nameEnglish": null,
+      "nameArabic": "مركز الجيزة البيطري",
+      "accept": [],
+      "governorate": "Giza",
+      "area": "Hadayek El Ahram"
+    },
+    { "nameEnglish": null, "nameArabic": "عيادة الدقي البيطرية", "accept": [], "governorate": "Giza", "area": "Dokki" },
+    {
+      "nameEnglish": null,
+      "nameArabic": "عيادة أورانج البيطرية",
+      "accept": [],
+      "governorate": "Giza",
+      "area": "Dokki / Mohandessin"
+    },
+    {
+      "nameEnglish": "Pets Home Vet Clinic",
+      "nameArabic": "عيادة بيتس هوم البيطرية",
+      "accept": [],
+      "governorate": "Giza",
+      "area": "6th of October"
+    },
+    {
+      "nameEnglish": null,
+      "nameArabic": "عيادة الشروق البيطرية",
+      "accept": [],
+      "governorate": "Giza",
+      "area": "Mohandessin"
+    },
+
+    {
+      "nameEnglish": "PetZone Veterinary Center",
+      "nameArabic": null,
+      "accept": ["Pet Zone"],
+      "governorate": "Alexandria",
+      "area": "Kafr Abdo"
+    },
+    {
+      "nameEnglish": "Pets Haven Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Kafr Abdo"
+    },
+    {
+      "nameEnglish": "Dr. Pets",
+      "nameArabic": null,
+      "accept": ["Dr Pets Veterinary Center"],
+      "governorate": "Alexandria",
+      "area": "Asafra"
+    },
+    {
+      "nameEnglish": "Vision Vet Center",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Sidi Gaber"
+    },
+    {
+      "nameEnglish": "Pet Cure Vet Clinic",
+      "nameArabic": null,
+      "accept": ["Pet Cure"],
+      "governorate": "Alexandria",
+      "area": "Sidi Bishr"
+    },
+    {
+      "nameEnglish": "Al-Qadi Veterinary Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Bolkly"
+    },
+    {
+      "nameEnglish": "Royal Veterinary Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Louran"
+    },
+    {
+      "nameEnglish": "Dr. Nour Veterinary Center",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Sidi Bishr"
+    },
+    {
+      "nameEnglish": "Alexandria Pet Center",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Miami / Smouha / Agami"
+    },
+    {
+      "nameEnglish": "Alex Pet Veterinary Center",
+      "nameArabic": null,
+      "accept": ["Alex Pet"],
+      "governorate": "Alexandria",
+      "area": "Ibrahimia"
+    },
+    {
+      "nameEnglish": "Freedom Veterinary Clinics",
+      "nameArabic": null,
+      "accept": ["Freedom Veterinary Clinic"],
+      "governorate": "Alexandria",
+      "area": "Ibrahimia"
+    },
+    {
+      "nameEnglish": "Elite Veterinary Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Louran"
+    },
+    {
+      "nameEnglish": "Alivi Veterinary Hospital",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Agami"
+    },
+    {
+      "nameEnglish": "Enor Veterinary Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Miami"
+    },
+    {
+      "nameEnglish": "Pet Life Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Sporting"
+    },
+    {
+      "nameEnglish": "Victoria Veterinary Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Victoria"
+    },
+    {
+      "nameEnglish": "Egy Pets Veterinary Clinic",
+      "nameArabic": null,
+      "accept": ["Egy Pets"],
+      "governorate": "Alexandria",
+      "area": "Saba Pasha"
+    },
+    {
+      "nameEnglish": "Zad Veterinary Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "El Falaki"
+    },
+    {
+      "nameEnglish": "Bacos Veterinary Clinic",
+      "nameArabic": null,
+      "accept": ["Bacchus Veterinary Clinic"],
+      "governorate": "Alexandria",
+      "area": "Bacchus"
+    },
+    {
+      "nameEnglish": "Orca Vet Center",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Louran"
+    },
+    {
+      "nameEnglish": "Dr. Wessam Tawfik Veterinary Center",
+      "nameArabic": null,
+      "accept": ["Dr. Wissam Tawfik Veterinary Center"],
+      "governorate": "Alexandria",
+      "area": "Mandara"
+    },
+    {
+      "nameEnglish": "Kashif Vet Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Saba Pasha"
+    },
+    {
+      "nameEnglish": "Stanley Veterinary Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Stanley"
+    },
+    {
+      "nameEnglish": "Petsia Veterinary Clinics",
+      "nameArabic": null,
+      "accept": ["Petsia"],
+      "governorate": "Alexandria",
+      "area": "Sidi Bishr"
+    },
+    {
+      "nameEnglish": "Pets Empire Clinic",
+      "nameArabic": null,
+      "accept": ["Pets Empire"],
+      "governorate": "Alexandria",
+      "area": "Ibrahimia"
+    },
+    {
+      "nameEnglish": "Canadian Veterinary Hospital",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Camp Shezar"
+    },
+    {
+      "nameEnglish": "Riyada Vet Clinic",
+      "nameArabic": "عيادة الريادة البيطرية",
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Smouha"
+    },
+    {
+      "nameEnglish": "Sporting Veterinary Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Sporting"
+    },
+    {
+      "nameEnglish": "Animal Planet Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Sporting"
+    },
+    {
+      "nameEnglish": "Green For Animals Hospital",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Smouha"
+    },
+    {
+      "nameEnglish": "Dr. Samer Veterinary Center",
+      "nameArabic": "مركز د سامر البيطرى",
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Smouha"
+    },
+    {
+      "nameEnglish": "Smouha Vet Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Smouha"
+    },
+    {
+      "nameEnglish": "Healthy Pets Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Alexandria",
+      "area": "Smouha"
+    },
+
+    {
+      "nameEnglish": "Port Said Vet Center",
+      "nameArabic": "مركز بورسعيد البيطرى",
+      "accept": [],
+      "governorate": "Port Said",
+      "area": "Dawahy"
+    },
+    {
+      "nameEnglish": "Port Said Veterinary Clinic",
+      "nameArabic": "عيادة بورسعيد البيطرية",
+      "accept": [],
+      "governorate": "Port Said",
+      "area": "Sharq / Port Fuad"
+    },
+    {
+      "nameEnglish": "Portfouad Veterinary Clinic",
+      "nameArabic": "عيادة بورفؤاد البيطرية",
+      "accept": ["Port Fouad Veterinary Clinic"],
+      "governorate": "Port Said",
+      "area": "Port Fuad"
+    },
+    {
+      "nameEnglish": "Fishara Pets Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Port Said",
+      "area": "unknown"
+    },
+    {
+      "nameEnglish": "Vet Care Point",
+      "nameArabic": "مركز الرعاية البيطرية",
+      "accept": [],
+      "governorate": "Port Said",
+      "area": "unknown"
+    },
+    {
+      "nameEnglish": "Dr Youssef Eldesoky Vet Clinic",
+      "nameArabic": null,
+      "accept": [],
+      "governorate": "Port Said",
+      "area": "Sharq"
+    }
+  ]
+}
