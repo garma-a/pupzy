@@ -4253,4 +4253,248 @@ describe('AdminJS HTTP security and resource behavior', () => {
       assert.equal((await state(id)).profile_picture_url, null);
     });
   });
+  describe("closing a target's open reports whenever it is actioned", () => {
+    const headers = () => ({
+      cookie: `${superCookie}; ${superCsrf.cookie}`,
+      origin: baseUrl,
+      'x-xsrf-token': superCsrf.token,
+      'content-type': 'application/json',
+    });
+    const act = async (resource, id, action, payload = { reason: 'Policy violation' }) => {
+      const response = await fetch(`${baseUrl}/admin/api/resources/${resource}/records/${id}/${action}`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify(payload),
+      });
+      return (await response.json()).notice;
+    };
+    const newUser = async (label, { banned = false } = {}) =>
+      (
+        await database.pool.query(
+          `INSERT INTO users (firebase_user_id, email, full_name, is_banned, banned_at, banned_by_admin_id)
+           VALUES ($1, $2, $3, $4, CASE WHEN $4 THEN now() END, CASE WHEN $4 THEN $5::uuid END) RETURNING id`,
+          [`close-${label}`, `close-${label}@example.com`, `Close ${label}`, banned, principals.adminId],
+        )
+      ).rows[0].id;
+    const newPost = (userId, title) =>
+      insertPost(database.pool, { userId, cityId: principals.cityId, title, moderationStatus: 'CLEAN' });
+    const newComment = async (postId, authorId, text = 'A comment', parentId = null) =>
+      (
+        await database.pool.query(
+          `INSERT INTO comments (post_id, author_id, parent_id, text, status) VALUES ($1, $2, $3, $4, 'ACTIVE') RETURNING id`,
+          [postId, authorId, parentId, text],
+        )
+      ).rows[0].id;
+    const reportPost = async (postId, reporterId) =>
+      (
+        await database.pool.query(
+          `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [postId, reporterId],
+        )
+      ).rows[0].id;
+    const reportComment = async (commentId, reporterId) =>
+      (
+        await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [commentId, reporterId],
+        )
+      ).rows[0].id;
+    const closed = async (table, id) =>
+      (
+        await database.pool.query(
+          `SELECT reviewed_at IS NOT NULL AS closed, review_outcome, reviewed_by_admin_id FROM ${table} WHERE id = $1`,
+          [id],
+        )
+      ).rows[0];
+    const audit = async (targetId, type) =>
+      (
+        await database.pool.query(`SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = $2`, [
+          targetId,
+          type,
+        ])
+      ).rows.map((row) => row.metadata);
+    const expectClosedByAction = async (table, id) =>
+      assert.deepEqual(await closed(table, id), {
+        closed: true,
+        review_outcome: 'ACTION_TAKEN',
+        reviewed_by_admin_id: principals.adminId,
+      });
+
+    it('removing a Post closes its Post Reports and the Comment Reports on its discussion, and restoring reopens nothing', async () => {
+      const owner = await newUser('remove-owner');
+      const reporter = await newUser('remove-reporter');
+      const postId = await newPost(owner, 'Post to remove');
+      const otherPostId = await newPost(owner, 'Other post stays');
+      const commentId = await newComment(postId, owner);
+      const otherCommentId = await newComment(otherPostId, owner);
+      const postReport = await reportPost(postId, reporter);
+      const commentReport = await reportComment(commentId, reporter);
+      const otherCommentReport = await reportComment(otherCommentId, reporter);
+
+      assert.equal((await act('posts', postId, 'removePost')).type, 'success');
+
+      await expectClosedByAction('post_reports', postReport);
+      await expectClosedByAction('comment_reports', commentReport);
+      assert.equal((await closed('comment_reports', otherCommentReport)).closed, false, 'another Post is untouched');
+      assert.equal(
+        (await database.pool.query(`SELECT status FROM comments WHERE id = $1`, [commentId])).rows[0].status,
+        'ACTIVE',
+        'the comment itself is not changed',
+      );
+      const [metadata] = await audit(postId, 'POST_REMOVED');
+      assert.deepEqual(metadata.closedPostReportIds, [postReport]);
+      assert.deepEqual(metadata.closedCommentReportIds, [commentReport]);
+
+      assert.equal((await act('posts', postId, 'restorePost', {})).type, 'success');
+      await expectClosedByAction('post_reports', postReport);
+      await expectClosedByAction('comment_reports', commentReport);
+    });
+
+    it('approving a Post closes its Post Reports as no action; flagging keeps them open; restoring does not touch them', async () => {
+      const owner = await newUser('approve-owner');
+      const reporter = await newUser('approve-reporter');
+      const approved = await newPost(owner, 'Post to approve');
+      await database.pool.query(`UPDATE posts SET moderation_status = 'FLAGGED' WHERE id = $1`, [approved]);
+      const approvedReport = await reportPost(approved, reporter);
+      const approvedCommentReport = await reportComment(await newComment(approved, owner), reporter);
+
+      assert.equal((await act('posts', approved, 'approvePost', {})).type, 'success');
+      assert.deepEqual(await closed('post_reports', approvedReport), {
+        closed: true,
+        review_outcome: 'NO_ACTION',
+        reviewed_by_admin_id: principals.adminId,
+      });
+      assert.equal(
+        (await closed('comment_reports', approvedCommentReport)).closed,
+        false,
+        "approving does not touch the Post's Comment Reports",
+      );
+      assert.deepEqual((await audit(approved, 'POST_APPROVED'))[0].closedPostReportIds, [approvedReport]);
+
+      const flagged = await newPost(owner, 'Post to flag');
+      const flaggedReport = await reportPost(flagged, reporter);
+      assert.equal((await act('posts', flagged, 'flagPost', { reason: 'Looks staged' })).type, 'success');
+      assert.equal((await closed('post_reports', flaggedReport)).closed, false, 'flagging keeps the case in the queue');
+      assert.equal((await audit(flagged, 'POST_FLAGGED'))[0], null);
+
+      const removed = await newPost(owner, 'Removed with a stale report');
+      await database.pool.query(`UPDATE posts SET status = 'REMOVED' WHERE id = $1`, [removed]);
+      const staleReport = await reportPost(removed, reporter);
+      assert.equal((await act('posts', removed, 'restorePost', {})).type, 'success');
+      assert.equal((await closed('post_reports', staleReport)).closed, false, 'restoring closes nothing');
+      assert.equal((await audit(removed, 'POST_RESTORED'))[0], null);
+    });
+
+    it('hiding, image-hiding and removing a Comment each close its open reports as action taken', async () => {
+      const author = await newUser('comment-author');
+      const reporter = await newUser('comment-reporter');
+      const postId = await newPost(author, 'Comment actions post');
+      await database.pool.query(`UPDATE posts SET comment_count = 3 WHERE id = $1`, [postId]);
+
+      const hiddenId = await newComment(postId, author, 'To hide');
+      const hiddenReport = await reportComment(hiddenId, reporter);
+      assert.equal((await act('comments', hiddenId, 'hideComment')).type, 'success');
+      await expectClosedByAction('comment_reports', hiddenReport);
+      assert.deepEqual((await audit(hiddenId, 'COMMENT_HIDDEN'))[0].closedCommentReportIds, [hiddenReport]);
+      const hidden = (await database.pool.query(`SELECT status FROM comments WHERE id = $1`, [hiddenId])).rows[0];
+      assert.equal(hidden.status, 'HIDDEN');
+      assert.equal(
+        (await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId])).rows[0].comment_count,
+        2,
+        'hiding takes the Comment out of the count like the app does',
+      );
+      assert.equal((await act('comments', hiddenId, 'restoreComment', {})).type, 'success');
+      await expectClosedByAction('comment_reports', hiddenReport);
+
+      const imageId = await newComment(postId, author, 'With images');
+      await database.pool.query(
+        `INSERT INTO comment_media (comment_id, storage_key, sha256, width, height, file_size_bytes, file_content_type, display_order)
+         VALUES ($1, 'comments/close/one.webp', repeat('d', 64), 10, 10, 100, 'image/webp', 0)`,
+        [imageId],
+      );
+      const imageReport = await reportComment(imageId, reporter);
+      assert.equal((await act('comments', imageId, 'hideCommentImages')).type, 'success');
+      assert.equal(
+        (await database.pool.query(`SELECT status FROM comments WHERE id = $1`, [imageId])).rows[0].status,
+        'IMAGE_HIDDEN',
+      );
+      await expectClosedByAction('comment_reports', imageReport);
+      assert.deepEqual((await audit(imageId, 'COMMENT_IMAGES_HIDDEN'))[0].closedCommentReportIds, [imageReport]);
+
+      const removedId = await newComment(postId, author, 'To remove');
+      const removedReport = await reportComment(removedId, reporter);
+      assert.equal((await act('comments', removedId, 'removeComment')).type, 'success');
+      await expectClosedByAction('comment_reports', removedReport);
+      assert.deepEqual((await audit(removedId, 'COMMENT_REMOVED'))[0].closedCommentReportIds, [removedReport]);
+
+      const textOnly = await newComment(postId, author, 'No images');
+      assert.equal((await act('comments', textOnly, 'hideCommentImages')).type, 'error', 'needs images');
+    });
+
+    it("banning closes Account Reports; with the post cascade it also closes the removed Posts' reports, not reports on content left visible", async () => {
+      const target = await newUser('ban-target');
+      const reporter = await newUser('ban-reporter');
+      const postId = await newPost(target, 'Ban target post');
+      const otherAuthor = await newUser('ban-other');
+      const discussionComment = await newComment(postId, otherAuthor, 'On the target post');
+      const ownComment = await newComment(await newPost(otherAuthor, 'Elsewhere'), target, 'Target comment elsewhere');
+      const postReport = await reportPost(postId, reporter);
+      const discussionReport = await reportComment(discussionComment, reporter);
+      const ownCommentReport = await reportComment(ownComment, reporter);
+      const accountReport = (
+        await database.pool.query(
+          `INSERT INTO account_reports (reporter_id, reported_user_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [reporter, target],
+        )
+      ).rows[0].id;
+
+      assert.equal((await act('users', target, 'banUser', { reason: 'Spam', alsoRemovePosts: true })).type, 'success');
+
+      await expectClosedByAction('account_reports', accountReport);
+      await expectClosedByAction('post_reports', postReport);
+      await expectClosedByAction('comment_reports', discussionReport);
+      assert.equal(
+        (await closed('comment_reports', ownCommentReport)).closed,
+        false,
+        "the ban leaves the user's own Comments visible, so their reports stay open",
+      );
+      const [metadata] = await audit(target, 'USER_BANNED');
+      assert.deepEqual(metadata.closedAccountReportIds, [accountReport]);
+      assert.deepEqual(metadata.closedPostReportIds, [postReport]);
+      assert.deepEqual(metadata.closedCommentReportIds, [discussionReport]);
+
+      assert.equal((await act('users', target, 'unbanUser', {})).type, 'success');
+      await expectClosedByAction('account_reports', accountReport);
+    });
+
+    it('a ban without the post cascade closes only Account Reports', async () => {
+      const target = await newUser('ban-plain');
+      const reporter = await newUser('ban-plain-reporter');
+      const postId = await newPost(target, 'Stays active');
+      const postReport = await reportPost(postId, reporter);
+      const accountReport = (
+        await database.pool.query(
+          `INSERT INTO account_reports (reporter_id, reported_user_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [reporter, target],
+        )
+      ).rows[0].id;
+      assert.equal((await act('users', target, 'banUser', { reason: 'Spam', alsoRemovePosts: false })).type, 'success');
+      await expectClosedByAction('account_reports', accountReport);
+      assert.equal((await closed('post_reports', postReport)).closed, false);
+      assert.equal((await audit(target, 'USER_BANNED'))[0].closedPostReportIds, undefined);
+    });
+
+    it('Review with No Action on a Comment Report records the outcome and reviewer through the API', async () => {
+      const author = await newUser('noaction-author');
+      const reporter = await newUser('noaction-reporter');
+      const commentId = await newComment(await newPost(author, 'No action post'), author);
+      const report = await reportComment(commentId, reporter);
+      assert.equal((await act('comment_reports', report, 'reviewWithNoAction', { reason: '' })).type, 'success');
+      assert.deepEqual(await closed('comment_reports', report), {
+        closed: true,
+        review_outcome: 'NO_ACTION',
+        reviewed_by_admin_id: principals.adminId,
+      });
+    });
+  });
 });

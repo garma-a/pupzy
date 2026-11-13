@@ -45,6 +45,10 @@ export const ACTION_CONSEQUENCES = {
     'Removes the Post from discovery and notifies the owner with this reason. Media and discussion are retained, and an administrator can restore the Post later.',
   removeProfilePhoto:
     "Clears this user's profile photo and queues the stored image for deletion. The user keeps their account and can upload a new photo; the sign-in provider's picture is not applied again.",
+  hideComment:
+    "Hides this Comment from everyone but staff, takes it out of the Post's comment count and closes its open Comment Reports as action taken. An administrator can restore it later.",
+  hideCommentImages:
+    "Hides only this Comment's images from users (the text stays) and closes its open Comment Reports as action taken. An administrator can restore it later.",
   removeComment:
     'Permanently removes this Comment, queues its images for deletion and closes its open Comment Reports. This cannot be undone.',
 };
@@ -56,6 +60,8 @@ export const ACTION_LABELS = {
   removePost: 'Remove Post',
   removeProfilePhoto: 'Remove Profile Photo',
   removeComment: 'Remove Comment',
+  hideComment: 'Hide Comment',
+  hideCommentImages: 'Hide Comment Images',
   reviewWithNoAction: 'Review with No Action',
 };
 
@@ -67,12 +73,13 @@ export const ACTION_LABELS = {
 export const CONFIRM_ONLY_ACTIONS = {
   approvePost: {
     label: 'Approve Post',
-    consequence: 'Marks this Post as clean, removes it from the review queue and closes its open Post Reports.',
+    consequence:
+      'Marks this Post as clean, removes it from the review queue and closes its open Post Reports as reviewed with no action.',
   },
   restorePost: {
     label: 'Restore Post',
     consequence:
-      'Returns this removed Post to Active so it appears in discovery again and closes its open Post Reports.',
+      'Returns this removed Post to Active so it appears in discovery again. Reports already closed stay closed.',
   },
   unbanUser: {
     label: 'Unban User',

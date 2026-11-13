@@ -1,6 +1,7 @@
 import {
   actionResponse,
   capturePostCompletion,
+  closeOpenCommentReportsForPosts,
   closeOpenPostReports,
   enqueuePushDeliveries,
   findLostReportType,
@@ -314,7 +315,8 @@ export function buildPostActions(pool, component, cache) {
              WHERE id = $1`,
             [row.id, adminId],
           );
-          const closedPostReportIds = await closeOpenPostReports(client, row.id, adminId);
+          // Approving says the Post is fine, so its open reports were unfounded.
+          const closedPostReportIds = await closeOpenPostReports(client, row.id, adminId, 'NO_ACTION');
           return { closedPostReportIds };
         },
       },
@@ -355,8 +357,7 @@ export function buildPostActions(pool, component, cache) {
              WHERE id = $1`,
             [row.id, reason, adminId],
           );
-          const closedPostReportIds = await closeOpenPostReports(client, row.id, adminId);
-          return { closedPostReportIds };
+          // Flagging only marks the Post for review: its reports stay open so the case stays in the queue.
         },
       },
       cache,
@@ -398,7 +399,8 @@ export function buildPostActions(pool, component, cache) {
             type: 'POST_REMOVED_BY_ADMIN',
           });
           const closedPostReportIds = await closeOpenPostReports(client, row.id, adminId);
-          return { closedPostReportIds };
+          const closedCommentReportIds = await closeOpenCommentReportsForPosts(client, [row.id], adminId);
+          return { closedPostReportIds, closedCommentReportIds };
         },
       },
       cache,
@@ -424,8 +426,9 @@ export function buildPostActions(pool, component, cache) {
              WHERE id = $1`,
             [row.id, adminId],
           );
-          const closedPostReportIds = await closeOpenPostReports(client, row.id, adminId);
-          return { closedPostReportIds };
+          // Nothing to close: a Removed Post cannot receive new reports (the API answers "not found"
+          // while holding the same row lock) and removal already closed the open ones. Closed reports
+          // are never reopened.
         },
       },
       cache,

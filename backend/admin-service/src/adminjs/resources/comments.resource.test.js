@@ -71,4 +71,23 @@ describe('AdminJS Comments Resource & Actions (Ticket 09)', () => {
       'without the component the plain text field stays',
     );
   });
+
+  describe('hiding a Comment from its page or its report', () => {
+    const { hideComment, hideCommentImages, removeComment } = buildCommentActions(pool, components.ModerationAction);
+
+    it('offers Hide Comment only for visible comments and Hide Comment Images only for active ones', () => {
+      const at = (status) => ({ record: { params: { status } } });
+      assert.equal(hideComment.component, 'ModerationActionMock');
+      assert.deepEqual(
+        ['ACTIVE', 'IMAGE_HIDDEN', 'HIDDEN', 'DELETED', 'REMOVED'].map((status) => hideComment.isVisible(at(status))),
+        [true, true, false, false, false],
+      );
+      assert.deepEqual(
+        ['ACTIVE', 'IMAGE_HIDDEN', 'HIDDEN', 'REMOVED'].map((status) => hideCommentImages.isVisible(at(status))),
+        [true, false, false, false],
+      );
+      assert.equal(removeComment.isVisible(at('HIDDEN')), true);
+      assert.equal(removeComment.isVisible(at('REMOVED')), false);
+    });
+  });
 });

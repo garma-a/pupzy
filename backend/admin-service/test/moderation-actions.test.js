@@ -1036,7 +1036,7 @@ describe('audited report outcomes', () => {
     assert.equal(post.status, 'REMOVED');
   });
 
-  it('closes open Post Reports on approval, flagging, and restoration', async () => {
+  it('closes open Post Reports as no action on approval, keeps them open on flagging, and leaves them alone on restoration', async () => {
     const actions = buildPostActions(database.pool, 'ModerationAction');
     const authorId = await insertUser('transition-author');
     const reporter = await insertUser('transition-reporter');
@@ -1051,7 +1051,7 @@ describe('audited report outcomes', () => {
     assert.equal((await call(actions.approvePost, approvedPost)).notice.type, 'success');
     let row = (await database.pool.query(`SELECT review_outcome FROM post_reports WHERE id = $1`, [approvedReport]))
       .rows[0];
-    assert.equal(row.review_outcome, 'ACTION_TAKEN');
+    assert.equal(row.review_outcome, 'NO_ACTION');
     let audit = (
       await database.pool.query(
         `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_APPROVED'`,
@@ -1068,16 +1068,20 @@ describe('audited report outcomes', () => {
     });
     const flaggedReport = await insertPostReport({ postId: flaggedPost, reporterId: reporter });
     assert.equal((await call(actions.flagPost, flaggedPost, { reason: 'Manual review' })).notice.type, 'success');
-    row = (await database.pool.query(`SELECT review_outcome FROM post_reports WHERE id = $1`, [flaggedReport])).rows[0];
-    assert.equal(row.review_outcome, 'ACTION_TAKEN');
+    row = (
+      await database.pool.query(`SELECT reviewed_at, review_outcome FROM post_reports WHERE id = $1`, [flaggedReport])
+    ).rows[0];
+    assert.equal(row.reviewed_at, null, 'flagging keeps the report open');
+    assert.equal(row.review_outcome, null);
     audit = (
       await database.pool.query(
         `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_FLAGGED'`,
         [flaggedPost],
       )
     ).rows[0];
-    assert.deepEqual(audit.metadata.closedPostReportIds, [flaggedReport]);
+    assert.equal(audit.metadata, null);
 
+    // A Removed Post cannot receive reports, so restoring has nothing to close.
     const removedPost = await insertPost(database.pool, {
       userId: authorId,
       cityId: principals.cityId,
@@ -1086,15 +1090,8 @@ describe('audited report outcomes', () => {
     });
     const removedReport = await insertPostReport({ postId: removedPost, reporterId: reporter });
     assert.equal((await call(actions.restorePost, removedPost)).notice.type, 'success');
-    row = (await database.pool.query(`SELECT review_outcome FROM post_reports WHERE id = $1`, [removedReport])).rows[0];
-    assert.equal(row.review_outcome, 'ACTION_TAKEN');
-    audit = (
-      await database.pool.query(
-        `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_RESTORED'`,
-        [removedPost],
-      )
-    ).rows[0];
-    assert.deepEqual(audit.metadata.closedPostReportIds, [removedReport]);
+    row = (await database.pool.query(`SELECT reviewed_at FROM post_reports WHERE id = $1`, [removedReport])).rows[0];
+    assert.equal(row.reviewed_at, null);
   });
 
   it('closes every open Comment Report when a Comment is removed', async () => {

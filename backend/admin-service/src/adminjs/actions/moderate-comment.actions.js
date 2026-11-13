@@ -20,6 +20,11 @@ function getRecordProperty(record, property) {
 /** Resolves CDN purge URLs according to configured delivery policy (see `comment-media-url.js`). */
 export const getCommentMediaPurgeUrls = commentMediaPurgeUrls;
 
+/** Visible comments (not already hidden, removed or deleted) can be hidden by an administrator. */
+export const canHideComment = (status) => status === 'ACTIVE' || status === 'IMAGE_HIDDEN';
+/** Any comment that is not already permanently removed can be removed. */
+export const canRemoveComment = (status) => status !== 'REMOVED';
+
 function buildCommentAction(pool, component, definition, cache) {
   return {
     actionType: 'record',
@@ -80,7 +85,7 @@ export function buildCommentActions(pool, component, cache) {
           }
           return null;
         },
-        mutate: async (client, row) => {
+        mutate: async (client, row, adminId) => {
           if (row.status === 'HIDDEN') {
             if (row.parent_id) {
               const { rows: parentRows } = await client.query(`SELECT status FROM comments WHERE id = $1`, [
@@ -105,7 +110,69 @@ export function buildCommentActions(pool, component, cache) {
             }
           }
           await client.query(`UPDATE comments SET status = 'ACTIVE', updated_at = now() WHERE id = $1`, [row.id]);
-          const closedCommentReportIds = await closeOpenCommentReports(client, row.id);
+          const closedCommentReportIds = await closeOpenCommentReports(client, row.id, adminId);
+          return { closedCommentReportIds };
+        },
+      },
+      cache,
+    ),
+    hideComment: buildCommentAction(
+      pool,
+      component,
+      {
+        actionType: 'COMMENT_HIDDEN',
+        icon: 'EyeOff',
+        reasonRequired: true,
+        successMessage: 'Comment hidden.',
+        isVisible: (context) => canHideComment(getRecordProperty(context?.record, 'status')),
+        validate: (row) => (canHideComment(row.status) ? null : 'Only visible comments can be hidden.'),
+        // Same effects as the API's automatic hiding (CommentsRepository.reportComment).
+        mutate: async (client, row, adminId) => {
+          await client.query(`UPDATE comments SET status = 'HIDDEN', updated_at = now() WHERE id = $1`, [row.id]);
+          await client.query(`DELETE FROM post_pins WHERE comment_id = $1`, [row.id]);
+          if (row.parent_id) {
+            const { rows: parentRows } = await client.query(`SELECT status FROM comments WHERE id = $1`, [
+              row.parent_id,
+            ]);
+            if (parentRows[0] && parentRows[0].status !== 'REMOVED') {
+              await client.query(
+                `UPDATE comments SET reply_count = GREATEST(0, reply_count - 1), updated_at = now() WHERE id = $1`,
+                [row.parent_id],
+              );
+              await client.query(
+                `UPDATE posts SET comment_count = GREATEST(0, comment_count - 1), updated_at = now() WHERE id = $1`,
+                [row.post_id],
+              );
+            }
+          } else {
+            await client.query(
+              `UPDATE posts SET comment_count = GREATEST(0, comment_count - 1), updated_at = now() WHERE id = $1`,
+              [row.post_id],
+            );
+          }
+          const closedCommentReportIds = await closeOpenCommentReports(client, row.id, adminId);
+          return { closedCommentReportIds };
+        },
+      },
+      cache,
+    ),
+    hideCommentImages: buildCommentAction(
+      pool,
+      component,
+      {
+        actionType: 'COMMENT_IMAGES_HIDDEN',
+        icon: 'Image',
+        reasonRequired: true,
+        successMessage: 'Comment images hidden.',
+        isVisible: (context) => getRecordProperty(context?.record, 'status') === 'ACTIVE',
+        validate: async (row, client) => {
+          if (row.status !== 'ACTIVE') return 'Only active comments can have their images hidden.';
+          const { rows } = await client.query(`SELECT 1 FROM comment_media WHERE comment_id = $1 LIMIT 1`, [row.id]);
+          return rows.length === 0 ? 'This comment has no images.' : null;
+        },
+        mutate: async (client, row, adminId) => {
+          await client.query(`UPDATE comments SET status = 'IMAGE_HIDDEN', updated_at = now() WHERE id = $1`, [row.id]);
+          const closedCommentReportIds = await closeOpenCommentReports(client, row.id, adminId);
           return { closedCommentReportIds };
         },
       },
@@ -203,7 +270,7 @@ export function buildCommentActions(pool, component, cache) {
           // Removal and restoration both close every currently open Comment
           // Report for this Comment or Reply in the same transaction as the
           // moderation action and its audit entry.
-          const closedCommentReportIds = await closeOpenCommentReports(client, row.id);
+          const closedCommentReportIds = await closeOpenCommentReports(client, row.id, adminId);
           return { closedCommentReportIds };
         },
       },
