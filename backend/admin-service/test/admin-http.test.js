@@ -4405,6 +4405,9 @@ describe('AdminJS HTTP security and resource behavior', () => {
       );
       assert.equal((await act('comments', hiddenId, 'restoreComment', {})).type, 'success');
       await expectClosedByAction('comment_reports', hiddenReport);
+      assert.equal((await audit(hiddenId, 'COMMENT_RESTORED'))[0], null, 'restoring closes nothing');
+      const lateReport = await reportComment(hiddenId, await newUser('comment-late-reporter'));
+      assert.equal((await closed('comment_reports', lateReport)).closed, false);
 
       const imageId = await newComment(postId, author, 'With images');
       await database.pool.query(

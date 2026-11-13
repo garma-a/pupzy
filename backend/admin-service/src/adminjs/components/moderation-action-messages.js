@@ -87,7 +87,7 @@ export const CONFIRM_ONLY_ACTIONS = {
   },
   restoreComment: {
     label: 'Restore Comment',
-    consequence: 'Marks this Comment clean and makes it visible again, and closes its open Comment Reports.',
+    consequence: 'Marks this Comment clean and makes it visible again. Reports already closed stay closed.',
   },
 };
 

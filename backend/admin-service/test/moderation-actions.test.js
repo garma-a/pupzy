@@ -1365,7 +1365,7 @@ describe('dashboard queries', () => {
   });
 
   describe('comment moderation actions', () => {
-    it('restores hidden comment, restores post comment count, marks reports reviewed, and writes audit row', async () => {
+    it('restores hidden comment, restores post comment count, leaves its reports alone, and writes audit row', async () => {
       const postId = await insertPost(database.pool, { ...principals, title: 'Comment post' });
       const commentRes = await database.pool.query(
         `INSERT INTO comments (post_id, author_id, text, status)
@@ -1375,11 +1375,23 @@ describe('dashboard queries', () => {
       );
       const commentId = commentRes.rows[0].id;
 
-      await database.pool.query(
-        `INSERT INTO comment_reports (comment_id, reporter_id, reason, details)
-         VALUES ($1, $2, 'SPAM', 'Spam details')`,
-        [commentId, principals.userId],
+      const otherReporter = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name) VALUES ('restore-other', 'restore-other@example.com', 'Other') RETURNING id`,
       );
+      const openReport = (
+        await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason, details)
+           VALUES ($1, $2, 'SPAM', 'Spam details') RETURNING id`,
+          [commentId, principals.userId],
+        )
+      ).rows[0].id;
+      const closedReport = (
+        await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason, reviewed_at, reviewed_by_admin_id, review_outcome)
+           VALUES ($1, $2, 'OTHER', now() - interval '1 hour', $3, 'ACTION_TAKEN') RETURNING id`,
+          [commentId, otherReporter.rows[0].id, principals.adminId],
+        )
+      ).rows[0].id;
 
       const actions = buildCommentActions(database.pool, 'ModerationAction');
       const response = await call(actions.restoreComment, commentId, {
@@ -1393,10 +1405,17 @@ describe('dashboard queries', () => {
       const post = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId]);
       assert.equal(post.rows[0].comment_count, 1);
 
-      const reports = await database.pool.query(`SELECT reviewed_at FROM comment_reports WHERE comment_id = $1`, [
-        commentId,
-      ]);
-      assert.notEqual(reports.rows[0].reviewed_at, null);
+      // Restoring closes nothing and reopens nothing.
+      const reports = await database.pool.query(
+        `SELECT id, reviewed_at IS NOT NULL AS closed, review_outcome, reviewed_by_admin_id FROM comment_reports WHERE comment_id = $1`,
+        [commentId],
+      );
+      const byId = Object.fromEntries(reports.rows.map((row) => [row.id, row]));
+      assert.equal(byId[openReport].closed, false, 'an open report stays open');
+      assert.equal(byId[openReport].review_outcome, null);
+      assert.equal(byId[closedReport].closed, true, 'a closed report stays closed');
+      assert.equal(byId[closedReport].review_outcome, 'ACTION_TAKEN');
+      assert.equal(byId[closedReport].reviewed_by_admin_id, principals.adminId);
 
       const audit = await database.pool.query(
         `SELECT action_type, reason, target_type, metadata FROM moderation_actions WHERE target_id = $1`,
@@ -1405,7 +1424,7 @@ describe('dashboard queries', () => {
       assert.equal(audit.rows[0].action_type, 'COMMENT_RESTORED');
       assert.equal(audit.rows[0].target_type, 'COMMENT');
       assert.equal(audit.rows[0].reason, 'Restoring compliant comment');
-      assert.equal(audit.rows[0].metadata.closedCommentReportIds.length, 1);
+      assert.equal(audit.rows[0].metadata, null, 'nothing was closed, so nothing is listed');
     });
 
     it('rejects restoration of active, deleted, or removed comment', async () => {

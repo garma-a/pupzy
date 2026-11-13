@@ -85,7 +85,7 @@ export function buildCommentActions(pool, component, cache) {
           }
           return null;
         },
-        mutate: async (client, row, adminId) => {
+        mutate: async (client, row) => {
           if (row.status === 'HIDDEN') {
             if (row.parent_id) {
               const { rows: parentRows } = await client.query(`SELECT status FROM comments WHERE id = $1`, [
@@ -110,8 +110,8 @@ export function buildCommentActions(pool, component, cache) {
             }
           }
           await client.query(`UPDATE comments SET status = 'ACTIVE', updated_at = now() WHERE id = $1`, [row.id]);
-          const closedCommentReportIds = await closeOpenCommentReports(client, row.id, adminId);
-          return { closedCommentReportIds };
+          // Restoring is the opposite of acting on the Comment, so it leaves its reports alone: the hide or
+          // removal before it already closed them, and a closed report is never reopened.
         },
       },
       cache,
