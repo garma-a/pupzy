@@ -11,6 +11,7 @@ import {
 
 const CITY_ID = '01916327-0000-7000-8000-0000000000c1';
 const ADMIN_ID = '01916327-0000-7000-8000-0000000000a1';
+const KEY = '3f6c1f0e-8a52-4b6e-9d57-0a6f3f0b7c11';
 
 const draft = (overrides = {}) => ({
   titleEn: 'Vaccination week',
@@ -23,14 +24,20 @@ const draft = (overrides = {}) => ({
 });
 
 /** Fake pool: scripted answers by SQL text, and a record of everything run. */
-function fakePool({ count = 3, city = { id: CITY_ID, name_english: 'Cairo' } } = {}) {
+function fakePool({
+  count = 3,
+  city = { id: CITY_ID, name_english: 'Cairo' },
+  existing = null,
+  conflict = false,
+} = {}) {
   const log = [];
   const answer = (text, values) => {
     log.push({ text, values });
     if (/FROM cities/.test(text)) return { rows: city ? [city] : [] };
+    if (/FROM announcements WHERE request_key/.test(text)) return { rows: existing ? [existing] : [] };
     if (/count\(\*\)/.test(text)) return { rows: [{ count }] };
     if (/SELECT now\(\)/.test(text)) return { rows: [{ cutoff: new Date('2026-11-13T10:00:00.000Z') }] };
-    if (/INSERT INTO announcements/.test(text)) return { rows: [{ id: 'announcement-1' }] };
+    if (/INSERT INTO announcements/.test(text)) return { rows: conflict ? [] : [{ id: 'announcement-1' }] };
     if (/INSERT INTO moderation_actions/.test(text)) return { rows: [{ id: 'audit-1' }] };
     return { rows: [] };
   };
@@ -39,6 +46,16 @@ function fakePool({ count = 3, city = { id: CITY_ID, name_english: 'Cairo' } } =
 }
 
 const sentTexts = (pool) => pool.log.map((entry) => entry.text.trim().split(/\s+/).slice(0, 3).join(' '));
+
+const stored = (overrides = {}) => ({
+  audience: 'ALL',
+  audience_city_id: null,
+  title_en: 'Vaccination week',
+  body_en: 'Free rabies shots this week.',
+  title_ar: 'أسبوع التطعيم',
+  body_ar: 'تطعيم مجاني هذا الأسبوع.',
+  ...overrides,
+});
 
 describe('previewAnnouncement', () => {
   it('returns field errors without touching the database', async () => {
@@ -80,7 +97,10 @@ describe('previewAnnouncement', () => {
 
 describe('sendAnnouncement', () => {
   const send = (pool, overrides = {}, extra = {}) =>
-    sendAnnouncement(pool, { adminId: ADMIN_ID, payload: { ...draft(overrides), confirmedCount: 3, ...extra } });
+    sendAnnouncement(pool, {
+      adminId: ADMIN_ID,
+      payload: { ...draft(overrides), confirmedCount: 3, requestKey: KEY, ...extra },
+    });
 
   it('writes one announcement and one audit row in one transaction and creates no notifications', async () => {
     const pool = fakePool({ count: 3 });
@@ -124,7 +144,10 @@ describe('sendAnnouncement', () => {
   it('refuses a send that was not confirmed with a count', async () => {
     for (const confirmedCount of [undefined, null, '', 'many', -1, 1.5]) {
       const pool = fakePool();
-      const result = await sendAnnouncement(pool, { adminId: ADMIN_ID, payload: { ...draft(), confirmedCount } });
+      const result = await sendAnnouncement(pool, {
+        adminId: ADMIN_ID,
+        payload: { ...draft(), confirmedCount, requestKey: KEY },
+      });
       assert.equal(result.ok, false, String(confirmedCount));
       assert.match(result.error, /confirm/i);
       assert.equal(pool.log.length, 0);
@@ -155,6 +178,64 @@ describe('sendAnnouncement', () => {
     );
   });
 
+  it('rejects a send without a valid request key before touching the database', async () => {
+    for (const requestKey of [undefined, null, '', 'not-a-uuid', 42]) {
+      const pool = fakePool();
+      const result = await sendAnnouncement(pool, {
+        adminId: ADMIN_ID,
+        payload: { ...draft(), confirmedCount: 3, requestKey },
+      });
+      assert.equal(result.ok, false, String(requestKey));
+      assert.match(result.error, /request key/i);
+      assert.equal(pool.log.length, 0);
+    }
+  });
+
+  it('returns the existing announcement when the request key was already used', async () => {
+    const existing = { id: 'announcement-0', expected_recipients: 3, ...stored() };
+    const pool = fakePool({ existing });
+    const result = await send(pool);
+    assert.deepEqual(result, { ok: true, id: 'announcement-0', count: 3 });
+    assert.equal(
+      pool.log.some((entry) => /INSERT INTO/.test(entry.text)),
+      false,
+      'a replay writes neither an announcement nor an audit row',
+    );
+  });
+
+  it('refuses a key that was used for a different announcement', async () => {
+    const existing = { id: 'announcement-0', expected_recipients: 3, ...stored({ title_en: 'Something else' }) };
+    const result = await send(fakePool({ existing }));
+    assert.equal(result.ok, false);
+    assert.match(result.error, /different announcement/i);
+  });
+
+  it('treats a lost race on the request key as a replay and writes no audit row', async () => {
+    const existing = { id: 'announcement-0', expected_recipients: 3, ...stored() };
+    const pool = fakePool({ conflict: true });
+    let lookups = 0;
+    const original = pool.connect;
+    pool.connect = async () => {
+      const client = await original();
+      const query = client.query;
+      client.query = async (text, values) => {
+        if (/FROM announcements WHERE request_key/.test(text)) {
+          lookups += 1;
+          // Nothing yet at the first look; the other request's row after the conflict.
+          return { rows: lookups === 1 ? [] : [existing] };
+        }
+        return query(text, values);
+      };
+      return client;
+    };
+    const result = await send(pool);
+    assert.deepEqual(result, { ok: true, id: 'announcement-0', count: 3 });
+    assert.equal(
+      pool.log.some((entry) => /INSERT INTO moderation_actions/.test(entry.text)),
+      false,
+    );
+  });
+
   it('accepts the confirmed count as the string a form posts', async () => {
     const pool = fakePool({ count: 3 });
     const result = await send(pool, {}, { confirmedCount: '3' });
@@ -171,7 +252,7 @@ describe('announcement action handlers', () => {
     for (const build of [buildPreviewAnnouncementAction, buildSendAnnouncementAction]) {
       const pool = fakePool();
       const action = build(pool);
-      const response = await action.handler(request({ ...draft(), confirmedCount: 3 }), {}, asStaff);
+      const response = await action.handler(request({ ...draft(), confirmedCount: 3, requestKey: KEY }), {}, asStaff);
       assert.equal(response.notice.type, 'error');
       assert.match(response.notice.message, /super admin/i);
       assert.equal(pool.log.length, 0);
@@ -181,7 +262,7 @@ describe('announcement action handlers', () => {
   it('send answers with a success notice and the new record id', async () => {
     const pool = fakePool({ count: 3 });
     const response = await buildSendAnnouncementAction(pool).handler(
-      request({ ...draft(), confirmedCount: 3 }),
+      request({ ...draft(), confirmedCount: 3, requestKey: KEY }),
       {},
       asSuper,
     );
@@ -193,7 +274,7 @@ describe('announcement action handlers', () => {
   it('send answers a stale count with an error notice and the current count', async () => {
     const pool = fakePool({ count: 9 });
     const response = await buildSendAnnouncementAction(pool).handler(
-      request({ ...draft(), confirmedCount: 3 }),
+      request({ ...draft(), confirmedCount: 3, requestKey: KEY }),
       {},
       asSuper,
     );

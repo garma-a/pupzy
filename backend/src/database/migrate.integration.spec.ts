@@ -269,6 +269,7 @@ describe('Database Migration Runner Integration', () => {
       'status',
       'audience_cutoff_at',
       'expected_recipients',
+      'request_key',
     ]) {
       expect(announcementNullMap[required]).toBe('NO');
     }
@@ -277,13 +278,14 @@ describe('Database Migration Runner Integration', () => {
     }
     const announcementIndexRes = await pool.query<{ indexname: string; indexdef: string }>(`
       SELECT indexname, indexdef FROM pg_indexes
-      WHERE indexname IN ('uq_notifications_announcement_recipient', 'idx_users_home_city_id', 'idx_announcements_work')
+      WHERE indexname IN ('uq_notifications_announcement_recipient', 'idx_users_home_city_id', 'idx_announcements_work', 'uq_announcements_request_key')
       ORDER BY indexname
     `);
     const announcementIndexes = Object.fromEntries(announcementIndexRes.rows.map((r) => [r.indexname, r.indexdef]));
     expect(announcementIndexes['uq_notifications_announcement_recipient']).toMatch(
       /UNIQUE INDEX .* \(announcement_id, recipient_id\) WHERE \(announcement_id IS NOT NULL\)/,
     );
+    expect(announcementIndexes['uq_announcements_request_key']).toMatch(/UNIQUE INDEX .* \(request_key\)/);
     expect(announcementIndexes['idx_users_home_city_id']).toMatch(/\(home_city_id, id\)/);
     expect(announcementIndexes['idx_announcements_work']).toMatch(/WHERE \(status = ANY/);
 

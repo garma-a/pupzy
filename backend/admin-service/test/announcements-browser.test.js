@@ -402,10 +402,53 @@ describe('Admin announcements real browser suite', { timeout: 240000 }, () => {
     }
   });
 
+  it('a double click on Send, and a replayed request, create one announcement', async () => {
+    const { page, errors } = await newPage([/Failed to load resource/]);
+    try {
+      const posts = [];
+      page.on('request', (request) => {
+        if (request.method() === 'POST' && request.url().endsWith('/actions/new')) posts.push(request.postData());
+      });
+      await loginSuper(page);
+      await openCompose(page);
+      await fillAnnouncement(page);
+      await page.click('[data-testid="announcement-preview"]');
+      await page.waitForSelector('[data-testid="announcement-continue"]');
+      await page.click('[data-testid="announcement-continue"]');
+      await page.waitForSelector('[data-testid="announcement-send"]');
+
+      await page.click('[data-testid="announcement-send"]', { clickCount: 2 });
+      await page.waitForSelector('[data-testid="announcement-show"]');
+
+      assert.ok(posts.length >= 1);
+      const keys = new Set(posts.map((body) => JSON.parse(body).requestKey));
+      assert.equal(keys.size, 1, 'every POST of one draft carries the same request key');
+      assert.match([...keys][0], /^[0-9a-f-]{36}$/);
+      // The same request replayed (a network retry) answers with the same announcement.
+      const replay = await page.evaluate(async (body) => {
+        const csrf = decodeURIComponent((document.cookie.match(/XSRF-TOKEN=([^;]+)/) ?? [])[1] ?? '');
+        const response = await fetch('/admin/api/resources/announcements/actions/new', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-xsrf-token': csrf },
+          body,
+        });
+        return response.json();
+      }, posts[0]);
+      assert.equal(replay.ok, true);
+      const rows = await dbAnnouncements();
+      assert.equal(rows.length, 1);
+      assert.equal(replay.id, rows[0].id);
+      assert.equal((await database.pool.query('SELECT count(*)::int AS n FROM moderation_actions')).rows[0].n, 1);
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
   it('the detail page follows the backend while the announcement is delivered', async () => {
     const { rows } = await database.pool.query(
-      `INSERT INTO announcements (audience, title_en, body_en, title_ar, body_ar, expected_recipients, sent_by_admin_id)
-       VALUES ('ALL', $1, $2, $3, $4, 200, (SELECT id FROM admin_users WHERE role = 'SUPER_ADMIN'))
+      `INSERT INTO announcements (request_key, audience, title_en, body_en, title_ar, body_ar, expected_recipients, sent_by_admin_id)
+       VALUES (uuidv7(), 'ALL', $1, $2, $3, $4, 200, (SELECT id FROM admin_users WHERE role = 'SUPER_ADMIN'))
        RETURNING id`,
       [ENGLISH_TITLE, ENGLISH_BODY, ARABIC_TITLE, ARABIC_BODY],
     );

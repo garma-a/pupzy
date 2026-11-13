@@ -1,5 +1,5 @@
 {
-  "id": "8aaf4011-bb1f-4fe4-b278-87d747b29452",
+  "id": "870cd45a-274d-4626-a562-f4b56639e22b",
   "prevId": "ca1b32d1-301a-40b8-a69b-2acfe4bbc706",
   "version": "7",
   "dialect": "postgresql",
@@ -2943,6 +2943,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "request_key": {
+          "name": "request_key",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "audience": {
           "name": "audience",
           "type": "announcement_audience",
@@ -3114,6 +3120,21 @@
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "uq_announcements_request_key": {
+          "name": "uq_announcements_request_key",
+          "columns": [
+            {
+              "expression": "request_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}

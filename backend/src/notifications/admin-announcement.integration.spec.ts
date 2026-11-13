@@ -129,9 +129,9 @@ describe('Admin Announcement fan-out (integration)', () => {
     const cityId = audience === 'CITY' ? (options.cityId ?? cairoId) : null;
     const count = options.expected ?? (await countEligible(audience, cityId));
     const { rows } = await dbHelper.pool.query<{ id: string }>(
-      `INSERT INTO announcements (sent_by_admin_id, audience, audience_city_id, title_en, body_en, title_ar, body_ar,
+      `INSERT INTO announcements (request_key, sent_by_admin_id, audience, audience_city_id, title_en, body_en, title_ar, body_ar,
                                   expected_recipients)
-       VALUES ($1, $2, $3, 'Vaccination week', 'Free rabies shots at partner clinics.',
+       VALUES (uuidv7(), $1, $2, $3, 'Vaccination week', 'Free rabies shots at partner clinics.',
                'أسبوع التطعيم', 'تطعيم مجاني ضد السعار في العيادات الشريكة.', $4)
        RETURNING id`,
       [adminId, audience, cityId, count],

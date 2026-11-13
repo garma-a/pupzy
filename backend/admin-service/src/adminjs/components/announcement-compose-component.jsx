@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router';
 import { Button } from '@adminjs/design-system';
 
 import AnnouncementCard from './announcement-card.jsx';
-import { BODY_MAX_LENGTH, TITLE_MAX_LENGTH, characterCount } from './announcement-limits.js';
+import { BODY_MAX_LENGTH, TITLE_MAX_LENGTH, characterCount, newRequestKey } from './announcement-limits.js';
 
 const api = new ApiClient();
 const helpers = new ViewHelpers();
@@ -199,6 +199,14 @@ export default function AnnouncementCompose({ resource }) {
   const [busy, setBusy] = useState(false);
   const [stale, setStale] = useState(null);
 
+  // One idempotency key per draft. Editing anything makes it a new draft, so a retry of the same
+  // draft (double click, network replay) cannot send twice, but a changed draft never answers with
+  // an earlier announcement.
+  const requestKey = useRef(newRequestKey());
+  useEffect(() => {
+    requestKey.current = newRequestKey();
+  }, [form]);
+
   const set = (field) => (value) => {
     setForm((previous) => ({ ...previous, [field]: value }));
     setErrors((previous) => (previous[field] ? { ...previous, [field]: undefined } : previous));
@@ -246,7 +254,7 @@ export default function AnnouncementCompose({ resource }) {
         resourceId: resource.id,
         actionName: 'new',
         method: 'post',
-        data: { ...draftPayload(form), confirmedCount: preview.count },
+        data: { ...draftPayload(form), confirmedCount: preview.count, requestKey: requestKey.current },
       });
       const result = response.data;
       if (result.ok) {

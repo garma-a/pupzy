@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { after, before, beforeEach, describe, it } from 'node:test';
@@ -208,7 +209,7 @@ describe('Admin announcements (HTTP, real database)', () => {
         assert.equal(result.notice?.type, 'error', `${action} must be refused`);
         assert.ok(!result.id && !result.count, `${action} must return no data`);
       };
-      await refused('new', { ...draft(), confirmedCount: eligibleCount() });
+      await refused('new', { ...draft(), requestKey: randomUUID(), confirmedCount: eligibleCount() });
       await refused('previewAnnouncement', draft());
       for (const action of ['list', 'search']) {
         const result = await api(staffSession, 'announcements', action, null, { method: 'GET' });
@@ -223,8 +224,8 @@ describe('Admin announcements (HTTP, real database)', () => {
 
     it('cannot read an announcement either', async () => {
       const { rows } = await database.pool.query(
-        `INSERT INTO announcements (audience, title_en, body_en, title_ar, body_ar, expected_recipients)
-         VALUES ('ALL', 'Hello', 'World', 'مرحبا', 'عالم', 1) RETURNING id`,
+        `INSERT INTO announcements (request_key, audience, title_en, body_en, title_ar, body_ar, expected_recipients)
+         VALUES (uuidv7(), 'ALL', 'Hello', 'World', 'مرحبا', 'عالم', 1) RETURNING id`,
       );
       const response = await fetch(`${baseUrl}/admin/api/resources/announcements/records/${rows[0].id}/show`, {
         headers: { cookie: staffSession.cookie },
@@ -279,7 +280,11 @@ describe('Admin announcements (HTTP, real database)', () => {
 
     it('sending writes one announcement and one audit row, and no notifications inline', async () => {
       const count = eligibleCount();
-      const result = await api(superSession, 'announcements', 'new', { ...draft(), confirmedCount: count });
+      const result = await api(superSession, 'announcements', 'new', {
+        ...draft(),
+        requestKey: randomUUID(),
+        confirmedCount: count,
+      });
       assert.equal(result.ok, true);
       assert.equal(result.count, count);
       assert.equal(result.notice.type, 'success');
@@ -316,6 +321,7 @@ describe('Admin announcements (HTTP, real database)', () => {
       const count = eligibleCount('CAIRO');
       const result = await api(superSession, 'announcements', 'new', {
         ...draft({ audience: 'CITY', cityId: cairoId }),
+        requestKey: randomUUID(),
         confirmedCount: count,
       });
       assert.equal(result.ok, true);
@@ -329,6 +335,7 @@ describe('Admin announcements (HTTP, real database)', () => {
     it('refuses a send whose confirmed count is stale and reports the current one', async () => {
       const result = await api(superSession, 'announcements', 'new', {
         ...draft(),
+        requestKey: randomUUID(),
         confirmedCount: eligibleCount() + 3,
       });
       assert.equal(result.ok, false);
@@ -338,15 +345,95 @@ describe('Admin announcements (HTTP, real database)', () => {
       assert.equal(await rowCount('moderation_actions'), 0);
     });
 
+    it('sends once when the same request is posted twice at the same time', async () => {
+      const body = { ...draft(), requestKey: randomUUID(), confirmedCount: eligibleCount() };
+      const [first, second] = await Promise.all([
+        api(superSession, 'announcements', 'new', body),
+        api(superSession, 'announcements', 'new', body),
+      ]);
+      assert.equal(first.ok, true);
+      assert.equal(second.ok, true);
+      assert.equal(first.id, second.id, 'both responses name the one announcement');
+      assert.equal(first.count, second.count);
+      assert.equal(first.notice.type, 'success');
+      assert.equal(second.notice.type, 'success');
+      assert.equal(await rowCount('announcements'), 1);
+      assert.equal(await rowCount('moderation_actions'), 1);
+    });
+
+    it('a sequential retry returns the same announcement and writes nothing more', async () => {
+      const body = { ...draft(), requestKey: randomUUID(), confirmedCount: eligibleCount() };
+      const first = await api(superSession, 'announcements', 'new', body);
+      const retry = await api(superSession, 'announcements', 'new', body);
+      assert.equal(retry.ok, true);
+      assert.equal(retry.id, first.id);
+      assert.equal(retry.count, first.count);
+      assert.equal(await rowCount('announcements'), 1);
+      assert.equal(await rowCount('moderation_actions'), 1);
+
+      // Still a replay after the audience changed: the answer is the original announcement.
+      await database.pool.query(`UPDATE users SET is_banned = true WHERE firebase_user_id = 'fb-2'`);
+      try {
+        const later = await api(superSession, 'announcements', 'new', body);
+        assert.equal(later.id, first.id);
+        assert.equal(await rowCount('announcements'), 1);
+      } finally {
+        await database.pool.query(`UPDATE users SET is_banned = false WHERE firebase_user_id = 'fb-2'`);
+      }
+    });
+
+    it('a different request key sends a new announcement', async () => {
+      const count = eligibleCount();
+      const first = await api(superSession, 'announcements', 'new', {
+        ...draft(),
+        requestKey: randomUUID(),
+        confirmedCount: count,
+      });
+      const second = await api(superSession, 'announcements', 'new', {
+        ...draft(),
+        requestKey: randomUUID(),
+        confirmedCount: count,
+      });
+      assert.notEqual(first.id, second.id);
+      assert.equal(await rowCount('announcements'), 2);
+    });
+
+    it('rejects a send without a request key and a key reused for different content', async () => {
+      const missing = await api(superSession, 'announcements', 'new', { ...draft(), confirmedCount: eligibleCount() });
+      assert.equal(missing.ok, false);
+      assert.match(missing.error, /request key/i);
+      assert.equal(await rowCount('announcements'), 0);
+
+      const requestKey = randomUUID();
+      const first = await api(superSession, 'announcements', 'new', {
+        ...draft(),
+        requestKey,
+        confirmedCount: eligibleCount(),
+      });
+      assert.equal(first.ok, true);
+      const reused = await api(superSession, 'announcements', 'new', {
+        ...draft({ titleEn: 'A different announcement' }),
+        requestKey,
+        confirmedCount: eligibleCount(),
+      });
+      assert.equal(reused.ok, false);
+      assert.match(reused.error, /different announcement/i);
+      assert.equal(await rowCount('announcements'), 1);
+    });
+
     it('refuses to send without a confirmed count', async () => {
-      const result = await api(superSession, 'announcements', 'new', draft());
+      const result = await api(superSession, 'announcements', 'new', { ...draft(), requestKey: randomUUID() });
       assert.equal(result.ok, false);
       assert.match(result.error, /confirm/i);
       assert.equal(await rowCount('announcements'), 0);
     });
 
     it('cannot edit or delete an announcement after it is sent', async () => {
-      const sent = await api(superSession, 'announcements', 'new', { ...draft(), confirmedCount: eligibleCount() });
+      const sent = await api(superSession, 'announcements', 'new', {
+        ...draft(),
+        requestKey: randomUUID(),
+        confirmedCount: eligibleCount(),
+      });
       for (const action of ['edit', 'delete']) {
         const response = await fetch(`${baseUrl}/admin/api/resources/announcements/records/${sent.id}/${action}`, {
           method: 'POST',
@@ -366,7 +453,11 @@ describe('Admin announcements (HTTP, real database)', () => {
     });
 
     it('lists the history and shows the detail with the live push breakdown', async () => {
-      const sent = await api(superSession, 'announcements', 'new', { ...draft(), confirmedCount: eligibleCount() });
+      const sent = await api(superSession, 'announcements', 'new', {
+        ...draft(),
+        requestKey: randomUUID(),
+        confirmedCount: eligibleCount(),
+      });
       // What the backend would have done for two recipients, so the breakdown has something to count.
       const recipients = await database.pool.query(`SELECT id FROM users ORDER BY id LIMIT 2`);
       for (const [index, user] of recipients.rows.entries()) {
@@ -408,7 +499,11 @@ describe('Admin announcements (HTTP, real database)', () => {
     });
 
     it('filters the history by status and audience', async () => {
-      await api(superSession, 'announcements', 'new', { ...draft(), confirmedCount: eligibleCount() });
+      await api(superSession, 'announcements', 'new', {
+        ...draft(),
+        requestKey: randomUUID(),
+        confirmedCount: eligibleCount(),
+      });
       const listWith = async (query) =>
         (
           await (
@@ -424,7 +519,11 @@ describe('Admin announcements (HTTP, real database)', () => {
     });
 
     it('the audit row links back to the announcement for a super admin without breaking for others', async () => {
-      const sent = await api(superSession, 'announcements', 'new', { ...draft(), confirmedCount: eligibleCount() });
+      const sent = await api(superSession, 'announcements', 'new', {
+        ...draft(),
+        requestKey: randomUUID(),
+        confirmedCount: eligibleCount(),
+      });
       for (const sessionState of [superSession, staffSession]) {
         const response = await fetch(`${baseUrl}/admin/api/resources/moderation_actions/actions/list`, {
           headers: { cookie: sessionState.cookie },

@@ -59,6 +59,36 @@ export async function previewAnnouncement(pool, payload) {
   return { ok: true, count, audience: draft.audience, cityName };
 }
 
+const REQUEST_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function readRequestKey(value) {
+  return typeof value === 'string' && REQUEST_KEY_PATTERN.test(value.trim()) ? value.trim().toLowerCase() : null;
+}
+
+async function findByRequestKey(db, requestKey) {
+  const { rows } = await db.query(
+    `SELECT id, expected_recipients, audience, audience_city_id, title_en, body_en, title_ar, body_ar
+     FROM announcements WHERE request_key = $1`,
+    [requestKey],
+  );
+  return rows[0] ?? null;
+}
+
+/** The answer for a send whose request key already created an announcement (a replay). */
+function replayResult(existing, draft) {
+  const same =
+    existing.audience === draft.audience &&
+    (existing.audience_city_id ?? null) === draft.cityId &&
+    existing.title_en === draft.titleEn &&
+    existing.body_en === draft.bodyEn &&
+    existing.title_ar === draft.titleAr &&
+    existing.body_ar === draft.bodyAr;
+  if (!same) {
+    return { ok: false, error: 'This request key was already used for a different announcement. Start a new draft.' };
+  }
+  return { ok: true, id: existing.id, count: Number(existing.expected_recipients) };
+}
+
 function readConfirmedCount(value) {
   if (typeof value === 'number') return Number.isInteger(value) && value >= 0 ? value : null;
   if (typeof value === 'string' && /^\d+$/.test(value.trim())) return Number(value.trim());
@@ -77,6 +107,11 @@ export async function sendAnnouncement(pool, { adminId, payload }) {
   if (!validation.ok) return { ok: false, errors: validation.errors };
   const draft = validation.value;
 
+  const requestKey = readRequestKey(payload?.requestKey);
+  if (requestKey === null) {
+    return { ok: false, error: 'The send is missing its request key. Reload the page and try again.' };
+  }
+
   const confirmedCount = readConfirmedCount(payload?.confirmedCount);
   if (confirmedCount === null) {
     return { ok: false, error: 'Confirm the number of recipients before sending.' };
@@ -84,6 +119,11 @@ export async function sendAnnouncement(pool, { adminId, payload }) {
 
   try {
     return await runModerationTransaction(pool, async (client) => {
+      // A repeated request (double click, retry, replay) answers with the announcement it
+      // already created, before the audience is recounted.
+      const existing = await findByRequestKey(client, requestKey);
+      if (existing) return replayResult(existing, draft);
+
       let cityName = null;
       if (draft.audience === 'CITY') {
         const city = await findCity(client, draft.cityId);
@@ -108,11 +148,13 @@ export async function sendAnnouncement(pool, { adminId, payload }) {
 
       const { rows } = await client.query(
         `INSERT INTO announcements
-           (sent_by_admin_id, audience, audience_city_id, audience_city_name,
+           (request_key, sent_by_admin_id, audience, audience_city_id, audience_city_name,
             title_en, body_en, title_ar, body_ar, audience_cutoff_at, expected_recipients)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         ON CONFLICT (request_key) DO NOTHING
          RETURNING id`,
         [
+          requestKey,
           adminId,
           draft.audience,
           draft.cityId,
@@ -125,6 +167,12 @@ export async function sendAnnouncement(pool, { adminId, payload }) {
           count,
         ],
       );
+      if (rows.length === 0) {
+        // A concurrent request with the same key won the insert (this statement waited for it to
+        // commit): answer with its announcement and write no audit row of our own.
+        const winner = await findByRequestKey(client, requestKey);
+        return replayResult(winner, draft);
+      }
       const id = rows[0].id;
 
       await client.query(

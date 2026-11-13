@@ -1,5 +1,16 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, pgEnum, uuid, varchar, text, integer, timestamp, index, check } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  pgEnum,
+  uuid,
+  varchar,
+  text,
+  integer,
+  timestamp,
+  index,
+  uniqueIndex,
+  check,
+} from 'drizzle-orm/pg-core';
 import { adminUsers } from './admin-users.schema';
 import { cities } from './cities.schema';
 
@@ -36,6 +47,13 @@ export const announcements = pgTable(
 
     /** The SUPER_ADMIN who sent it. SET NULL keeps history if the account is removed. */
     sentByAdminId: uuid('sent_by_admin_id').references(() => adminUsers.id, { onDelete: 'set null' }),
+
+    /**
+     * Idempotency key the compose page generates once per draft. A repeated send
+     * with the same key (double click, retry, replay) finds this row instead of
+     * creating a second announcement, which could not be unsent.
+     */
+    requestKey: uuid('request_key').notNull(),
 
     audience: announcementAudienceEnum('audience').notNull(),
 
@@ -88,6 +106,7 @@ export const announcements = pgTable(
       .on(table.nextAttemptAt, table.createdAt)
       .where(sql`status IN ('PENDING', 'SENDING')`),
     historyIdx: index('idx_announcements_created').on(table.createdAt),
+    requestKeyUq: uniqueIndex('uq_announcements_request_key').on(table.requestKey),
     audienceCheck: check(
       'announcements_audience_city',
       sql`${table.audience} <> 'ALL' OR ${table.audienceCityId} IS NULL`,
