@@ -50,6 +50,7 @@ export const ENUMS = {
     'POST_REOPENED',
     'RESCUE_COMPLETED',
     'RESCUE_REOPENED',
+    'ADMIN_ANNOUNCEMENT',
   ],
   vetClinicSource: ['OSM', 'GOOGLE_PLACES', 'WEB_RESEARCH', 'MANUAL'],
   cityLifecycleStatus: ['OFFICIAL', 'LEGACY', 'RETIRED'],
@@ -70,8 +71,11 @@ export const ENUMS = {
     'USER_PROFILE_PHOTO_REMOVED',
     'COMMENT_HIDDEN',
     'COMMENT_IMAGES_HIDDEN',
+    'ANNOUNCEMENT_SENT',
   ],
-  moderationTargetType: ['POST', 'USER', 'COMMENT'],
+  moderationTargetType: ['POST', 'USER', 'COMMENT', 'ANNOUNCEMENT'],
+  announcementStatus: ['PENDING', 'SENDING', 'SENT', 'FAILED'],
+  announcementAudience: ['ALL', 'CITY'],
   commentStatus: ['ACTIVE', 'IMAGE_HIDDEN', 'HIDDEN', 'DELETED', 'REMOVED'],
 };
 

@@ -15,6 +15,7 @@ function notification(overrides: Partial<Notification> = {}): Notification {
     discussionEventId: null,
     relatedContactRequestId: null,
     relatedApplicationId: '01916327-0000-7000-8000-000000000020',
+    announcementId: null,
     isRead: false,
     createdAt: new Date('2026-09-21T10:00:00Z'),
     ...overrides,
@@ -101,5 +102,40 @@ describe('push payload builder', () => {
     );
 
     expect(first).not.toBe(second);
+  });
+
+  describe('admin announcement', () => {
+    const announcement = () =>
+      notification({
+        type: 'ADMIN_ANNOUNCEMENT',
+        title: 'Vaccination week',
+        body: 'Free rabies shots this week.',
+        titleArabic: 'أسبوع التطعيم',
+        bodyArabic: 'تطعيم مجاني هذا الأسبوع.',
+        relatedPostId: null,
+        relatedApplicationId: null,
+        announcementId: '01916327-0000-7000-8000-0000000000a1',
+      });
+
+    it('has no post to open: the payload routes by notification id and type only', () => {
+      expect(buildPushRoutingData(announcement())).toEqual({
+        notificationId: '01916327-0000-7000-8000-000000000001',
+        type: 'ADMIN_ANNOUNCEMENT',
+      });
+    });
+
+    it('is sent in the recipient language from the stored text', () => {
+      const arabic = buildPushMessage({ notification: announcement(), languagePreference: 'ar', token: 't' });
+      expect(arabic.title).toBe('أسبوع التطعيم');
+      expect(arabic.body).toBe('تطعيم مجاني هذا الأسبوع.');
+      const english = buildPushMessage({ notification: announcement(), languagePreference: null, token: 't' });
+      expect(english.title).toBe('Vaccination week');
+    });
+
+    it('never collapses two different recipients announcements into one', () => {
+      const other = announcement();
+      other.id = '01916327-0000-7000-8000-000000000002';
+      expect(buildPushCollapseId(announcement())).not.toBe(buildPushCollapseId(other));
+    });
   });
 });

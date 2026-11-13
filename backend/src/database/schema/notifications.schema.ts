@@ -1,11 +1,12 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, text, boolean, timestamp, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, boolean, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { users } from './users.schema';
 import { posts } from './posts.schema';
 import { comments } from './comments.schema';
 import { discussionNotificationEvents } from './discussion-notification-events.schema';
 import { contactRequests } from './contact-requests.schema';
 import { adoptionApplications } from './adoption-applications.schema';
+import { announcements } from './announcements.schema';
 import { notificationTypeEnum } from './enums';
 
 /**
@@ -26,6 +27,7 @@ import { notificationTypeEnum } from './enums';
  * | POST_RESOLVED_BY_ADMIN            | AdminJS type-specific Post Resolution actions (ticket 08)         |
  * | POST_INACTIVITY_NUDGE             | Auto-removal cron (fires before removing the post)               |
  * | SYSTEM_ANNOUNCEMENT               | Retired saved-search alert — retained for historical rows, no creation site |
+ * | ADMIN_ANNOUNCEMENT                | Nest `AdminAnnouncementProcessor` fan-out of an `announcements` row |
  *
  * ## Related entity FKs
  * All three FK columns are nullable. SET NULL on delete so historical
@@ -109,6 +111,13 @@ export const notifications = pgTable(
       onDelete: 'set null',
     }),
 
+    /**
+     * Set only for an administrator's Announcement. The partial unique index
+     * `(announcement_id, recipient_id)` makes fan-out idempotent: a resumed or
+     * repeated batch creates at most one notification per recipient.
+     */
+    announcementId: uuid('announcement_id').references(() => announcements.id, { onDelete: 'set null' }),
+
     /** Whether the recipient has read this notification. */
     isRead: boolean('is_read').notNull().default(false),
 
@@ -127,6 +136,9 @@ export const notifications = pgTable(
     discussionEventIdx: index('uq_notifications_discussion_event_id').on(table.discussionEventId),
     relatedContactRequestIdx: index('idx_notifications_related_contact_request').on(table.relatedContactRequestId),
     relatedApplicationIdx: index('idx_notifications_related_application').on(table.relatedApplicationId),
+    announcementRecipientUq: uniqueIndex('uq_notifications_announcement_recipient')
+      .on(table.announcementId, table.recipientId)
+      .where(sql`announcement_id IS NOT NULL`),
 
     /*
      * Partial index for unread badge count:

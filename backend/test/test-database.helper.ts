@@ -79,6 +79,7 @@ export class TestDatabaseHelper {
         contact_requests,
         adoption_applications,
         post_reports,
+        announcements,
         notifications,
         discussion_notification_events,
         post_completion_recipients,

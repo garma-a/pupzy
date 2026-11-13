@@ -35,6 +35,10 @@ describe('push delivery type coverage', () => {
     }
   });
 
+  it('covers the admin announcement so it creates push intents like every other workflow type', () => {
+    expect(isPushDeliveryEnabled('ADMIN_ANNOUNCEMENT')).toBe(true);
+  });
+
   it('only enables types with bilingual templates', () => {
     for (const type of PUSH_ENABLED_NOTIFICATION_TYPES) {
       expect(NOTIFICATION_TEMPLATE_TYPES).toContain(type);

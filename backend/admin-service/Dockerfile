@@ -11,6 +11,9 @@ COPY --chown=node:node src/notifications/notification-templates.ts /src/notifica
 # The backend push allowlist is imported by the AdminJS moderation helpers, so
 # the runtime image must carry it beside the shared templates.
 COPY --chown=node:node src/notifications/push-delivery.constants.ts /src/notifications/push-delivery.constants.ts
+# The announcement validation rules and eligibility SQL are shared with the Nest
+# API, so the recipient count an admin confirms is the audience the fan-out uses.
+COPY --chown=node:node src/notifications/admin-announcement.contract.ts /src/notifications/admin-announcement.contract.ts
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=256"
 ENV ADMIN_JS_TMP_DIR=/tmp/adminjs

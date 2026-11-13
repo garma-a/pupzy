@@ -8,9 +8,19 @@ const LABELS = {
   ACTION_TAKEN: 'Action taken',
   NO_ACTION: 'No action',
 };
-const POSITIVE = new Set(['ACTIVE', 'CLEAN', 'RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ACCEPTED', 'ACTION_TAKEN']);
-const ATTENTION = new Set(['PENDING', 'PENDING_AUTO_REVIEW', 'OPEN', 'URGENT']);
-const DANGER = new Set(['FLAGGED', 'BANNED', 'CRITICAL']);
+const POSITIVE = new Set([
+  'ACTIVE',
+  'CLEAN',
+  'RESOLVED',
+  'REUNITED',
+  'ADOPTED',
+  'SOLD',
+  'ACCEPTED',
+  'ACTION_TAKEN',
+  'SENT',
+]);
+const ATTENTION = new Set(['PENDING', 'PENDING_AUTO_REVIEW', 'OPEN', 'URGENT', 'SENDING']);
+const DANGER = new Set(['FLAGGED', 'BANNED', 'CRITICAL', 'FAILED']);
 
 export function StateTag({ value, label: explicitLabel }) {
   if (value == null || value === '') return <span style={{ color: '#B8A499' }}>—</span>;

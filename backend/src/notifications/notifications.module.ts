@@ -14,6 +14,8 @@ import { FirebasePushProvider, PUSH_PROVIDER } from './push.provider';
 import { AccountIsolationModule } from '../blocks/account-isolation.module';
 import { PostCompletionNotificationRepository } from './post-completion-notification.repository';
 import { PostCompletionNotificationProcessor } from './post-completion-notification.processor';
+import { AdminAnnouncementRepository } from './admin-announcement.repository';
+import { AdminAnnouncementProcessor } from './admin-announcement.processor';
 
 /**
  * NotificationsModule — owns the notification lifecycle.
@@ -28,6 +30,9 @@ import { PostCompletionNotificationProcessor } from './post-completion-notificat
  * start delivery immediately after their source event commits.
  * `PostCompletionNotificationRepository` and `PostCompletionNotificationProcessor`
  * are exported to support post completion notification lifecycle and background batching.
+ *
+ * `AdminAnnouncementProcessor` fans a SUPER_ADMIN's Announcement out in durable
+ * batches (found by its own cron, not called by other modules).
  *
  * ## Dependencies
  * - `DatabaseModule` — global, provides DATABASE_TOKEN for Drizzle.
@@ -54,6 +59,8 @@ import { PostCompletionNotificationProcessor } from './post-completion-notificat
     { provide: PUSH_PROVIDER, useClass: FirebasePushProvider },
     PostCompletionNotificationRepository,
     PostCompletionNotificationProcessor,
+    AdminAnnouncementRepository,
+    AdminAnnouncementProcessor,
   ],
   exports: [
     NotificationsService,

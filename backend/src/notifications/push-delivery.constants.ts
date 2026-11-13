@@ -10,6 +10,11 @@ import type { NotificationType } from './notification-templates';
  * reopening, and expiry/reminders — plus the remaining existing engagement and
  * adoption notifications.
  *
+ * `ADMIN_ANNOUNCEMENT` is an administrator's Announcement. Its fan-out writes the
+ * notification and its intents in one batch transaction (see
+ * `AdminAnnouncementProcessor`); the push worker rechecks preference, account
+ * state and isolation before sending, like every other type.
+ *
  * `SYSTEM_ANNOUNCEMENT` is deliberately excluded: it belonged to the retired
  * saved-search alert feature, has no creation site, and saved-search alerts are
  * out of push scope. Nearby-rescue broadcasts do not exist as notification
@@ -42,9 +47,18 @@ export const PUSH_ENABLED_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = ne
   'POST_REOPENED',
   'RESCUE_COMPLETED',
   'RESCUE_REOPENED',
+  'ADMIN_ANNOUNCEMENT',
 ]);
 
 /** True when a notification type should enqueue durable push delivery intents. */
 export function isPushDeliveryEnabled(type: NotificationType): boolean {
   return PUSH_ENABLED_NOTIFICATION_TYPES.has(type);
 }
+
+/**
+ * Claim priority of a push delivery intent: the worker claims the LOWER number
+ * first. Everything time-sensitive uses `DEFAULT`; a bulk send (an admin
+ * Announcement to many users) uses `BULK`, so it drains whenever nothing more
+ * urgent is due but never delays a comment or an adoption approval.
+ */
+export const PUSH_PRIORITY = { DEFAULT: 0, BULK: 10 } as const;

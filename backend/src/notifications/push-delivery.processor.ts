@@ -196,22 +196,34 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
           AND attempts >= ${MAX_PUSH_DELIVERY_ATTEMPTS}
       `);
 
-      const candidateResult = await tx.execute<{ id: string }>(sql`
+      // Claim order: priority first (lower number first, so a bulk announcement never
+      // delays a comment), then the existing order. An interrupted lease is reclaimed
+      // before new work: the set is tiny (one crashed worker's claims) and its intents
+      // are the oldest due. Each branch is a plain ordered index scan with LIMIT 1, so a
+      // claim costs the same with a million queued intents as with ten.
+      const reclaimResult = await tx.execute<{ id: string }>(sql`
         SELECT id
         FROM push_deliveries
-        WHERE (
-          status = 'PENDING'
-          AND next_attempt_at <= now()
-          AND attempts < ${MAX_PUSH_DELIVERY_ATTEMPTS}
-        ) OR (
-          status = 'PROCESSING'
+        WHERE status = 'PROCESSING'
           AND (lease_expires_at IS NULL OR lease_expires_at < now())
           AND attempts < ${MAX_PUSH_DELIVERY_ATTEMPTS}
-        )
-        ORDER BY next_attempt_at ASC, created_at ASC, id ASC
+        ORDER BY priority ASC, next_attempt_at ASC, created_at ASC, id ASC
         FOR UPDATE SKIP LOCKED
         LIMIT 1
       `);
+      const candidateResult =
+        reclaimResult.rows.length > 0
+          ? reclaimResult
+          : await tx.execute<{ id: string }>(sql`
+              SELECT id
+              FROM push_deliveries
+              WHERE status = 'PENDING'
+                AND next_attempt_at <= now()
+                AND attempts < ${MAX_PUSH_DELIVERY_ATTEMPTS}
+              ORDER BY priority ASC, next_attempt_at ASC, created_at ASC, id ASC
+              FOR UPDATE SKIP LOCKED
+              LIMIT 1
+            `);
       const candidateId = candidateResult.rows[0]?.id;
       if (!candidateId) return undefined;
 

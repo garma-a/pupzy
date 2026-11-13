@@ -51,3 +51,19 @@ Open http://localhost:4000/admin. Log in with the local-only moderator account (
 - [ ] Open Omar Hassan: a large photo opens full size. Use **Remove Profile Photo** with a reason, and his initials appear.
 - [ ] Edit a user's name and save. You land on that user's page, and the photo URL is not editable.
 - [ ] Unban the banned seller with **Unban User**. It works and shows a success message.
+
+## 8. Announcements (super admin only)
+
+Log in as the local super admin (`superadmin@pupzy.local`). The Announcements entry is in the left menu. Log in as the moderator (`moderator@pupzy.local`) in a private window: the entry is missing, and opening `/admin/resources/announcements/actions/new` shows no form.
+
+- [ ] Announcements → **New announcement**. Click **Preview** with nothing typed: each of the four fields shows a message, and nothing is sent.
+- [ ] Type an English title and message, and an Arabic title and message. The counters read `n / 80` and `n / 500`, and the Arabic fields type right to left. Typing in a field clears its message.
+- [ ] Put Arabic text in an English field: the message says it must be written in English. Do the reverse for an Arabic field.
+- [ ] **Preview** shows two notification cards: English on the left, Arabic (right to left) on the right.
+- [ ] **Continue** shows the exact number of users ("N users will receive this announcement") and a **Send to N users** button. The number is the count of users who are not banned and have no deletion request.
+- [ ] Go back, choose **Users in one City**, pick a City, and Preview again: the number is smaller and the preview names the City. Choose a City with no one in it: **Send** is refused with "There are no eligible users for this audience."
+- [ ] Press **Send**. You land on the announcement's page with a success message, status **Pending**, and a note that the backend starts within about a minute. The page refreshes itself.
+- [ ] Moderation Actions has one **ANNOUNCEMENT SENT** row for it, and its target opens the announcement.
+- [ ] The Announcements list shows the sender, time, audience (All users or the City), both texts, status, recipients, in-app and push counts.
+- [ ] If the backend is running against this database, the status moves to **Sending**, then **Sent**, and the in-app count reaches the recipient count. In the app, a user whose language is Arabic sees the Arabic text and everyone else sees English.
+- [ ] There is no way to edit or delete an announcement after it is sent.

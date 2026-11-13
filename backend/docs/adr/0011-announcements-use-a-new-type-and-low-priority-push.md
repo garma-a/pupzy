@@ -1,0 +1,5 @@
+# Announcements use a new notification type, batched fan-out and low-priority push
+
+Status: accepted
+
+Administrator Announcements use a new `ADMIN_ANNOUNCEMENT` notification type instead of reusing `SYSTEM_ANNOUNCEMENT`, whose historical rows and stored text mean a retired saved-search alert; app builds that predate the Flutter handoff still list the new type with their generic icon. Sending stores one Announcement, keyed by a client request key so a retried or double-clicked send never reaches users twice, and the backend delivers it in durable batches that each create notifications and their Push Delivery Intents in one transaction. The audience is frozen by a registration cutoff and a user-id cursor rather than a recipient snapshot table, so the send request stays constant-time; eligibility and home City are still read when each batch runs. Announcement push intents carry a lower priority than workflow pushes, so a large Announcement never delays comment, adoption or rescue pushes; a lower priority was chosen over a separate queue because it keeps one delivery pipeline and drains bulk work whenever nothing urgent is due.

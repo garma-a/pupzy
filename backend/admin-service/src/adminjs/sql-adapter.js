@@ -16,6 +16,10 @@ const COLUMN_AVAILABLE_VALUES = Object.freeze({
     moderation_status: ENUMS.moderationStatus,
     urgency: ENUMS.urgencyTier,
   }),
+  announcements: Object.freeze({
+    status: ENUMS.announcementStatus,
+    audience: ENUMS.announcementAudience,
+  }),
 });
 
 const SQL_POOL_OPTIONS = Object.freeze({

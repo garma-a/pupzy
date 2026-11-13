@@ -230,6 +230,74 @@ describe('Database Migration Runner Integration', () => {
     expect(moderationActionEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_REOPENED');
     expect(notificationTypeEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_REOPENED_BY_ADMIN');
 
+    // Admin Announcements (migration 0071): a new notification type that is not the
+    // retired SYSTEM_ANNOUNCEMENT, an audit action and target, and a durable
+    // announcements table whose per-recipient guard makes fan-out idempotent.
+    expect(notificationTypeEnumRes.rows.map((row) => row.enumlabel)).toEqual(
+      expect.arrayContaining(['SYSTEM_ANNOUNCEMENT', 'ADMIN_ANNOUNCEMENT']),
+    );
+    expect(moderationActionEnumRes.rows.map((row) => row.enumlabel)).toContain('ANNOUNCEMENT_SENT');
+    const targetTypeEnumRes = await pool.query<{ enumlabel: string }>(`
+      SELECT enumlabel FROM pg_enum JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+      WHERE pg_type.typname = 'moderation_target_type' ORDER BY enumsortorder
+    `);
+    expect(targetTypeEnumRes.rows.map((row) => row.enumlabel)).toContain('ANNOUNCEMENT');
+    const announcementEnumsRes = await pool.query<{ typname: string; enumlabel: string }>(`
+      SELECT pg_type.typname, enumlabel FROM pg_enum JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+      WHERE pg_type.typname IN ('announcement_status', 'announcement_audience')
+      ORDER BY pg_type.typname, enumsortorder
+    `);
+    expect(announcementEnumsRes.rows.map((row) => `${row.typname}:${row.enumlabel}`)).toEqual([
+      'announcement_audience:ALL',
+      'announcement_audience:CITY',
+      'announcement_status:PENDING',
+      'announcement_status:SENDING',
+      'announcement_status:SENT',
+      'announcement_status:FAILED',
+    ]);
+    const announcementColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`
+      SELECT column_name, is_nullable FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'announcements'
+    `);
+    const announcementNullMap = Object.fromEntries(announcementColsRes.rows.map((r) => [r.column_name, r.is_nullable]));
+    for (const required of [
+      'title_en',
+      'body_en',
+      'title_ar',
+      'body_ar',
+      'audience',
+      'status',
+      'audience_cutoff_at',
+      'expected_recipients',
+      'request_key',
+    ]) {
+      expect(announcementNullMap[required]).toBe('NO');
+    }
+    for (const optional of ['sent_by_admin_id', 'audience_city_id', 'cursor_user_id', 'failure_reason']) {
+      expect(announcementNullMap[optional]).toBe('YES');
+    }
+    const announcementIndexRes = await pool.query<{ indexname: string; indexdef: string }>(`
+      SELECT indexname, indexdef FROM pg_indexes
+      WHERE indexname IN ('uq_notifications_announcement_recipient', 'idx_users_home_city_id', 'idx_announcements_work', 'uq_announcements_request_key')
+      ORDER BY indexname
+    `);
+    const announcementIndexes = Object.fromEntries(announcementIndexRes.rows.map((r) => [r.indexname, r.indexdef]));
+    expect(announcementIndexes['uq_notifications_announcement_recipient']).toMatch(
+      /UNIQUE INDEX .* \(announcement_id, recipient_id\) WHERE \(announcement_id IS NOT NULL\)/,
+    );
+    expect(announcementIndexes['uq_announcements_request_key']).toMatch(/UNIQUE INDEX .* \(request_key\)/);
+    const priorityColumn = await pool.query<{ data_type: string; is_nullable: string; column_default: string }>(`
+      SELECT data_type, is_nullable, column_default FROM information_schema.columns
+      WHERE table_name = 'push_deliveries' AND column_name = 'priority'
+    `);
+    expect(priorityColumn.rows).toEqual([{ data_type: 'smallint', is_nullable: 'NO', column_default: '0' }]);
+    const dueIndex = await pool.query<{ indexdef: string }>(
+      `SELECT indexdef FROM pg_indexes WHERE indexname = 'idx_push_deliveries_due'`,
+    );
+    expect(dueIndex.rows[0].indexdef).toMatch(/\(status, priority, next_attempt_at, created_at, id\)/);
+    expect(announcementIndexes['idx_users_home_city_id']).toMatch(/\(home_city_id, id\)/);
+    expect(announcementIndexes['idx_announcements_work']).toMatch(/WHERE \(status = ANY/);
+
     // Verify staged_uploads schema and non-null constraints
     const stagedColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`
       SELECT column_name, is_nullable

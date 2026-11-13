@@ -148,6 +148,7 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'POST_REOPENED',
   'RESCUE_COMPLETED',
   'RESCUE_REOPENED',
+  'ADMIN_ANNOUNCEMENT',
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────

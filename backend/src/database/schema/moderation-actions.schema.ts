@@ -18,13 +18,14 @@ export const moderationActionTypeEnum = pgEnum('moderation_action_type', [
   'USER_PROFILE_PHOTO_REMOVED',
   'COMMENT_HIDDEN',
   'COMMENT_IMAGES_HIDDEN',
+  'ANNOUNCEMENT_SENT',
 ]);
 
-export const moderationTargetTypeEnum = pgEnum('moderation_target_type', ['POST', 'USER', 'COMMENT']);
+export const moderationTargetTypeEnum = pgEnum('moderation_target_type', ['POST', 'USER', 'COMMENT', 'ANNOUNCEMENT']);
 
 /**
  * Append-only audit log. targetId is polymorphic and deliberately has no
- * foreign key; targetType selects the posts or users table.
+ * foreign key; targetType selects the posts, users, comments or announcements table.
  */
 export const moderationActions = pgTable(
   'moderation_actions',

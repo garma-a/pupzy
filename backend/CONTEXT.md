@@ -86,6 +86,10 @@ _Avoid_: User report, account flag, Post Report
 An administrator's recorded end to a Post Report, Comment Report, or Pupzy Account Report, with an outcome of "no action" or "action taken". Removing, hiding, or banning the reported target closes every open report on it as "action taken"; approving a Post closes its reports as "no action". A closed report is never reopened, even if its content is later restored.
 _Avoid_: Resolved report, dismissed report, Post Resolution
 
+**Announcement**:
+A message a super administrator sends to every eligible Pupzy Account, or to the accounts whose home City is one chosen City, written in both English and Arabic and received in each account's language. It always appears in the in-app inbox and is pushed only to accounts with notifications enabled; banned and deleted accounts never receive it. Its audience is fixed when it is sent, and it cannot be edited or unsent.
+_Avoid_: Broadcast, system announcement, saved-search alert
+
 **Flagged Post**:
 A Post an administrator has marked for closer review without removing it. Flagging keeps the Post's open reports open so the case stays in the moderation queue.
 _Avoid_: Reported Post, Post flag (for a user complaint)
