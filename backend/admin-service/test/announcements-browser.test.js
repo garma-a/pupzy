@@ -389,6 +389,9 @@ describe('Admin announcements real browser suite', { timeout: 240000 }, () => {
         assert.equal(await text(page, '[data-testid="announcement-confirm-count"]'), String(ALL_COUNT - 1));
         assert.equal((await dbAnnouncements()).length, 0);
 
+        // The button now names the new number, so one click confirms it; nothing is retyped.
+        assert.equal(await text(page, '[data-testid="announcement-send"]'), `Send to ${ALL_COUNT - 1} users`);
+        assert.equal(await page.$eval('[data-testid="announcement-send"]', (el) => el.disabled), false);
         // Confirming the new number sends.
         await page.click('[data-testid="announcement-send"]');
         await page.waitForSelector('[data-testid="announcement-show"]');
