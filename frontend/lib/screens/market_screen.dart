@@ -24,6 +24,7 @@ import '../widgets/skeleton_loader.dart';
 import '../widgets/top_bar.dart';
 import 'post_form_screen.dart';
 import 'product_detail_screen.dart';
+import '../widgets/load_more_footer.dart';
 
 
 /// A fixed-choice category: (canonical ProductCategory enum value, English label, Arabic label).
@@ -96,7 +97,7 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
   }
 
   void _onScroll() {
-    if (_loading || _loadingMore || !_hasNextPage) return;
+    if (_loading || _loadingMore || !_hasNextPage || !feedCanAutoLoad(_posts.length)) return;
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 400) {
       _loadMore();
     }
@@ -565,11 +566,8 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
                           },
                         );
                       }),
-                    if (_loadingMore)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                      ),
+                    if (feedShowsFooter(loadingMore: _loadingMore, hasNextPage: _hasNextPage, loaded: _posts.length))
+                      LoadMoreFooter(hasMore: _hasNextPage, loading: _loadingMore, failed: false, onLoadMore: _loadMore, pagedBeyondFirst: _posts.length > feedPageSize),
                   ],
                 ),
               ),

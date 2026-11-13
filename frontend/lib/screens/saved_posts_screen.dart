@@ -14,6 +14,7 @@ import 'adoption_detail_screen.dart';
 import 'mating_detail_screen.dart';
 import 'product_detail_screen.dart';
 import 'rescue_detail_screen.dart';
+import '../widgets/load_more_footer.dart';
 
 /// Full list of the current user's saved/bookmarked posts, across every
 /// post type — reached from Home's "FAVORITES" section via "See more".
@@ -48,7 +49,7 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
   }
 
   void _onScroll() {
-    if (_loading || _loadingMore || !_hasNextPage) return;
+    if (_loading || _loadingMore || !_hasNextPage || !feedCanAutoLoad(_posts.length)) return;
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 400) {
       _loadMore();
     }
@@ -168,13 +169,10 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
                       : ListView.builder(
                           controller: _scrollController,
                           padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 100),
-                          itemCount: _posts.length + (_loadingMore ? 1 : 0),
+                          itemCount: _posts.length + (feedShowsFooter(loadingMore: _loadingMore, hasNextPage: _hasNextPage, loaded: _posts.length) ? 1 : 0),
                           itemBuilder: (_, i) {
                             if (i >= _posts.length) {
-                              return const Padding(
-                                padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                                child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                              );
+                              return LoadMoreFooter(hasMore: _hasNextPage, loading: _loadingMore, failed: false, onLoadMore: _loadMore, pagedBeyondFirst: _posts.length > feedPageSize);
                             }
                             return _SavedPostTile(key: ValueKey(_posts[i].id), post: _posts[i], onToggleSave: () => _toggleSave(_posts[i]));
                           },

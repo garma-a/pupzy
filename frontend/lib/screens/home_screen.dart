@@ -35,6 +35,7 @@ import 'product_detail_screen.dart';
 import 'rescue_detail_screen.dart';
 import 'saved_posts_screen.dart';
 import 'vets_screen.dart';
+import '../widgets/load_more_footer.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onNavigateToMarket;
@@ -204,7 +205,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   void _onScroll() {
-    if (_loading || _loadingMore || !_hasNextPage || _query.trim().isNotEmpty) return;
+    // Home previews each section; past the cap, "See all" opens the full list.
+    if (_loading || _loadingMore || !_hasNextPage || _query.trim().isNotEmpty || !feedCanAutoLoad(_posts.length)) return;
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 400) {
       _loadMore();
     }

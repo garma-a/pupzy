@@ -8,12 +8,14 @@ import '../theme/app_theme.dart';
 import '../utils/upvote_wording.dart';
 import '../widgets/blurred_thumbnail.dart';
 import '../widgets/image_with_fallback.dart';
-import '../widgets/skeleton_loader.dart';
+import '../widgets/skeleton_loader.dart';
+
 import '../utils/post_status_labels.dart';
 import 'adoption_detail_screen.dart';
 import 'mating_detail_screen.dart';
 import 'product_detail_screen.dart';
 import 'rescue_detail_screen.dart';
+import '../widgets/load_more_footer.dart';
 
 /// The current user's own posts, one section (postType) at a time —
 /// reached from the profile sheet's "My Posts" row.
@@ -119,7 +121,7 @@ class _MyPostsListState extends State<_MyPostsList> with AutomaticKeepAliveClien
   }
 
   void _onScroll() {
-    if (_loading || _loadingMore || !_hasNextPage) return;
+    if (_loading || _loadingMore || !_hasNextPage || !feedCanAutoLoad(_posts.length)) return;
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 400) {
       _loadMore();
     }
@@ -229,13 +231,10 @@ class _MyPostsListState extends State<_MyPostsList> with AutomaticKeepAliveClien
                   : ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 100),
-                      itemCount: _posts.length + (_loadingMore ? 1 : 0),
+                      itemCount: _posts.length + (feedShowsFooter(loadingMore: _loadingMore, hasNextPage: _hasNextPage, loaded: _posts.length) ? 1 : 0),
                       itemBuilder: (_, i) {
                         if (i >= _posts.length) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                            child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                          );
+                          return LoadMoreFooter(hasMore: _hasNextPage, loading: _loadingMore, failed: false, onLoadMore: _loadMore, pagedBeyondFirst: _posts.length > feedPageSize);
                         }
                         return _MyPostTile(key: ValueKey(_posts[i].id), post: _posts[i], onReturn: _refreshQuietly);
                       },

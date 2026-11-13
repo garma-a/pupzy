@@ -26,6 +26,7 @@ import '../widgets/image_with_fallback.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/top_bar.dart';
 import 'rescue_detail_screen.dart';
+import '../widgets/load_more_footer.dart';
 
 class HelpScreen extends StatefulWidget {
   // Whether this tab is the one currently shown by the bottom nav — see
@@ -337,6 +338,8 @@ class _HelpScreenState extends State<HelpScreen> with RouteAware {
                                   onSave: _toggleSave,
                                   onLoadMore: _loadMore,
                                   loadingMore: _loadingMore,
+                                  hasNextPage: _hasNextPage,
+                                  loaded: _posts.length,
                                 ),
                                 _HelpFeedList(
                                   posts: _posts.where((p) => p.postType == 'LOST').toList(),
@@ -345,6 +348,8 @@ class _HelpScreenState extends State<HelpScreen> with RouteAware {
                                   onSave: _toggleSave,
                                   onLoadMore: _loadMore,
                                   loadingMore: _loadingMore,
+                                  hasNextPage: _hasNextPage,
+                                  loaded: _posts.length,
                                 ),
                               ],
                             ),
@@ -390,6 +395,10 @@ class _HelpFeedList extends StatelessWidget {
   final Future<bool> Function(FeedPost) onSave;
   final VoidCallback onLoadMore;
   final bool loadingMore;
+  final bool hasNextPage;
+
+  /// Posts loaded across both tabs: the pages are shared, so the cap is too.
+  final int loaded;
   const _HelpFeedList({
     required this.posts,
     required this.query,
@@ -397,6 +406,8 @@ class _HelpFeedList extends StatelessWidget {
     required this.onSave,
     required this.onLoadMore,
     required this.loadingMore,
+    required this.hasNextPage,
+    required this.loaded,
   });
 
   @override
@@ -426,20 +437,17 @@ class _HelpFeedList extends StatelessWidget {
     }
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
-        if (notification.metrics.pixels >= notification.metrics.maxScrollExtent - 400) {
+        if (feedCanAutoLoad(loaded) && notification.metrics.pixels >= notification.metrics.maxScrollExtent - 400) {
           onLoadMore();
         }
         return false;
       },
       child: ListView.builder(
         padding: const EdgeInsets.only(bottom: 100, top: AppSpacing.xs),
-        itemCount: items.length + (loadingMore ? 1 : 0),
+        itemCount: items.length + (feedShowsFooter(loadingMore: loadingMore, hasNextPage: hasNextPage, loaded: loaded) ? 1 : 0),
         itemBuilder: (_, i) {
           if (i >= items.length) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-              child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-            );
+            return LoadMoreFooter(hasMore: hasNextPage, loading: loadingMore, failed: false, onLoadMore: onLoadMore, pagedBeyondFirst: loaded > feedPageSize);
           }
           return _HelpFeedCard(
             key: ValueKey(items[i].id),
