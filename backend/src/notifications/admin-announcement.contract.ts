@@ -44,7 +44,8 @@ export type AnnouncementValidation =
   { ok: true; value: AnnouncementDraft } | { ok: false; errors: Partial<Record<AnnouncementDraftField, string>> };
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ARABIC_LETTER = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
+// Arabic, Arabic Supplement, Arabic Extended-A and the two Arabic presentation-form blocks.
+const ARABIC_LETTER = new RegExp('[\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF]');
 const LATIN_LETTER = /[A-Za-z]/;
 // Control characters other than tab and newline cannot be shown in a notification.
 // eslint-disable-next-line no-control-regex
@@ -79,7 +80,8 @@ export function validateAnnouncementDraft(raw: unknown): AnnouncementValidation 
   const text = {} as Record<TextField, string>;
   for (const field of Object.keys(TEXT_RULES) as TextField[]) {
     const rule = TEXT_RULES[field];
-    const value = typeof input[field] === 'string' ? (input[field] as string).trim() : '';
+    const raw = input[field];
+    const value = typeof raw === 'string' ? raw.trim() : '';
     text[field] = value;
     if (!value) {
       errors[field] = `Enter the ${rule.label.toLowerCase()}.`;
