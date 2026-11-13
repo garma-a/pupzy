@@ -425,6 +425,10 @@ describe('CommentImageValidator', () => {
     it('enforces decoder execution timeout bound safely with retryable error', async () => {
       const buffer = await createValidLossyWebp(200, 200);
       _setDecoderConcurrencyLimits({ decoderTimeoutMs: 1 }); // 1ms timeout
+      // A 200x200 image can fully decode within 1ms on a fast machine, which
+      // made this test flaky. Hold the pixel decode open so the timeout is
+      // what ends it, every time.
+      const decode = jest.spyOn(sharp.prototype, 'toBuffer').mockImplementation(() => new Promise<never>(() => {}));
 
       try {
         await validateCommentImage(buffer);
@@ -434,7 +438,10 @@ describe('CommentImageValidator', () => {
         if (err instanceof AppError) {
           expect(err.code).toBe('COMMENT_MEDIA_PROCESSING_FAILED');
           expect(err.message).toMatch(/execution limit exceeded|timed out/i);
+          expect(err.extensions).toMatchObject({ retryable: true });
         }
+      } finally {
+        decode.mockRestore();
       }
     });
 
