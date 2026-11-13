@@ -46,6 +46,21 @@ export function attachShortUuid(properties, fieldNames, components, locations = 
   }
 }
 
+/**
+ * Declares the read-only "Status" column of a report resource (see
+ * `reportStatusProperties`). Not sortable or filterable: it has no column.
+ */
+export function reportStatusProperty(components) {
+  return {
+    isSortable: false,
+    isDisabled: true,
+    isVisible: { list: true, show: true, edit: false, filter: false },
+    ...(components?.ReportStatus
+      ? { components: { list: components.ReportStatus, show: components.ReportStatus } }
+      : {}),
+  };
+}
+
 export function buildReadOnlyResource(db, table, navigation, properties = {}, extra = {}) {
   const { actions = {}, ...otherOptions } = extra;
 

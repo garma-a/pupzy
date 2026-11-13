@@ -106,6 +106,7 @@ describe('Moderation and Activity Tables Curation & Layout Rules (Task 10)', () 
       const reportsRes = buildPostReportsResource(db, components);
       assert.deepEqual(reportsRes.options.listProperties, [
         'id',
+        'review_status',
         'post_id',
         'reporter_id',
         'reason',

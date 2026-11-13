@@ -369,13 +369,32 @@ describe('Post review workspace payload', () => {
                   reason: 'SPAM',
                   details: null,
                   reviewed_at: new Date('2026-09-14T10:00:00Z'),
+                  reviewed_by_name: 'Mona Moderator',
                   review_outcome: 'NO_ACTION',
                   created_at: new Date('2026-09-13T09:00:00Z'),
                 },
               ],
             }
           : null,
-      (sql) => (sql.includes('FROM comment_reports') ? { rows: [] } : null),
+      (sql) =>
+        sql.includes('FROM comment_reports')
+          ? {
+              rows: [
+                {
+                  id: 'comment-report-closed',
+                  comment_id: 'comment-1',
+                  comment_text: 'Hello',
+                  comment_status: 'ACTIVE',
+                  reporter_id: 'reporter-3',
+                  reporter_name: 'Third Reporter',
+                  reason: 'SPAM',
+                  details: null,
+                  reviewed_at: new Date('2026-09-14T10:30:00Z'),
+                  created_at: new Date('2026-09-13T09:30:00Z'),
+                },
+              ],
+            }
+          : null,
       (sql) =>
         sql.includes('FROM moderation_actions')
           ? {
@@ -423,7 +442,13 @@ describe('Post review workspace payload', () => {
     assert.equal(review.reports.postReports[0].reasonLabel, 'Inappropriate content');
     assert.equal(review.reports.postReports[1].isOpen, false);
     assert.equal(review.reports.postReports[1].reviewOutcomeLabel, 'No action');
-    assert.deepEqual(review.reports.commentReports, []);
+    assert.equal(review.reports.postReports[0].reviewedByName, null);
+    assert.equal(review.reports.postReports[1].statusLabel, 'Closed: no action');
+    assert.equal(review.reports.postReports[1].reviewedByName, 'Mona Moderator');
+    assert.equal(review.reports.postReports[1].reviewedAt.toISOString(), '2026-09-14T10:00:00.000Z');
+    assert.equal(review.reports.commentReports.length, 1);
+    assert.equal(review.reports.commentReports[0].isOpen, false);
+    assert.equal(review.reports.commentReports[0].statusLabel, 'Closed');
 
     assert.equal(review.history.length, 1);
     assert.equal(review.history[0].actionLabel, 'Post flagged');

@@ -98,6 +98,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'PostMediaPreview',
       path.join(currentDirectory, 'components', 'post-media-preview-component.jsx'),
     ),
+    ReportStatus: componentLoader.add(
+      'ReportStatus',
+      path.join(currentDirectory, 'components', 'report-status-component.jsx'),
+    ),
     RecordStatus: componentLoader.add(
       'RecordStatus',
       path.join(currentDirectory, 'components', 'record-status-component.jsx'),
@@ -172,6 +176,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       translations: {
         en: {
           actions: { show: 'Details', list: 'Records' },
+          properties: { review_status: 'Status' },
           resources: { posts: { actions: { show: 'Review Post', list: 'Posts' } } },
           components: {
             Login: {

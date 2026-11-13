@@ -41,6 +41,27 @@ export function virtualFilterProperties(tableName) {
   );
 }
 
+const REPORT_TABLES = Object.freeze(['post_reports', 'comment_reports', 'account_reports']);
+
+/**
+ * Read-only, display-only `review_status` column for the three report tables.
+ * It has no database column: `ReportStatus` derives the words from the row's
+ * `reviewed_at` and `review_outcome`.
+ */
+export function reportStatusProperties(tableName) {
+  if (!REPORT_TABLES.includes(tableName)) return [];
+  return [
+    new Property({
+      name: 'review_status',
+      isId: false,
+      position: 9_000,
+      isNullable: true,
+      isEditable: false,
+      type: 'string',
+    }),
+  ];
+}
+
 export function virtualFilterOptions(tableName) {
   const definitions = VIRTUAL_FILTERS[tableName] ?? {};
   return Object.fromEntries(

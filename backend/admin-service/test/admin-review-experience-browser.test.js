@@ -903,6 +903,126 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
     }
   });
 
+  it('reviews a report from the workspace in the same tab and returns to a workspace that shows it closed', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      const reporterId = await insertUser('workspace-reporter');
+      const { rows } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason, details)
+         VALUES ($1, $2, 'SPAM', 'Workspace review journey') RETURNING id`,
+        [fixture.flaggedId, reporterId],
+      );
+      const reportId = rows[0].id;
+      const workspaceUrl = `${baseUrl}/admin/resources/posts/records/${fixture.flaggedId}/show`;
+
+      await loginAsAdmin(page, baseUrl);
+      await openWorkspace(page, fixture.flaggedId);
+      const before = await page.$eval('[data-testid="pupzy-reports"]', (node) => node.innerText);
+      assert.match(before, /Open/);
+      const link = await page.$('[data-testid="pupzy-report-review-link"]');
+      assert.ok(link, 'an open report offers the review link');
+      assert.equal(await link.evaluate((node) => node.getAttribute('target')), null, 'it opens in the same tab');
+      console.log(`[fix2 evidence] workspace before ${await recordEvidence(page, 'fix2-workspace-before-review')}`);
+
+      await link.click();
+      await page.waitForSelector('[data-testid="moderation-action-submit"]', { timeout: 60000 });
+      assert.match(page.url(), /reviewWithNoAction\?returnTo=/);
+      await waitForEnabledSubmit(page);
+      await page.click('[data-testid="moderation-action-submit"]');
+
+      await page.waitForSelector('[data-testid="pupzy-review-workspace"]', { timeout: 60000 });
+      await page.waitForFunction(() => document.body.innerText.includes('reviewed with no action'), {
+        timeout: 30000,
+      });
+      assert.equal(page.url().split('?')[0], workspaceUrl, 'the moderator is back on the workspace');
+
+      const { rows: stored } = await database.pool.query(
+        `SELECT reviewed_at, review_outcome FROM post_reports WHERE id = $1`,
+        [reportId],
+      );
+      assert.ok(stored[0].reviewed_at);
+      assert.equal(stored[0].review_outcome, 'NO_ACTION');
+
+      await page.waitForFunction(
+        () => document.querySelector('[data-testid="pupzy-report-status"]')?.innerText === 'Closed: no action',
+        { timeout: 30000 },
+      );
+      assert.equal(
+        await page.$('[data-testid="pupzy-report-review-link"]'),
+        null,
+        'a closed report has no review link',
+      );
+      const closedNote = await page.$eval('[data-testid="pupzy-report-closed-note"]', (node) => node.innerText);
+      assert.match(closedNote, /Closed on .* by Staff Admin/);
+      console.log(`[fix2 evidence] workspace after ${await recordEvidence(page, 'fix2-workspace-after-review')}`);
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('shows a Status column on the report lists and a Status at the top of a closed report', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      const reporterId = await insertUser('status-reporter');
+      const reportedId = await insertUser('status-reported');
+      const commentId = await insertComment({
+        postId: fixture.flaggedId,
+        authorId: fixture.commenterId,
+        text: 'Comment with a closed report',
+        createdAt: new Date(Date.now() - 3_600_000),
+      });
+      const { rows: closedPost } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason, reviewed_at, reviewed_by_admin_id, review_outcome)
+         VALUES ($1, $2, 'SPAM', now(), $3, 'NO_ACTION') RETURNING id`,
+        [fixture.flaggedId, reporterId, principals.adminId],
+      );
+      await database.pool.query(`INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SCAM')`, [
+        fixture.flaggedId,
+        reportedId,
+      ]);
+      await database.pool.query(
+        `INSERT INTO comment_reports (comment_id, reporter_id, reason, reviewed_at) VALUES ($1, $2, 'SPAM', now())`,
+        [commentId, reporterId],
+      );
+      await database.pool.query(
+        `INSERT INTO account_reports (reporter_id, reported_user_id, reason, reviewed_at, reviewed_by_admin_id, review_outcome)
+         VALUES ($1, $2, 'SPAM', now(), $3, 'ACTION_TAKEN')`,
+        [reporterId, reportedId, principals.adminId],
+      );
+
+      await loginAsAdmin(page, baseUrl);
+      const rowTexts = async (resourceId) => {
+        await page.goto(`${baseUrl}/admin/resources/${resourceId}`, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('table tbody tr', { timeout: 60000 });
+        const header = await page.$$eval('table thead td', (nodes) => nodes.map((node) => node.innerText.trim()));
+        assert.ok(header.includes('Status'), `${resourceId} list has a Status column, got ${JSON.stringify(header)}`);
+        return page.$$eval('table tbody tr', (nodes) => nodes.map((node) => node.innerText));
+      };
+
+      const postRows = await rowTexts('post_reports');
+      assert.ok(postRows.some((text) => text.includes('Closed: no action')));
+      assert.ok(postRows.some((text) => /\bOpen\b/.test(text)));
+      console.log(`[fix2 evidence] post report list ${await recordEvidence(page, 'fix2-post-reports-list')}`);
+      const commentRows = await rowTexts('comment_reports');
+      assert.ok(commentRows.some((text) => /\bClosed\b/.test(text) && !text.includes('Closed:')));
+      const accountRows = await rowTexts('account_reports');
+      assert.ok(accountRows.some((text) => text.includes('Closed: action taken')));
+
+      await page.goto(`${baseUrl}/admin/resources/post_reports/records/${closedPost[0].id}/show`, {
+        waitUntil: 'networkidle0',
+      });
+      await page.waitForSelector('[data-testid="pupzy-report-status"]', { timeout: 60000 });
+      const status = await page.$eval('[data-testid="pupzy-report-status"]', (node) => node.innerText);
+      assert.match(status, /^Status\s+Closed: no action/);
+      assert.match(status, /Closed on .* by Test Admin/);
+      console.log(`[fix2 evidence] closed report ${await recordEvidence(page, 'fix2-closed-report-show')}`);
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
   it('shows the dashboard empty state when no review work remains', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {

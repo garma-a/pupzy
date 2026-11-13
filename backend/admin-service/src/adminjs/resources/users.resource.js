@@ -5,6 +5,22 @@ import { attachShortUuid, noDeleteActions, stripRecordParams } from './resource-
 const stripPrivateFields = (response) =>
   stripRecordParams(response, ['phone_number', 'last_known_location', 'password_hash']);
 
+/**
+ * AdminJS sends a successful edit back to the list; a moderator expects to land
+ * on the user they just edited (with the success notice still showing).
+ */
+export const stripPrivateFieldsAndShowUser = (response, request, context) => {
+  stripPrivateFields(response);
+  if (response.redirectUrl && context?.h) {
+    response.redirectUrl = context.h.recordActionUrl({
+      resourceId: 'users',
+      recordId: request?.params?.recordId ?? context.record?.id(),
+      actionName: 'show',
+    });
+  }
+  return response;
+};
+
 export const ALLOWED_USER_EDIT_FIELDS = Object.freeze([
   'full_name',
   'full_name_arabic',
@@ -167,7 +183,7 @@ export function buildUsersResource(db, pool, components, cache) {
         show: { after: stripPrivateFields },
         edit: {
           before: prepareUserEditPayload,
-          after: stripPrivateFields,
+          after: stripPrivateFieldsAndShowUser,
         },
         banUser: buildBanUserAction(pool, components?.ModerationAction, cache),
         unbanUser: buildUnbanUserAction(pool, components?.ModerationAction, cache),

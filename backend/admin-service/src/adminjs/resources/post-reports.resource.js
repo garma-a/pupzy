@@ -5,11 +5,13 @@ import {
   attachShortUuid,
   buildReadOnlyResource,
   enumProperty,
+  reportStatusProperty,
   stripPopulatedPasswordHashes,
 } from './resource-helpers.js';
 
 export function buildPostReportsResource(db, components = {}, pool, cache) {
   const properties = {
+    review_status: reportStatusProperty(components),
     reason: enumProperty(ENUMS.reportReason),
     review_outcome: enumProperty(ENUMS.postReportReviewOutcome),
     details: { isDisabled: true },
@@ -22,8 +24,9 @@ export function buildPostReportsResource(db, components = {}, pool, cache) {
 
   return buildReadOnlyResource(db, 'post_reports', { name: 'Moderation', icon: 'Flag' }, properties, {
     sort: { sortBy: 'created_at', direction: 'desc' },
-    listProperties: ['id', 'post_id', 'reporter_id', 'reason', 'reviewed_at', 'created_at'],
+    listProperties: ['id', 'review_status', 'post_id', 'reporter_id', 'reason', 'reviewed_at', 'created_at'],
     showProperties: [
+      'review_status',
       'id',
       'post_id',
       'reporter_id',

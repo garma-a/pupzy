@@ -3762,4 +3762,70 @@ describe('AdminJS HTTP security and resource behavior', () => {
       });
     }
   });
+  describe('report review status and user edit return', () => {
+    const jsonHeaders = () => ({
+      cookie: `${superCookie}; ${superCsrf.cookie}`,
+      origin: baseUrl,
+      'x-xsrf-token': superCsrf.token,
+      'content-type': 'application/json',
+    });
+
+    it('serves the review fields the Status column derives from, including the reviewing admin', async () => {
+      const postId = await insertPost(database.pool, {
+        userId: principals.userId,
+        cityId: principals.cityId,
+        title: 'Report status post',
+        moderationStatus: 'FLAGGED',
+      });
+      const { rows } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason, details)
+         VALUES ($1, $2, 'SPAM', 'status check') RETURNING id`,
+        [postId, principals.userId],
+      );
+      const reportId = rows[0].id;
+
+      const listProps = async () => {
+        const list = await (
+          await fetch(`${baseUrl}/admin/api/resources/post_reports/actions/list`, { headers: { cookie: superCookie } })
+        ).json();
+        return list.records.find((record) => record.id === reportId).params;
+      };
+      const open = await listProps();
+      assert.equal(open.reviewed_at, null);
+
+      const reviewed = await fetch(
+        `${baseUrl}/admin/api/resources/post_reports/records/${reportId}/reviewWithNoAction`,
+        {
+          method: 'POST',
+          headers: jsonHeaders(),
+          body: JSON.stringify({ reason: '' }),
+        },
+      );
+      assert.equal((await reviewed.json()).notice.type, 'success');
+
+      const closed = await listProps();
+      assert.ok(closed.reviewed_at);
+      assert.equal(closed.review_outcome, 'NO_ACTION');
+
+      const show = await (
+        await fetch(`${baseUrl}/admin/api/resources/post_reports/records/${reportId}/show`, {
+          headers: { cookie: superCookie },
+        })
+      ).json();
+      assert.equal(show.record.populated.reviewed_by_admin_id.params.full_name, 'Test Admin');
+    });
+
+    it('sends a saved user edit to the user page, not the list', async () => {
+      const edited = await fetch(`${baseUrl}/admin/api/resources/users/records/${principals.userId}/edit`, {
+        method: 'POST',
+        headers: jsonHeaders(),
+        body: JSON.stringify({ full_name: 'Edited Through Http' }),
+      });
+      const body = await edited.json();
+      assert.equal(body.notice.type, 'success');
+      assert.equal(body.redirectUrl, `/admin/resources/users/records/${principals.userId}/show`);
+      const stored = await database.pool.query(`SELECT full_name FROM users WHERE id = $1`, [principals.userId]);
+      assert.equal(stored.rows[0].full_name, 'Edited Through Http');
+    });
+  });
 });

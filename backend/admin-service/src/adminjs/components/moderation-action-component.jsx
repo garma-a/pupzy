@@ -10,6 +10,7 @@ import {
   POST_CORRECTION_ACTIONS,
   POST_RESOLUTION_ACTIONS,
 } from './moderation-action-messages.js';
+import { adminRootPath, safeReturnPath } from './list-return.js';
 
 const api = new ApiClient();
 const helpers = new ViewHelpers();
@@ -45,7 +46,10 @@ export default function ModerationAction({ action, resource, record }) {
       if (response.data.notice) addNotice(response.data.notice);
       if (response.data.notice?.type === 'success') {
         // Client-side navigation keeps the notice that addNotice just queued.
-        navigate(helpers.recordActionUrl({ resourceId: resource.id, recordId: record.id, actionName: 'show' }));
+        const returnTo = safeReturnPath(new URLSearchParams(window.location.search).get('returnTo'), adminRootPath());
+        navigate(
+          returnTo ?? helpers.recordActionUrl({ resourceId: resource.id, recordId: record.id, actionName: 'show' }),
+        );
       }
     } catch {
       addNotice({ message: 'The moderation action failed.', type: 'error' });

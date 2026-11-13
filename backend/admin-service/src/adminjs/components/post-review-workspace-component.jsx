@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ApiClient } from 'adminjs';
 import { Badge, Box, Button, H3, H4, Icon, Link, Loader, MessageBox, Modal, Text } from '@adminjs/design-system';
 
-import { filteredListBackLink, recallListSearch } from './list-return.js';
+import { filteredListBackLink, recallListSearch, reportReviewHref } from './list-return.js';
 import { StateTag } from './record-status-component.jsx';
 
 const api = new ApiClient();
@@ -22,11 +22,6 @@ const COMMENT_BADGE_VARIANTS = {
   HIDDEN: 'warning',
   DELETED: 'default',
   REMOVED: 'danger',
-};
-
-const REPORT_BADGE_VARIANTS = {
-  Open: 'warning',
-  Reviewed: 'default',
 };
 
 function parseJson(value) {
@@ -239,16 +234,14 @@ function DiscussionItem({ item, onOpenMedia }) {
 }
 
 function ReportRow({ report, reviewHref, context }) {
+  const closedOn = report.reviewedAt ? formatDateTime(report.reviewedAt) : null;
   return (
     <li className="pupzy-report-row">
       <div className="pupzy-discussion-meta">
         <Text fontWeight="bold">{report.reasonLabel}</Text>
-        <Badge variant={REPORT_BADGE_VARIANTS[report.statusLabel] ?? 'default'}>{report.statusLabel}</Badge>
-        {report.reviewOutcomeLabel ? (
-          <Text color="grey60" fontSize="sm">
-            {report.reviewOutcomeLabel}
-          </Text>
-        ) : null}
+        <Badge variant={report.isOpen ? 'warning' : 'default'} data-testid="pupzy-report-status">
+          {report.statusLabel}
+        </Badge>
       </div>
       {context ? (
         <Text color="grey60" fontSize="sm" mt="xs">
@@ -260,9 +253,16 @@ function ReportRow({ report, reviewHref, context }) {
         <Text color="grey60" fontSize="sm">
           Reported by {report.reporterName} on {formatDateTime(report.createdAt)}
         </Text>
-        <Link href={reviewHref} target="_blank" rel="noopener noreferrer" data-testid="pupzy-report-review-link">
-          Review this report
-        </Link>
+        {report.isOpen ? (
+          <Link href={reviewHref} data-testid="pupzy-report-review-link">
+            Review this report
+          </Link>
+        ) : (
+          <Text color="grey60" fontSize="sm" data-testid="pupzy-report-closed-note">
+            {closedOn ? `Closed on ${closedOn}` : 'Closed'}
+            {report.reviewedByName ? ` by ${report.reviewedByName}` : ''}
+          </Text>
+        )}
       </div>
     </li>
   );
@@ -283,6 +283,7 @@ export default function PostReviewWorkspace({ resource, record }) {
   const [pageError, setPageError] = useState('');
   const [dialog, setDialog] = useState(null);
   const triggerRef = useRef(null);
+  const returnTo = typeof window === 'undefined' ? '' : `${window.location.pathname}${window.location.search}`;
 
   useEffect(() => {
     setDiscussion(review?.discussion ?? null);
@@ -505,7 +506,7 @@ export default function PostReviewWorkspace({ resource, record }) {
               <ReportRow
                 key={report.id}
                 report={report}
-                reviewHref={adminResourceUrl(`post_reports/records/${encodeURIComponent(report.id)}/show`)}
+                reviewHref={reportReviewHref('post_reports', report.id, returnTo, adminRootPath())}
               />
             ))}
           </ul>
@@ -523,7 +524,7 @@ export default function PostReviewWorkspace({ resource, record }) {
                 key={report.id}
                 report={report}
                 context={`Comment state: ${report.commentStatusLabel ?? 'Unknown'}`}
-                reviewHref={adminResourceUrl(`comment_reports/records/${encodeURIComponent(report.id)}/show`)}
+                reviewHref={reportReviewHref('comment_reports', report.id, returnTo, adminRootPath())}
               />
             ))}
           </ul>

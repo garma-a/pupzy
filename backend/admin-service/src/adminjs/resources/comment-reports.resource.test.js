@@ -11,6 +11,7 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
     const resource = buildCommentReportsResource(db);
     assert.deepEqual(resource.options.listProperties, [
       'id',
+      'review_status',
       'comment_id',
       'reporter_id',
       'reason',
@@ -27,6 +28,7 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
   it('preserves full report details on record show view', () => {
     const resource = buildCommentReportsResource(db);
     assert.deepEqual(resource.options.showProperties, [
+      'review_status',
       'id',
       'comment_id',
       'reporter_id',

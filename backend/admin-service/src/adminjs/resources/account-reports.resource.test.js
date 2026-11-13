@@ -11,6 +11,7 @@ describe('AdminJS Account Reports Resource Configuration', () => {
     const resource = buildAccountReportsResource(db);
     assert.deepEqual(resource.options.listProperties, [
       'id',
+      'review_status',
       'reporter_id',
       'reported_user_id',
       'reason',

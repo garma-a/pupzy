@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { ValidationError } from 'adminjs';
 
-import { ALLOWED_USER_EDIT_FIELDS, PROTECTED_USER_FIELDS, buildUsersResource } from './users.resource.js';
+import {
+  ALLOWED_USER_EDIT_FIELDS,
+  PROTECTED_USER_FIELDS,
+  buildUsersResource,
+  stripPrivateFieldsAndShowUser,
+} from './users.resource.js';
 
 const db = { table: (name) => ({ name }) };
 const pool = {};
@@ -339,5 +344,34 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
     };
     const result2 = await editHook(req2);
     assert.equal(result2.payload.home_city_id, null);
+  });
+});
+
+describe('User edit return target', () => {
+  it('sends a successful edit to the user page instead of the list', () => {
+    const resource = buildUsersResource(db, pool, components);
+    assert.equal(resource.options.actions.edit.after, stripPrivateFieldsAndShowUser);
+    const context = {
+      h: {
+        recordActionUrl: ({ resourceId, recordId, actionName }) =>
+          `/admin/resources/${resourceId}/records/${recordId}/${actionName}`,
+      },
+    };
+    const response = stripPrivateFieldsAndShowUser(
+      { redirectUrl: '/admin/resources/users', record: { params: { phone_number: '1' } } },
+      { params: { recordId: 'user-1' } },
+      context,
+    );
+    assert.equal(response.redirectUrl, '/admin/resources/users/records/user-1/show');
+    assert.equal(response.record.params.phone_number, undefined);
+  });
+
+  it('keeps the user on the form when the save failed (no redirect)', () => {
+    const response = stripPrivateFieldsAndShowUser(
+      { record: { params: {} } },
+      { params: { recordId: 'user-1' } },
+      { h: {} },
+    );
+    assert.equal(response.redirectUrl, undefined);
   });
 });

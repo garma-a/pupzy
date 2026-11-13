@@ -394,7 +394,7 @@ describe('Post review workspace HTTP boundary', () => {
     assert.equal(payload.reports.postReports[0].reasonLabel, 'Inappropriate content');
     assert.equal(payload.reports.postReports[1].id, reviewedPostReportId);
     assert.equal(payload.reports.postReports[1].isOpen, false);
-    assert.equal(payload.reports.postReports[1].statusLabel, 'Reviewed');
+    assert.equal(payload.reports.postReports[1].statusLabel, 'Closed: no action');
     assert.equal(payload.reports.postReports[1].reviewOutcomeLabel, 'No action');
     assert.equal(payload.reports.commentReports.length, 1);
     assert.equal(payload.reports.commentReports[0].commentId, comments[0]);

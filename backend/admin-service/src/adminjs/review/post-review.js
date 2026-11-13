@@ -1,4 +1,5 @@
 import { isAnyAdmin } from '../rbac.js';
+import { reportReviewStatus } from '../report-status.js';
 
 export const POST_REVIEW_WORKSPACE_PARAM = 'post_review_workspace';
 export const POST_REVIEW_DISCUSSION_PARAM = 'post_review_discussion';
@@ -284,9 +285,10 @@ export async function loadDiscussion(pool, postId, options = {}) {
 export async function loadReports(pool, postId) {
   const { rows: postReportRows } = await pool.query(
     `SELECT r.id, r.post_id, r.reporter_id, u.full_name AS reporter_name, r.reason, r.details,
-            r.reviewed_at, r.reviewed_by_admin_id, r.review_outcome, r.created_at
+            r.reviewed_at, r.reviewed_by_admin_id, a.full_name AS reviewed_by_name, r.review_outcome, r.created_at
      FROM post_reports r
      LEFT JOIN users u ON u.id = r.reporter_id
+     LEFT JOIN admin_users a ON a.id = r.reviewed_by_admin_id
      WHERE r.post_id = $1
      ORDER BY (r.reviewed_at IS NOT NULL), r.created_at DESC
      LIMIT $2`,
@@ -306,20 +308,24 @@ export async function loadReports(pool, postId) {
     [postId, POST_REVIEW_REPORTS_LIMIT],
   );
 
-  const shape = (row) => ({
-    id: row.id,
-    reason: row.reason,
-    reasonLabel: reportReasonLabel(row.reason),
-    details: row.details ?? null,
-    reporterId: row.reporter_id,
-    reporterName: row.reporter_name ?? 'Deleted account',
-    reviewedAt: row.reviewed_at,
-    reviewOutcome: row.review_outcome ?? null,
-    reviewOutcomeLabel: row.review_outcome ? reviewOutcomeLabel(row.review_outcome) : null,
-    isOpen: !row.reviewed_at,
-    statusLabel: row.reviewed_at ? 'Reviewed' : 'Open',
-    createdAt: row.created_at,
-  });
+  const shape = (row) => {
+    const status = reportReviewStatus({ reviewedAt: row.reviewed_at, reviewOutcome: row.review_outcome });
+    return {
+      id: row.id,
+      reason: row.reason,
+      reasonLabel: reportReasonLabel(row.reason),
+      details: row.details ?? null,
+      reporterId: row.reporter_id,
+      reporterName: row.reporter_name ?? 'Deleted account',
+      reviewedAt: row.reviewed_at,
+      reviewOutcome: row.review_outcome ?? null,
+      reviewOutcomeLabel: row.review_outcome ? reviewOutcomeLabel(row.review_outcome) : null,
+      reviewedByName: row.reviewed_by_name ?? null,
+      isOpen: status.isOpen,
+      statusLabel: status.label,
+      createdAt: row.created_at,
+    };
+  };
 
   return {
     postReports: postReportRows.map((row) => ({

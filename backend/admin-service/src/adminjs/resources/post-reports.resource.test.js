@@ -11,6 +11,7 @@ describe('AdminJS Post Reports Resource Configuration', () => {
     const resource = buildPostReportsResource(db);
     assert.deepEqual(resource.options.listProperties, [
       'id',
+      'review_status',
       'post_id',
       'reporter_id',
       'reason',
@@ -27,6 +28,7 @@ describe('AdminJS Post Reports Resource Configuration', () => {
   it('preserves full report details and review outcome on record show view', () => {
     const resource = buildPostReportsResource(db);
     assert.deepEqual(resource.options.showProperties, [
+      'review_status',
       'id',
       'post_id',
       'reporter_id',
@@ -112,5 +114,24 @@ describe('AdminJS Post Reports Resource Configuration', () => {
     const available = resource.options.properties.review_outcome.availableValues.map((v) => v.value);
     assert.deepEqual(available, ENUMS.postReportReviewOutcome);
     assert.deepEqual(available, ENUMS.accountReportReviewOutcome);
+  });
+});
+
+describe('Report review status column', () => {
+  it('is a read-only Status at the top of the show page and in the list for all three report resources', async () => {
+    const { buildCommentReportsResource } = await import('./comment-reports.resource.js');
+    const { buildAccountReportsResource } = await import('./account-reports.resource.js');
+    const components = { ReportStatus: 'ReportStatusMock' };
+    for (const build of [buildPostReportsResource, buildCommentReportsResource, buildAccountReportsResource]) {
+      const resource = build(db, components);
+      assert.equal(resource.options.showProperties[0], 'review_status');
+      assert.ok(resource.options.listProperties.includes('review_status'));
+      const property = resource.options.properties.review_status;
+      assert.equal(property.isSortable, false);
+      assert.equal(property.isDisabled, true);
+      assert.equal(property.components.list, 'ReportStatusMock');
+      assert.equal(property.components.show, 'ReportStatusMock');
+      assert.equal(resource.options.filterProperties.includes('review_status'), false);
+    }
   });
 });
