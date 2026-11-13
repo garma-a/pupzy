@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -16,6 +14,7 @@ import '../utils/age_parser.dart';
 import '../utils/arabic_adoption_description.dart';
 import '../utils/photo_privacy.dart';
 import '../utils/presigned_upload.dart';
+import '../widgets/post_photo_picker.dart';
 import '../widgets/yes_no_question.dart';
 
 /// A fixed-choice option: (canonical value sent to the backend, English label, Arabic label).
@@ -170,6 +169,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
   void initState() {
     super.initState();
     _selectedCategory = widget.initialCategory;
+    _recoverLostPhotos();
     if (widget.type == PostType.mating) {
       _loadCities();
     }
@@ -248,18 +248,16 @@ class _PostFormScreenState extends State<PostFormScreen> {
     return t(context, match.$2, match.$3);
   }
 
-  Future<void> _pickImage() async {
-    if (_images.length >= 4) return;
-    // Downscale + re-encode at pick time so we never upload a full-resolution
-    // camera photo (can be 10+ MB) — keeps uploads fast and comfortably under
-    // the backend's 5MB-per-image limit.
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1600,
-      maxHeight: 1600,
-      imageQuality: 80,
-    );
-    if (picked != null) setState(() => _images.add(picked));
+  /// Photos in post order: the first is the cover (see [PostPhotoPicker]).
+  void _setPhotos(List<XFile> photos) => setState(() => _images
+    ..clear()
+    ..addAll(photos));
+
+  /// Brings back photos taken or picked just before Android closed the app.
+  Future<void> _recoverLostPhotos() async {
+    final lost = await recoverLostPostPhotos();
+    if (!mounted || lost.isEmpty) return;
+    _setPhotos(addPostPhotos(_images, lost).photos);
   }
 
   _Check get _photosCheck =>
@@ -1030,62 +1028,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     _SectionLabel(t(context, 'ANIMAL DETAILS', 'تفاصيل الحيوان')),
                     const SizedBox(height: AppSpacing.sm),
                     _fieldLabel('photos', null),
-                    InkWell(
-                      onTap: _pickImage,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceWarm,
-                          borderRadius: BorderRadius.circular(AppRadius.card),
-                          border: Border.all(color: AppColors.border, style: BorderStyle.solid),
-                        ),
-                        child: Column(
-                          children: [
-                            if (_images.isEmpty) ...[
-                              const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
-                              const SizedBox(height: AppSpacing.sm),
-                              Text(
-                                t(context, 'Add photos of the animal', 'أضف صورًا للحيوان'),
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(t(context, 'Up to 4 photos', 'حتى 4 صور'), style: Theme.of(context).textTheme.bodySmall),
-                            ] else
-                              SizedBox(
-                                height: 90,
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  children: [
-                                    ..._images.map(
-                                      (img) => Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
-                                        ),
-                                      ),
-                                    ),
-                                    if (_images.length < 4)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                        child: Container(
-                                          width: 90,
-                                          height: 90,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: AppColors.border),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+                    PostPhotoPicker(
+                      photos: _images,
+                      title: t(context, 'Add photos of the animal', 'أضف صورًا للحيوان'),
+                      subtitle: t(context, 'Up to 4 photos', 'حتى 4 صور'),
+                      onChanged: _setPhotos,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     _fieldLabel('species', t(context, 'Species', 'النوع')),
@@ -1295,65 +1242,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     _SectionLabel(t(context, 'PET DETAILS', 'تفاصيل الحيوان')),
                     const SizedBox(height: AppSpacing.sm),
                     _fieldLabel('photos', null),
-                    InkWell(
-                      onTap: _pickImage,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceWarm,
-                          borderRadius: BorderRadius.circular(AppRadius.card),
-                          border: Border.all(color: AppColors.border, style: BorderStyle.solid),
-                        ),
-                        child: Column(
-                          children: [
-                            if (_images.isEmpty) ...[
-                              const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
-                              const SizedBox(height: AppSpacing.sm),
-                              Text(
-                                t(context, 'Add photos of your pet', 'أضف صورًا لحيوانك الأليف'),
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                t(context, 'Clear photos help with identification', 'الصور الواضحة تساعد في التعرف عليه'),
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ] else
-                              SizedBox(
-                                height: 90,
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  children: [
-                                    ..._images.map(
-                                      (img) => Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
-                                        ),
-                                      ),
-                                    ),
-                                    if (_images.length < 4)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                        child: Container(
-                                          width: 90,
-                                          height: 90,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: AppColors.border),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+                    PostPhotoPicker(
+                      photos: _images,
+                      title: t(context, 'Add photos of your pet', 'أضف صورًا لحيوانك الأليف'),
+                      subtitle: t(context, 'Clear photos help with identification', 'الصور الواضحة تساعد في التعرف عليه'),
+                      onChanged: _setPhotos,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     _fieldLabel('species', t(context, 'Species', 'النوع')),
@@ -1559,65 +1452,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     _SectionLabel(t(context, 'ANIMAL DETAILS', 'تفاصيل الحيوان')),
                     const SizedBox(height: AppSpacing.sm),
                     _fieldLabel('photos', null),
-                    InkWell(
-                      onTap: _pickImage,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceWarm,
-                          borderRadius: BorderRadius.circular(AppRadius.card),
-                          border: Border.all(color: AppColors.border, style: BorderStyle.solid),
-                        ),
-                        child: Column(
-                          children: [
-                            if (_images.isEmpty) ...[
-                              const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
-                              const SizedBox(height: AppSpacing.sm),
-                              Text(
-                                t(context, 'Add photos of the animal', 'أضف صورًا للحيوان'),
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                t(context, 'Clear photos help the owner recognize it', 'الصور الواضحة تساعد المالك على التعرف عليه'),
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ] else
-                              SizedBox(
-                                height: 90,
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  children: [
-                                    ..._images.map(
-                                      (img) => Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
-                                        ),
-                                      ),
-                                    ),
-                                    if (_images.length < 4)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                        child: Container(
-                                          width: 90,
-                                          height: 90,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: AppColors.border),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+                    PostPhotoPicker(
+                      photos: _images,
+                      title: t(context, 'Add photos of the animal', 'أضف صورًا للحيوان'),
+                      subtitle: t(context, 'Clear photos help the owner recognize it', 'الصور الواضحة تساعد المالك على التعرف عليه'),
+                      onChanged: _setPhotos,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     _fieldLabel('species', t(context, 'Species', 'النوع')),
@@ -1801,65 +1640,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     _SectionLabel(t(context, 'PET PROFILE', 'ملف الحيوان')),
                     const SizedBox(height: AppSpacing.sm),
                     _fieldLabel('photos', null),
-                    InkWell(
-                      onTap: _pickImage,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceWarm,
-                          borderRadius: BorderRadius.circular(AppRadius.card),
-                          border: Border.all(color: AppColors.border, style: BorderStyle.solid),
-                        ),
-                        child: Column(
-                          children: [
-                            if (_images.isEmpty) ...[
-                              const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
-                              const SizedBox(height: AppSpacing.sm),
-                              Text(
-                                t(context, 'Add pet photos', 'أضف صور الحيوان'),
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                t(context, 'Up to 4 photos — first is the cover', 'حتى 4 صور — الأولى هي الغلاف'),
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ] else
-                              SizedBox(
-                                height: 90,
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  children: [
-                                    ..._images.map(
-                                      (img) => Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
-                                        ),
-                                      ),
-                                    ),
-                                    if (_images.length < 4)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                        child: Container(
-                                          width: 90,
-                                          height: 90,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: AppColors.border),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+                    PostPhotoPicker(
+                      photos: _images,
+                      title: t(context, 'Add pet photos', 'أضف صور الحيوان'),
+                      subtitle: t(context, 'Up to 4 photos — first is the cover', 'حتى 4 صور — الأولى هي الغلاف'),
+                      onChanged: _setPhotos,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     _fieldLabel('petName', t(context, "Pet's name", 'اسم الحيوان')),
@@ -2097,65 +1882,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     _SectionLabel(t(context, 'PET PROFILE', 'ملف الحيوان')),
                     const SizedBox(height: AppSpacing.sm),
                     _fieldLabel('photos', null),
-                    InkWell(
-                      onTap: _pickImage,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceWarm,
-                          borderRadius: BorderRadius.circular(AppRadius.card),
-                          border: Border.all(color: AppColors.border, style: BorderStyle.solid),
-                        ),
-                        child: Column(
-                          children: [
-                            if (_images.isEmpty) ...[
-                              const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
-                              const SizedBox(height: AppSpacing.sm),
-                              Text(
-                                t(context, 'Add pet photos', 'أضف صور الحيوان'),
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                t(context, 'Up to 4 photos — first is the cover', 'حتى 4 صور — الأولى هي الغلاف'),
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ] else
-                              SizedBox(
-                                height: 90,
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  children: [
-                                    ..._images.map(
-                                      (img) => Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
-                                        ),
-                                      ),
-                                    ),
-                                    if (_images.length < 4)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                        child: Container(
-                                          width: 90,
-                                          height: 90,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: AppColors.border),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+                    PostPhotoPicker(
+                      photos: _images,
+                      title: t(context, 'Add pet photos', 'أضف صور الحيوان'),
+                      subtitle: t(context, 'Up to 4 photos — first is the cover', 'حتى 4 صور — الأولى هي الغلاف'),
+                      onChanged: _setPhotos,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     _fieldLabel('petName', t(context, "Pet's name", 'اسم الحيوان')),
@@ -2366,62 +2097,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     _SectionLabel(t(context, 'LISTING DETAILS', 'تفاصيل الإعلان')),
                     const SizedBox(height: AppSpacing.sm),
                     _fieldLabel('photos', null),
-                    InkWell(
-                      onTap: _pickImage,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceWarm,
-                          borderRadius: BorderRadius.circular(AppRadius.card),
-                          border: Border.all(color: AppColors.border, style: BorderStyle.solid),
-                        ),
-                        child: Column(
-                          children: [
-                            if (_images.isEmpty) ...[
-                              const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
-                              const SizedBox(height: AppSpacing.sm),
-                              Text(
-                                t(context, 'Add photos of the item', 'أضف صورًا للمنتج'),
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(t(context, 'Up to 4 photos', 'حتى 4 صور'), style: Theme.of(context).textTheme.bodySmall),
-                            ] else
-                              SizedBox(
-                                height: 90,
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  children: [
-                                    ..._images.map(
-                                      (img) => Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
-                                        ),
-                                      ),
-                                    ),
-                                    if (_images.length < 4)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                        child: Container(
-                                          width: 90,
-                                          height: 90,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: AppColors.border),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+                    PostPhotoPicker(
+                      photos: _images,
+                      title: t(context, 'Add photos of the item', 'أضف صورًا للمنتج'),
+                      subtitle: t(context, 'Up to 4 photos', 'حتى 4 صور'),
+                      onChanged: _setPhotos,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     _fieldLabel('title', t(context, 'Title', 'العنوان')),
