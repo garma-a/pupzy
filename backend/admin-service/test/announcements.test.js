@@ -407,6 +407,22 @@ describe('Admin announcements (HTTP, real database)', () => {
       assert.ok(!('password_hash' in detail.record.populated.sent_by_admin_id.params));
     });
 
+    it('filters the history by status and audience', async () => {
+      await api(superSession, 'announcements', 'new', { ...draft(), confirmedCount: eligibleCount() });
+      const listWith = async (query) =>
+        (
+          await (
+            await fetch(`${baseUrl}/admin/api/resources/announcements/actions/list?${query}`, {
+              headers: { cookie: superSession.cookie },
+            })
+          ).json()
+        ).records.length;
+      assert.equal(await listWith('filters.status=PENDING'), 1);
+      assert.equal(await listWith('filters.status=SENT'), 0);
+      assert.equal(await listWith('filters.audience=ALL'), 1);
+      assert.equal(await listWith('filters.audience=CITY'), 0);
+    });
+
     it('the audit row links back to the announcement for a super admin without breaking for others', async () => {
       const sent = await api(superSession, 'announcements', 'new', { ...draft(), confirmedCount: eligibleCount() });
       for (const sessionState of [superSession, staffSession]) {
