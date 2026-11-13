@@ -1,4 +1,9 @@
 import { buildCommentReportReviewAction } from '../actions/review-report.actions.js';
+import {
+  buildCommentReportTargetActions,
+  reportTargetState,
+  withTargetState,
+} from '../actions/report-target-actions.js';
 import { ENUMS } from '../enums.js';
 import { COMMENT_EVIDENCE_PARAM, attachCommentEvidence } from '../review/comment-evidence.js';
 import { virtualFilterOptions } from '../queue-filters.js';
@@ -53,16 +58,22 @@ export function buildCommentReportsResource(db, components = {}, pool, cache) {
     filterProperties: ['reason', 'comment_id', 'reporter_id', 'reviewed_at', 'created_at', 'review_state'],
     actions: {
       list: { after: stripPopulatedPasswordHashes },
-      show: {
-        after: [
-          stripPopulatedPasswordHashes,
-          attachCommentEvidence(pool, {
-            commentIdOf: (params) => params.comment_id,
-            reportIdOf: (params) => params.id,
-          }),
-        ],
-      },
-      reviewWithNoAction: buildCommentReportReviewAction(pool, components?.ModerationAction, cache),
+      ...withTargetState(
+        {
+          show: {
+            after: [
+              stripPopulatedPasswordHashes,
+              attachCommentEvidence(pool, {
+                commentIdOf: (params) => params.comment_id,
+                reportIdOf: (params) => params.id,
+              }),
+            ],
+          },
+          reviewWithNoAction: buildCommentReportReviewAction(pool, components?.ModerationAction, cache),
+          ...buildCommentReportTargetActions(),
+        },
+        reportTargetState(pool, 'comment'),
+      ),
     },
   });
 }

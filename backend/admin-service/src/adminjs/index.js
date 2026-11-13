@@ -200,7 +200,14 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
         en: {
           actions: { show: 'Details', list: 'Records' },
           properties: PROPERTY_LABELS,
-          resources: { posts: { actions: { show: 'Review Post', list: 'Posts' } } },
+          resources: {
+            posts: { actions: { show: 'Review Post', list: 'Posts' } },
+            post_reports: { actions: { removePost: 'Remove Post', banAuthor: 'Ban Author' } },
+            comment_reports: {
+              actions: { hideComment: 'Hide Comment', removeComment: 'Remove Comment', banAuthor: 'Ban Author' },
+            },
+            account_reports: { actions: { banUser: 'Ban User' } },
+          },
           components: {
             Login: {
               welcomeHeader: 'Welcome to Pupzy',

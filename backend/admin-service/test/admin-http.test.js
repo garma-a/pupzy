@@ -4497,4 +4497,89 @@ describe('AdminJS HTTP security and resource behavior', () => {
       });
     });
   });
+  describe('report pages offer the actions on the reported content', () => {
+    const apiGet = async (path) =>
+      (await fetch(`${baseUrl}/admin/api/resources/${path}`, { headers: { cookie: superCookie } })).json();
+    const actionNames = async (resource, id) =>
+      (await apiGet(`${resource}/records/${id}/show`)).record.recordActions.map((action) => action.name);
+
+    it('lists Remove Post and Ban Author on a Post Report, hides them as the target changes, and only redirects', async () => {
+      const { rows: users } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name) VALUES ('rt-author', 'rt-author@example.com', 'RT Author') RETURNING id`,
+      );
+      const postId = await insertPost(database.pool, {
+        userId: users[0].id,
+        cityId: principals.cityId,
+        title: 'Report target post',
+        moderationStatus: 'CLEAN',
+      });
+      const { rows } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [postId, principals.userId],
+      );
+      const reportId = rows[0].id;
+
+      const names = await actionNames('post_reports', reportId);
+      assert.ok(names.includes('reviewWithNoAction'));
+      assert.ok(names.includes('removePost'));
+      assert.ok(names.includes('banAuthor'));
+
+      const show = await apiGet(`post_reports/records/${reportId}/show`);
+      const remove = show.record.recordActions.find((action) => action.name === 'removePost');
+      assert.equal(remove.component, false, 'a plain button, not a form of its own');
+
+      const response = await apiGet(`post_reports/records/${reportId}/removePost`);
+      assert.equal(
+        response.redirectUrl,
+        `/admin/resources/posts/records/${postId}/removePost?returnTo=${encodeURIComponent(`/admin/resources/post_reports/records/${reportId}/show`)}`,
+      );
+      assert.equal(
+        (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0].status,
+        'ACTIVE',
+        'the button itself removes nothing',
+      );
+
+      await database.pool.query(`UPDATE posts SET status = 'REMOVED' WHERE id = $1`, [postId]);
+      await database.pool.query(`UPDATE users SET is_banned = true, banned_at = now() WHERE id = $1`, [users[0].id]);
+      const after = await actionNames('post_reports', reportId);
+      assert.equal(after.includes('removePost'), false, 'already removed');
+      assert.equal(after.includes('banAuthor'), false, 'already banned');
+    });
+
+    it('lists Hide Comment, Remove Comment and Ban Author on a Comment Report and Ban User on an Account Report', async () => {
+      const { rows: users } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name) VALUES ('rt-comment-author', 'rt-comment@example.com', 'RT Commenter') RETURNING id`,
+      );
+      const postId = await insertPost(database.pool, {
+        userId: principals.userId,
+        cityId: principals.cityId,
+        title: 'Comment report target',
+        moderationStatus: 'CLEAN',
+      });
+      const { rows: comment } = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status) VALUES ($1, $2, 'Reported text', 'ACTIVE') RETURNING id`,
+        [postId, users[0].id],
+      );
+      const { rows: commentReport } = await database.pool.query(
+        `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [comment[0].id, principals.userId],
+      );
+      const names = await actionNames('comment_reports', commentReport[0].id);
+      for (const expected of ['reviewWithNoAction', 'hideComment', 'removeComment', 'banAuthor']) {
+        assert.ok(names.includes(expected), expected);
+      }
+      await database.pool.query(`UPDATE comments SET status = 'HIDDEN' WHERE id = $1`, [comment[0].id]);
+      const hidden = await actionNames('comment_reports', commentReport[0].id);
+      assert.equal(hidden.includes('hideComment'), false);
+      assert.ok(hidden.includes('removeComment'));
+
+      const { rows: accountReport } = await database.pool.query(
+        `INSERT INTO account_reports (reporter_id, reported_user_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [principals.userId, users[0].id],
+      );
+      assert.ok((await actionNames('account_reports', accountReport[0].id)).includes('banUser'));
+      await database.pool.query(`UPDATE users SET is_banned = true, banned_at = now() WHERE id = $1`, [users[0].id]);
+      assert.equal((await actionNames('account_reports', accountReport[0].id)).includes('banUser'), false);
+    });
+  });
 });

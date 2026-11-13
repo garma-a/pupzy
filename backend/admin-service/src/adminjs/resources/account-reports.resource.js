@@ -1,4 +1,9 @@
 import { buildAccountReportReviewAction } from '../actions/review-report.actions.js';
+import {
+  buildAccountReportTargetActions,
+  reportTargetState,
+  withTargetState,
+} from '../actions/report-target-actions.js';
 import { ENUMS } from '../enums.js';
 import { buildPolymorphicReferenceHook } from '../reference-targets.js';
 import { virtualFilterOptions } from '../queue-filters.js';
@@ -69,8 +74,14 @@ export function buildAccountReportsResource(db, components = {}, pool, cache) {
     ],
     actions: {
       list: { after: [stripPopulatedPasswordHashes, resolveSource] },
-      show: { after: [stripPopulatedPasswordHashes, resolveSource] },
-      reviewWithNoAction: buildAccountReportReviewAction(pool, components?.ModerationAction, cache),
+      ...withTargetState(
+        {
+          show: { after: [stripPopulatedPasswordHashes, resolveSource] },
+          reviewWithNoAction: buildAccountReportReviewAction(pool, components?.ModerationAction, cache),
+          ...buildAccountReportTargetActions(),
+        },
+        reportTargetState(pool, 'account'),
+      ),
     },
   });
 }

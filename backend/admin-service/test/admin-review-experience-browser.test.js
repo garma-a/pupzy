@@ -1492,6 +1492,130 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
     });
   });
 
+  describe('acting on the reported content from a report page', () => {
+    const closedStatus = (page) =>
+      page.waitForFunction(
+        () =>
+          /Closed: action taken/.test(document.querySelector('[data-testid="pupzy-report-status"]')?.innerText ?? ''),
+        { timeout: 30000 },
+      );
+
+    it('hides a reported Comment from its Comment Report and lands back on the report closed as action taken', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        const reporterId = await insertUser('act-comment-reporter');
+        const commentId = await insertComment({
+          postId: fixture.flaggedId,
+          authorId: fixture.commenterId,
+          text: 'A comment a moderator will hide',
+          createdAt: new Date(Date.now() - 3_600_000),
+        });
+        const { rows } = await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [commentId, reporterId],
+        );
+        const reportUrl = `${baseUrl}/admin/resources/comment_reports/records/${rows[0].id}/show`;
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(reportUrl, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="action-hideComment"]', { timeout: 60000 });
+        assert.ok(await page.$('[data-testid="action-reviewWithNoAction"]'));
+        assert.ok(await page.$('[data-testid="action-removeComment"]'));
+        assert.ok(await page.$('[data-testid="action-banAuthor"]'));
+        console.log(
+          `[fix6 evidence] comment report before ${await recordEvidence(page, 'fix6-comment-report-before')}`,
+        );
+
+        await page.click('[data-testid="action-hideComment"]');
+        await page.waitForSelector('#moderation-reason', { timeout: 60000 });
+        assert.match(page.url(), new RegExp(`/resources/comments/records/${commentId}/hideComment\\?.*returnTo=`));
+        assert.equal(await page.$eval('h3', (node) => node.innerText), 'Hide Comment');
+        await page.type('#moderation-reason', 'Abusive language');
+        await waitForEnabledSubmit(page);
+        await page.click('[data-testid="moderation-action-submit"]');
+
+        await page.waitForSelector('[data-testid="pupzy-report-status"]', { timeout: 60000 });
+        await closedStatus(page);
+        assert.equal(page.url().split('?')[0], reportUrl, 'back on the report');
+        assert.match(
+          await page.$eval('[data-testid="pupzy-report-status"]', (node) => node.innerText),
+          /Closed: action taken[\s\S]*by Staff Admin/,
+        );
+        assert.equal(await page.$('[data-testid="action-hideComment"]'), null, 'nothing left to hide');
+        console.log(`[fix6 evidence] comment report after ${await recordEvidence(page, 'fix6-comment-report-after')}`);
+
+        const comment = await database.pool.query(`SELECT status FROM comments WHERE id = $1`, [commentId]);
+        assert.equal(comment.rows[0].status, 'HIDDEN');
+        const report = await database.pool.query(
+          `SELECT review_outcome, reviewed_by_admin_id IS NOT NULL AS reviewed FROM comment_reports WHERE id = $1`,
+          [rows[0].id],
+        );
+        assert.deepEqual(report.rows[0], { review_outcome: 'ACTION_TAKEN', reviewed: true });
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+
+    it('removes a reported Post from its Post Report and closes the reports on its comments too', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        const reporterId = await insertUser('act-post-reporter');
+        const otherReporterId = await insertUser('act-post-reporter-two');
+        const commentId = await insertComment({
+          postId: fixture.flaggedId,
+          authorId: fixture.commenterId,
+          text: 'A comment on the removed post',
+          createdAt: new Date(Date.now() - 3_600_000),
+        });
+        const { rows } = await database.pool.query(
+          `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [fixture.flaggedId, reporterId],
+        );
+        const { rows: commentReport } = await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [commentId, otherReporterId],
+        );
+        const reportUrl = `${baseUrl}/admin/resources/post_reports/records/${rows[0].id}/show`;
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(reportUrl, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="action-removePost"]', { timeout: 60000 });
+        assert.ok(await page.$('[data-testid="action-banAuthor"]'));
+
+        await page.click('[data-testid="action-removePost"]');
+        await page.waitForSelector('#moderation-reason', { timeout: 60000 });
+        assert.equal(await page.$eval('h3', (node) => node.innerText), 'Remove Post');
+        await page.type('#moderation-reason', 'Breaks the rules');
+        await waitForEnabledSubmit(page);
+        await page.click('[data-testid="moderation-action-submit"]');
+
+        await page.waitForSelector('[data-testid="pupzy-report-status"]', { timeout: 60000 });
+        await closedStatus(page);
+        assert.equal(page.url().split('?')[0], reportUrl);
+        assert.equal(await page.$('[data-testid="action-removePost"]'), null, 'the Post is already removed');
+        console.log(`[fix6 evidence] post report after ${await recordEvidence(page, 'fix6-post-report-after')}`);
+
+        const post = await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [fixture.flaggedId]);
+        assert.equal(post.rows[0].status, 'REMOVED');
+        const closedReports = await database.pool.query(
+          `SELECT review_outcome FROM post_reports WHERE id = $1 UNION ALL SELECT review_outcome FROM comment_reports WHERE id = $2`,
+          [rows[0].id, commentReport[0].id],
+        );
+        assert.deepEqual(
+          closedReports.rows.map((row) => row.review_outcome),
+          ['ACTION_TAKEN', 'ACTION_TAKEN'],
+        );
+        const audit = await database.pool.query(
+          `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_REMOVED'`,
+          [fixture.flaggedId],
+        );
+        assert.deepEqual(audit.rows[0].metadata.closedCommentReportIds, [commentReport[0].id]);
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+  });
+
   it('shows the dashboard empty state when no review work remains', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {

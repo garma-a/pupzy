@@ -1,4 +1,5 @@
 import { buildPostReportReviewAction } from '../actions/review-report.actions.js';
+import { buildPostReportTargetActions, reportTargetState, withTargetState } from '../actions/report-target-actions.js';
 import { ENUMS } from '../enums.js';
 import { virtualFilterOptions } from '../queue-filters.js';
 import {
@@ -50,8 +51,14 @@ export function buildPostReportsResource(db, components = {}, pool, cache) {
     ],
     actions: {
       list: { after: stripPopulatedPasswordHashes },
-      show: { after: stripPopulatedPasswordHashes },
-      reviewWithNoAction: buildPostReportReviewAction(pool, components?.ModerationAction, cache),
+      ...withTargetState(
+        {
+          show: { after: stripPopulatedPasswordHashes },
+          reviewWithNoAction: buildPostReportReviewAction(pool, components?.ModerationAction, cache),
+          ...buildPostReportTargetActions(),
+        },
+        reportTargetState(pool, 'post'),
+      ),
     },
   });
 }
