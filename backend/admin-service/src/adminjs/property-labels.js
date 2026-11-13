@@ -3,6 +3,7 @@
  * the trailing "Id" so a column reads "Post" or "Reported by".
  */
 export const PROPERTY_LABELS = Object.freeze({
+  id: 'ID',
   review_status: 'Status',
   post_id: 'Post',
   target_post_id: 'Post',

@@ -73,6 +73,14 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
   const componentLoader = new ComponentLoader();
   componentLoader.override('Login', path.join(currentDirectory, 'components', 'login-component.jsx'));
   componentLoader.override(
+    'DefaultShowProperty',
+    path.join(currentDirectory, 'components', 'default-show-property-component.jsx'),
+  );
+  componentLoader.override(
+    'DefaultDatetimeShowProperty',
+    path.join(currentDirectory, 'components', 'default-datetime-show-component.jsx'),
+  );
+  componentLoader.override(
     'RecordsTable',
     path.join(currentDirectory, 'components', 'scrollable-records-table-component.jsx'),
   );

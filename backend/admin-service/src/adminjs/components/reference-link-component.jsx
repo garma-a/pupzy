@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { ViewHelpers, useTranslation } from 'adminjs';
+import { ViewHelpers } from 'adminjs';
 import { useNavigate } from 'react-router';
 
 import { deletedLabel, referenceTitle } from '../reference-title.js';
 import { formatShortUuid } from './short-uuid.js';
 import { Avatar } from './avatar-component.jsx';
+import ShowField from './show-field.jsx';
 
 const helpers = new ViewHelpers();
 const MUTED = { color: '#B8A499' };
@@ -49,19 +50,8 @@ function CopyId({ value }) {
  * same). Show pages keep a small copy-ID button; lists never print a raw UUID.
  */
 export default function ReferenceLink(props) {
-  const { property, where } = props;
-  const { translateProperty } = useTranslation();
   const body = <ReferenceValue {...props} />;
-  if (where !== 'show') return body;
-  // Show pages print the property label because a custom component replaces AdminJS's own row.
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4 }}>
-        {translateProperty(property?.path, property?.resourceId)}
-      </div>
-      {body}
-    </div>
-  );
+  return props.where === 'show' ? <ShowField property={props.property}>{body}</ShowField> : body;
 }
 
 function ReferenceValue({ property, record, where }) {

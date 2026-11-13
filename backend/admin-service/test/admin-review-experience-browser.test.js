@@ -1014,7 +1014,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       });
       await page.waitForSelector('[data-testid="pupzy-report-status"]', { timeout: 60000 });
       const status = await page.$eval('[data-testid="pupzy-report-status"]', (node) => node.innerText);
-      assert.match(status, /^Status\s+Closed: no action/);
+      assert.match(status, /^Closed: no action/);
       assert.match(status, /Closed on .* by Test Admin/);
       console.log(`[fix2 evidence] closed report ${await recordEvidence(page, 'fix2-closed-report-show')}`);
       assert.deepEqual(errors, []);
@@ -1119,6 +1119,74 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       await clickReference('posts');
       await waitForPath(`/resources/posts/records/${fixture.flaggedId}/show`);
       assert.ok(!page.url().includes('moderation_actions'));
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('labels every field on the report pages and reads an empty value as a dash', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      const reporterId = await insertUser('label-reporter');
+      const reportedId = await insertUser('label-reported');
+      const commentId = await insertComment({
+        postId: fixture.flaggedId,
+        authorId: fixture.commenterId,
+        text: 'Comment for the label check',
+        createdAt: new Date(Date.now() - 3_600_000),
+      });
+      const { rows: post } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [fixture.flaggedId, reporterId],
+      );
+      const { rows: comment } = await database.pool.query(
+        `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [commentId, reporterId],
+      );
+      const { rows: account } = await database.pool.query(
+        `INSERT INTO account_reports (reporter_id, reported_user_id, reason, reviewed_at, reviewed_by_admin_id, review_outcome)
+         VALUES ($1, $2, 'SPAM', now(), $3, 'ACTION_TAKEN') RETURNING id`,
+        [reporterId, reportedId, principals.adminId],
+      );
+
+      await loginAsAdmin(page, baseUrl);
+      const pages = [
+        ['post_reports', post[0].id],
+        ['comment_reports', comment[0].id],
+        ['account_reports', account[0].id],
+        ['users', reporterId],
+        ['comments', commentId],
+      ];
+      for (const [resourceId, recordId] of pages) {
+        await page.goto(`${baseUrl}/admin/resources/${resourceId}/records/${recordId}/show`, {
+          waitUntil: 'networkidle0',
+        });
+        await page.waitForSelector('main label, [data-css*="show"] label, label', { timeout: 60000 });
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        const rows = await page.evaluate(() => {
+          const first = [...document.querySelectorAll('label')].find((node) => !node.closest('[data-css^="sidebar"]'));
+          const container = first.parentElement.parentElement.parentElement;
+          return [...container.children].map((row) => ({
+            label: row.querySelector('label')?.innerText.trim() ?? null,
+            text: row.innerText.trim(),
+          }));
+        });
+        assert.ok(rows.length > 3, `${resourceId} show page has fields`);
+        for (const row of rows) {
+          assert.ok(row.label, `${resourceId}: a value has no label: ${JSON.stringify(row.text.slice(0, 60))}`);
+        }
+        if (resourceId !== 'users') {
+          const labels = rows.map((row) => row.label);
+          assert.ok(labels.includes('ID'), `${resourceId} labels its own id`);
+          assert.ok(!labels.some((label) => /_id$/.test(label)), `${resourceId} labels read as plain words`);
+        }
+        if (resourceId === 'post_reports') {
+          const reviewedAt = rows.find((row) => row.label === 'Reviewed At');
+          assert.match(reviewedAt.text, /—/, 'an empty value is a dash, not a blank gap');
+          console.log(`[fix4 evidence] report show ${await recordEvidence(page, 'fix4-report-show-labelled')}`);
+        }
+      }
       assert.deepEqual(errors, []);
     } finally {
       await page.close();

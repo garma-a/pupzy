@@ -2,6 +2,7 @@ import React from 'react';
 
 import { reportReviewStatus } from '../report-status.js';
 import { StateTag } from './record-status-component.jsx';
+import ShowField from './show-field.jsx';
 
 function formatDate(value) {
   const date = value ? new Date(value) : null;
@@ -13,7 +14,7 @@ function formatDate(value) {
  * "Closed: action taken" or "Closed". The show page adds when it was closed and
  * by whom.
  */
-export default function ReportStatus({ record, where }) {
+export default function ReportStatus({ property, record, where }) {
   const params = record?.params ?? {};
   const status = reportReviewStatus({ reviewedAt: params.reviewed_at, reviewOutcome: params.review_outcome });
   const tag = <StateTag value={status.state} label={status.label} />;
@@ -26,10 +27,11 @@ export default function ReportStatus({ record, where }) {
     ? null
     : [closedOn ? `Closed on ${closedOn}` : null, reviewerName ? `by ${reviewerName}` : null].filter(Boolean).join(' ');
   return (
-    <div data-testid="pupzy-report-status" style={{ marginBottom: 16 }}>
-      <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4 }}>Status</div>
-      {tag}
-      {detail ? <span className="pupzy-report-status-detail"> {detail}</span> : null}
-    </div>
+    <ShowField property={property}>
+      <div data-testid="pupzy-report-status">
+        {tag}
+        {detail ? <span className="pupzy-report-status-detail"> {detail}</span> : null}
+      </div>
+    </ShowField>
   );
 }
