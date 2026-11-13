@@ -15,6 +15,7 @@ export function buildCommentReportsResource(db, components = {}, pool, cache) {
   const properties = {
     review_status: reportStatusProperty(components),
     reason: enumProperty(ENUMS.reportReason),
+    review_outcome: enumProperty(ENUMS.commentReportReviewOutcome),
     details: { isDisabled: true },
     reviewed_at: { isDisabled: true },
     created_at: { isDisabled: true },
@@ -31,7 +32,7 @@ export function buildCommentReportsResource(db, components = {}, pool, cache) {
   }
 
   attachShortUuid(properties, ['id'], components, ['list', 'show']);
-  attachReferenceLink(properties, ['comment_id', 'reporter_id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['comment_id', 'reporter_id', 'reviewed_by_admin_id'], components, ['list', 'show']);
 
   return buildReadOnlyResource(db, 'comment_reports', { name: 'Moderation', icon: 'Flag' }, properties, {
     sort: { sortBy: 'created_at', direction: 'desc' },
@@ -45,6 +46,8 @@ export function buildCommentReportsResource(db, components = {}, pool, cache) {
       'reason',
       'details',
       'reviewed_at',
+      'reviewed_by_admin_id',
+      'review_outcome',
       'created_at',
     ],
     filterProperties: ['reason', 'comment_id', 'reporter_id', 'reviewed_at', 'created_at', 'review_state'],

@@ -67,6 +67,8 @@ const MODERATION_ACTION_LABELS = {
   USER_PROFILE_PHOTO_REMOVED: 'Profile photo removed',
   COMMENT_RESTORED: 'Comment restored',
   COMMENT_REMOVED: 'Comment removed',
+  COMMENT_HIDDEN: 'Comment hidden',
+  COMMENT_IMAGES_HIDDEN: 'Comment images hidden',
   POST_REPORT_REVIEWED_NO_ACTION: 'Post Report reviewed — no action',
   ACCOUNT_REPORT_REVIEWED_NO_ACTION: 'Pupzy Account Report reviewed — no action',
 };
@@ -299,10 +301,11 @@ export async function loadReports(pool, postId) {
   const { rows: commentReportRows } = await pool.query(
     `SELECT r.id, r.comment_id, c.text AS comment_text, c.status AS comment_status,
             r.reporter_id, ${USER_NAME_SQL} AS reporter_name, r.reason, r.details,
-            r.reviewed_at, r.created_at
+            r.reviewed_at, r.review_outcome, a.full_name AS reviewed_by_name, r.created_at
      FROM comment_reports r
      JOIN comments c ON c.id = r.comment_id
      LEFT JOIN users u ON u.id = r.reporter_id
+     LEFT JOIN admin_users a ON a.id = r.reviewed_by_admin_id
      WHERE c.post_id = $1
      ORDER BY (r.reviewed_at IS NOT NULL), r.created_at DESC
      LIMIT $2`,

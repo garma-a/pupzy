@@ -35,6 +35,8 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
       'reason',
       'details',
       'reviewed_at',
+      'reviewed_by_admin_id',
+      'review_outcome',
       'created_at',
     ]);
   });
@@ -48,6 +50,7 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
     assert.equal(resource.options.properties.comment_id.components.show, 'CustomReferenceLinkComponent');
     assert.equal(resource.options.properties.reporter_id.components.list, 'CustomReferenceLinkComponent');
     assert.equal(resource.options.properties.reporter_id.components.show, 'CustomReferenceLinkComponent');
+    assert.equal(resource.options.properties.reviewed_by_admin_id.components.show, 'CustomReferenceLinkComponent');
   });
 
   it('enforces read-only actions (disables new, edit, delete, bulkDelete)', () => {

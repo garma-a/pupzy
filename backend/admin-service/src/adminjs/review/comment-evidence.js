@@ -44,7 +44,7 @@ export function buildCommentEvidence({ comment, media = [], reports = [] }, env 
     }),
     currentReportId,
     reports: reports.map((report) => {
-      const status = reportReviewStatus({ reviewedAt: report.reviewed_at });
+      const status = reportReviewStatus({ reviewedAt: report.reviewed_at, reviewOutcome: report.review_outcome });
       return {
         id: report.id,
         reason: report.reason,
@@ -53,6 +53,7 @@ export function buildCommentEvidence({ comment, media = [], reports = [] }, env 
         reporter: person(report.reporter_id, report.reporter_name, report.reporter_picture),
         createdAt: report.created_at,
         reviewedAt: report.reviewed_at ?? null,
+        reviewedByName: report.reviewed_by_name ?? null,
         statusLabel: status.label,
         isOpen: status.isOpen,
       };
@@ -89,10 +90,12 @@ export async function loadCommentEvidence(pool, commentIds, env = process.env, c
       [ids],
     ),
     pool.query(
-      `SELECT r.id, r.comment_id, r.reason, r.details, r.reviewed_at, r.created_at, r.reporter_id,
+      `SELECT r.id, r.comment_id, r.reason, r.details, r.reviewed_at, r.review_outcome, r.created_at, r.reporter_id,
+              a.full_name AS reviewed_by_name,
               ${USER_NAME_SQL} AS reporter_name, u.profile_picture_url AS reporter_picture
        FROM comment_reports r
        LEFT JOIN users u ON u.id = r.reporter_id
+       LEFT JOIN admin_users a ON a.id = r.reviewed_by_admin_id
        WHERE r.comment_id = ANY($1::uuid[])
        ORDER BY (r.reviewed_at IS NOT NULL), r.created_at DESC`,
       [ids],

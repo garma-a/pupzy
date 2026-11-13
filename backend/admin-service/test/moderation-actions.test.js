@@ -930,9 +930,15 @@ describe('audited report outcomes', () => {
     const response = await call(action, reportId, { reason: 'Unsubstantiated after review' });
     assert.equal(response.notice.type, 'success');
 
-    const report = (await database.pool.query(`SELECT reviewed_at FROM comment_reports WHERE id = $1`, [reportId]))
-      .rows[0];
+    const report = (
+      await database.pool.query(
+        `SELECT reviewed_at, review_outcome, reviewed_by_admin_id FROM comment_reports WHERE id = $1`,
+        [reportId],
+      )
+    ).rows[0];
     assert.ok(report.reviewed_at);
+    assert.equal(report.review_outcome, 'NO_ACTION');
+    assert.equal(report.reviewed_by_admin_id, principals.adminId);
 
     const audits = (
       await database.pool.query(

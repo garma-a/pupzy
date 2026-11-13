@@ -1,7 +1,7 @@
 /**
  * Plain-words review status of a Post, Comment or Pupzy Account Report,
  * derived from `reviewed_at` and `review_outcome`. Comment Reports have no
- * outcome column yet, so a reviewed one reads just "Closed".
+ * outcome before migration 0070, so one closed earlier reads just "Closed".
  *
  * Shared by the AdminJS components and the Post review workspace loader so the
  * list, show page and workspace never disagree.

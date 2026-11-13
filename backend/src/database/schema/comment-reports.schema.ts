@@ -2,7 +2,9 @@ import { sql } from 'drizzle-orm';
 import { pgTable, uuid, text, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { comments } from './comments.schema';
 import { users } from './users.schema';
+import { adminUsers } from './admin-users.schema';
 import { reportReasonEnum } from './enums';
+import { postReportReviewOutcomeEnum } from './post-reports.schema';
 
 /**
  * `comment_reports` — content moderation reports submitted by users on comments or replies.
@@ -47,6 +49,16 @@ export const commentReports = pgTable(
 
     /** Timestamp when report was reviewed during moderation/restoration. NULL if unreviewed. */
     reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+
+    /**
+     * FK → admin_users. Reviewing administrator, set by the admin service when it closes the
+     * report. NULL while open and for reports closed before this column existed. SET NULL if the
+     * admin is removed. The mobile API never reads or writes it.
+     */
+    reviewedByAdminId: uuid('reviewed_by_admin_id').references(() => adminUsers.id, { onDelete: 'set null' }),
+
+    /** Review outcome (same enum as Post Reports). NULL while open and for older closed reports. */
+    reviewOutcome: postReportReviewOutcomeEnum('review_outcome'),
   },
   (table) => ({
     uniqueCommentReportPerCommentAndReporter: uniqueIndex('unique_comment_report_per_comment_and_reporter').on(
