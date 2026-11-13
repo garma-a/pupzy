@@ -34,7 +34,7 @@ function buildPostAction(pool, component, definition, cache) {
     actionType: 'record',
     icon: definition.icon,
     guard: definition.guard,
-    component: definition.requiresForm ? component : false,
+    component,
     isAccessible: isAnyAdmin,
     isVisible: definition.isVisible,
     handler: async (request, _response, context) => {
@@ -130,7 +130,6 @@ function buildResolutionAction(pool, component, cache, definition) {
       actionType: 'POST_RESOLVED',
       icon: definition.icon,
       guard: definition.guard,
-      requiresForm: true,
       reasonRequired: true,
       successMessage: 'Post resolution recorded.',
       isVisible: (context) => {
@@ -227,7 +226,6 @@ function buildReopenAction(pool, component, cache) {
     {
       actionType: 'POST_REOPENED',
       icon: 'CornerUpLeft',
-      requiresForm: true,
       reasonRequired: true,
       successMessage: 'Post reopened.',
       isVisible: (context) => {
@@ -291,7 +289,6 @@ export function buildPostActions(pool, component, cache) {
       {
         actionType: 'POST_APPROVED',
         icon: 'Check',
-        guard: 'Approve this post as clean?',
         successMessage: 'Post approved.',
         isVisible: (context) => {
           const record = context?.record;
@@ -329,7 +326,6 @@ export function buildPostActions(pool, component, cache) {
       {
         actionType: 'POST_FLAGGED',
         icon: 'Flag',
-        requiresForm: true,
         reasonRequired: true,
         successMessage: 'Post flagged.',
         isVisible: (context) => {
@@ -371,7 +367,6 @@ export function buildPostActions(pool, component, cache) {
       {
         actionType: 'POST_REMOVED',
         icon: 'Trash2',
-        requiresForm: true,
         reasonRequired: true,
         successMessage: 'Post removed.',
         isVisible: (context) => {
@@ -414,7 +409,6 @@ export function buildPostActions(pool, component, cache) {
       {
         actionType: 'POST_RESTORED',
         icon: 'RotateCcw',
-        guard: 'Restore this post to active?',
         successMessage: 'Post restored.',
         isVisible: (context) => {
           const record = context?.record;

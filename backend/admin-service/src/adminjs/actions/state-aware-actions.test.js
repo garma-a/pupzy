@@ -11,7 +11,7 @@ describe('State-Aware Action Visibility Matrix', () => {
 
   const postActions = buildPostActions(dummyPool, dummyComponent, dummyCache);
   const banUserAction = buildBanUserAction(dummyPool, dummyComponent, dummyCache);
-  const unbanUserAction = buildUnbanUserAction(dummyPool, dummyCache);
+  const unbanUserAction = buildUnbanUserAction(dummyPool, dummyComponent, dummyCache);
 
   const createPostRecord = (status, moderation_status) => ({
     id: () => 'test-post-id',

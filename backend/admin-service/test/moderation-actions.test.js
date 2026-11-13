@@ -594,7 +594,7 @@ describe('moderation actions', () => {
   });
 
   it('rejects unbanning an already-unbanned user', async () => {
-    const response = await call(buildUnbanUserAction(database.pool), principals.userId);
+    const response = await call(buildUnbanUserAction(database.pool, 'ModerationAction'), principals.userId);
     assert.equal(response.notice.type, 'error');
     assert.match(response.notice.message, /not banned/i);
     const audit = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);

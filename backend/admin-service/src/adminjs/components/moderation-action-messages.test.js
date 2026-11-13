@@ -2,7 +2,14 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { POST_RESOLUTION_ACTIONS as RESOLUTION_ACTIONS } from '../actions/moderate-post.actions.js';
-import { POST_RESOLUTION_ACTIONS as CONFIRMATION_COPY } from './moderation-action-messages.js';
+import { buildUnbanUserAction } from '../actions/ban-user.action.js';
+import { buildCommentActions } from '../actions/moderate-comment.actions.js';
+import { buildPostActions } from '../actions/moderate-post.actions.js';
+import {
+  ACTION_LABELS,
+  CONFIRM_ONLY_ACTIONS,
+  POST_RESOLUTION_ACTIONS as CONFIRMATION_COPY,
+} from './moderation-action-messages.js';
 
 describe('Moderation action confirmation copy', () => {
   it('has a label and consequence for every Post Resolution action', () => {
@@ -28,5 +35,29 @@ describe('Moderation action confirmation copy', () => {
     assert.match(confirmation.consequence, /animal died/);
     assert.match(confirmation.consequence, /never described as rescued/);
     assert.doesNotMatch(confirmation.consequence, /successful rescue/i);
+  });
+
+  it('gives every confirm-only action a label, a consequence and the shared form (never a GET guard)', () => {
+    const component = 'ModerationAction';
+    const actions = {
+      ...buildPostActions(null, component, null),
+      ...buildCommentActions(null, component, null),
+      unbanUser: buildUnbanUserAction(null, component, null),
+    };
+    assert.deepEqual(Object.keys(CONFIRM_ONLY_ACTIONS).sort(), [
+      'approvePost',
+      'restoreComment',
+      'restorePost',
+      'unbanUser',
+    ]);
+    for (const [name, copy] of Object.entries(CONFIRM_ONLY_ACTIONS)) {
+      assert.ok(copy.label && copy.consequence, `"${name}" needs a label and a consequence`);
+      assert.equal(actions[name].component, component, `"${name}" must submit through the form`);
+      assert.ok(!actions[name].guard, `"${name}" must not use a guard modal, which AdminJS submits as a GET`);
+    }
+  });
+
+  it('labels removeComment instead of falling back to the raw action name', () => {
+    assert.equal(ACTION_LABELS.removeComment, 'Remove Comment');
   });
 });

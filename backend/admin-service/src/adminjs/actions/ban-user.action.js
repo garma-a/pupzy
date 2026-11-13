@@ -293,20 +293,24 @@ export function buildBanUserAction(pool, component, cache) {
   };
 }
 
-export function buildUnbanUserAction(pool, cache) {
+export function buildUnbanUserAction(pool, component, cache) {
   return {
     actionType: 'record',
     icon: 'Check',
-    guard: 'Are you sure you want to unban this user?',
     isAccessible: isAnyAdmin,
     isVisible: (context) => {
       if (!context?.record) return false;
       return isUserBanned(context.record);
     },
-    component: false,
+    component,
     handler: async (request, _response, context) => {
       const { record, currentAdmin } = context;
       if (request.method !== 'post') return { record: record.toJSON(currentAdmin) };
+
+      const reasonResult = readModerationReason(request.payload?.reason);
+      if (reasonResult.error) {
+        return actionResponse(record, currentAdmin, { ok: false, error: reasonResult.error }, '');
+      }
 
       const result = await runModerationAction(pool, {
         table: 'users',
@@ -314,6 +318,7 @@ export function buildUnbanUserAction(pool, cache) {
         adminUserId: currentAdmin.id,
         actionType: 'USER_UNBANNED',
         targetType: 'USER',
+        reason: reasonResult.reason || undefined,
         onSuccess: () => cache?.invalidate(),
         validate: (row) => (!row.is_banned ? 'This user is not banned.' : null),
         mutate: async (client, row) => {

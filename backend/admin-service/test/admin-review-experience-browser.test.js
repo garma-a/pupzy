@@ -845,6 +845,64 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
     }
   });
 
+  it('approves a flagged Post from its record page, keeps the success notice and shows the new status', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      const requests = [];
+      page.on('request', (request) => {
+        if (request.url().includes('/approvePost')) requests.push(request.method());
+      });
+      await loginAsAdmin(page, baseUrl);
+      await openWorkspace(page, fixture.flaggedId);
+      await page.click('[data-testid="action-approvePost"]');
+      await page.waitForSelector('[data-testid="moderation-action-submit"]', { timeout: 60000 });
+
+      assert.equal(await page.$eval('h3', (node) => node.innerText), 'Approve Post');
+      assert.match(
+        await page.$eval('#moderation-action-consequence', (node) => node.innerText),
+        /clean/i,
+        'the form states the consequence in a sentence',
+      );
+      assert.equal(
+        await page.$eval('[data-testid="moderation-action-submit"]', (node) => node.innerText),
+        'Approve Post',
+      );
+      await waitForEnabledSubmit(page);
+      console.log(`[fix1 evidence] approve form ${await recordEvidence(page, 'fix1-approve-form')}`);
+      await page.click('[data-testid="moderation-action-submit"]');
+
+      await page.waitForSelector('[data-testid="pupzy-review-workspace"]', { timeout: 60000 });
+      await page.waitForFunction(() => document.body.innerText.includes('Post approved.'), { timeout: 30000 });
+      assert.match(page.url(), new RegExp(`/admin/resources/posts/records/${fixture.flaggedId}/show`));
+      // The action page loads the record with a read-only GET; the approval itself is one POST.
+      assert.equal(
+        requests.filter((method) => method === 'POST').length,
+        1,
+        'the approval is submitted once, as a POST',
+      );
+
+      const { rows } = await database.pool.query(
+        `SELECT moderation_status, moderation_reason FROM posts WHERE id = $1`,
+        [fixture.flaggedId],
+      );
+      assert.equal(rows[0].moderation_status, 'CLEAN');
+      assert.equal(rows[0].moderation_reason, null);
+      const audit = await database.pool.query(
+        `SELECT action_type FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_APPROVED'`,
+        [fixture.flaggedId],
+      );
+      assert.equal(audit.rows.length, 1);
+
+      const text = await page.$eval('body', (node) => node.innerText);
+      assert.match(text, /clean/i, 'the record page shows the new moderation status');
+      assert.equal(await page.$('[data-testid="action-approvePost"]'), null, 'a clean Post no longer offers Approve');
+      console.log(`[fix1 evidence] approved record ${await recordEvidence(page, 'fix1-approved-record')}`);
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
   it('shows the dashboard empty state when no review work remains', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {

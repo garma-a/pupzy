@@ -3628,4 +3628,138 @@ describe('AdminJS HTTP security and resource behavior', () => {
       'a reviewed Post Report must no longer offer the no-action review action',
     );
   });
+  describe('confirm-only moderation actions submit as POST, never GET', () => {
+    const frontendBody = { reason: '', alsoRemovePosts: false };
+    const apiHeaders = () => ({
+      cookie: `${superCookie}; ${superCsrf.cookie}`,
+      origin: baseUrl,
+      'x-xsrf-token': superCsrf.token,
+      'content-type': 'application/json',
+    });
+
+    async function insertBannedUser(suffix) {
+      const { rows } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name, is_banned, banned_by_admin_id, banned_at, ban_reason)
+         VALUES ($1, $2, 'Confirm Banned', true, $3, now(), 'spam') RETURNING id`,
+        [`confirm-only-${suffix}`, `confirm-only-${suffix}@example.com`, principals.adminId],
+      );
+      return rows[0].id;
+    }
+
+    async function insertHiddenComment(postId) {
+      const { rows } = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status, reply_count)
+         VALUES ($1, $2, 'Hidden for confirm-only test', 'HIDDEN', 0) RETURNING id`,
+        [postId, principals.userId],
+      );
+      return rows[0].id;
+    }
+
+    const cases = [
+      {
+        name: 'approvePost',
+        resource: 'posts',
+        setup: async () =>
+          insertPost(database.pool, {
+            userId: principals.userId,
+            cityId: principals.cityId,
+            title: 'Confirm-only approve',
+            moderationStatus: 'FLAGGED',
+          }),
+        read: async (id) =>
+          (await database.pool.query(`SELECT moderation_status AS state FROM posts WHERE id = $1`, [id])).rows[0].state,
+        before: 'FLAGGED',
+        after: 'CLEAN',
+        audit: 'POST_APPROVED',
+      },
+      {
+        name: 'restorePost',
+        resource: 'posts',
+        setup: async () =>
+          insertPost(database.pool, {
+            userId: principals.userId,
+            cityId: principals.cityId,
+            title: 'Confirm-only restore',
+            status: 'REMOVED',
+            moderationStatus: 'FLAGGED',
+          }),
+        read: async (id) =>
+          (await database.pool.query(`SELECT status AS state FROM posts WHERE id = $1`, [id])).rows[0].state,
+        before: 'REMOVED',
+        after: 'ACTIVE',
+        audit: 'POST_RESTORED',
+      },
+      {
+        name: 'unbanUser',
+        resource: 'users',
+        setup: async () => insertBannedUser('unban'),
+        read: async (id) =>
+          (await database.pool.query(`SELECT is_banned::text AS state FROM users WHERE id = $1`, [id])).rows[0].state,
+        before: 'true',
+        after: 'false',
+        audit: 'USER_UNBANNED',
+      },
+      {
+        name: 'restoreComment',
+        resource: 'comments',
+        setup: async () =>
+          insertHiddenComment(
+            await insertPost(database.pool, {
+              userId: principals.userId,
+              cityId: principals.cityId,
+              title: 'Confirm-only comment post',
+              moderationStatus: 'CLEAN',
+            }),
+          ),
+        read: async (id) =>
+          (await database.pool.query(`SELECT status AS state FROM comments WHERE id = $1`, [id])).rows[0].state,
+        before: 'HIDDEN',
+        after: 'ACTIVE',
+        audit: 'COMMENT_RESTORED',
+      },
+    ];
+
+    for (const testCase of cases) {
+      it(`${testCase.name} uses the form component, ignores GET and applies on POST`, async () => {
+        const id = await testCase.setup();
+        const recordUrl = `${baseUrl}/admin/api/resources/${testCase.resource}/records/${id}`;
+
+        // Without a form component AdminJS opens a guard modal and calls the API
+        // with no `data`, which ApiClient turns into a GET. The action must
+        // therefore declare the form component and no guard.
+        const show = await (await fetch(`${recordUrl}/show`, { headers: { cookie: superCookie } })).json();
+        const descriptor = show.record.recordActions.find((action) => action.name === testCase.name);
+        assert.ok(descriptor, `${testCase.name} is offered on the record`);
+        assert.equal(descriptor.component, 'ModerationAction', 'confirm-only action submits through the form');
+        assert.ok(!descriptor.guard, 'no guard modal that would send a GET');
+
+        const getResponse = await fetch(`${recordUrl}/${testCase.name}`, { headers: { cookie: superCookie } });
+        assert.equal(getResponse.status, 200);
+        assert.equal(await testCase.read(id), testCase.before, 'GET must not change state');
+        const getAudit = await database.pool.query(
+          `SELECT count(*)::int AS n FROM moderation_actions WHERE target_id = $1`,
+          [id],
+        );
+        assert.equal(getAudit.rows[0].n, 0, 'GET must not write an audit row');
+
+        const postResponse = await fetch(`${recordUrl}/${testCase.name}`, {
+          method: 'POST',
+          headers: apiHeaders(),
+          body: JSON.stringify(frontendBody),
+        });
+        assert.equal(postResponse.status, 200);
+        assert.equal((await postResponse.json()).notice?.type, 'success');
+        assert.equal(await testCase.read(id), testCase.after);
+        const postAudit = await database.pool.query(
+          `SELECT action_type, reason FROM moderation_actions WHERE target_id = $1`,
+          [id],
+        );
+        assert.deepEqual(
+          postAudit.rows.map((row) => row.action_type),
+          [testCase.audit],
+        );
+        assert.equal(postAudit.rows[0].reason, null, 'the reason stays optional');
+      });
+    }
+  });
 });

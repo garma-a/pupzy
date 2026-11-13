@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
-import { ApiClient, useNotice } from 'adminjs';
+import { ApiClient, ViewHelpers, useNotice } from 'adminjs';
+import { useNavigate } from 'react-router';
 import { Box, Button, CheckBox, FormGroup, H3, Label, Text, TextArea } from '@adminjs/design-system';
 
-import { ACTION_CONSEQUENCES, POST_CORRECTION_ACTIONS, POST_RESOLUTION_ACTIONS } from './moderation-action-messages.js';
+import {
+  ACTION_CONSEQUENCES,
+  ACTION_LABELS,
+  CONFIRM_ONLY_ACTIONS,
+  POST_CORRECTION_ACTIONS,
+  POST_RESOLUTION_ACTIONS,
+} from './moderation-action-messages.js';
 
 const api = new ApiClient();
+const helpers = new ViewHelpers();
 
 export default function ModerationAction({ action, resource, record }) {
   const addNotice = useNotice();
+  const navigate = useNavigate();
   const [reason, setReason] = useState('');
   const [alsoRemovePosts, setAlsoRemovePosts] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -15,19 +24,14 @@ export default function ModerationAction({ action, resource, record }) {
   const isReviewWithNoAction = action.name === 'reviewWithNoAction';
   const resolution = POST_RESOLUTION_ACTIONS[action.name];
   const correction = POST_CORRECTION_ACTIONS[action.name];
+  const confirmOnly = CONFIRM_ONLY_ACTIONS[action.name];
   const isResolution = Boolean(resolution);
   const label =
-    correction?.label ??
-    resolution?.label ??
-    {
-      banUser: 'Ban User',
-      flagPost: 'Flag Post',
-      removePost: 'Remove Post',
-      reviewWithNoAction: 'Review with No Action',
-    }[action.name] ??
-    action.label;
-  const consequence = correction?.consequence ?? resolution?.consequence ?? ACTION_CONSEQUENCES[action.name];
-  const variant = correction || isResolution || isReviewWithNoAction ? 'primary' : 'danger';
+    correction?.label ?? resolution?.label ?? confirmOnly?.label ?? ACTION_LABELS[action.name] ?? action.label;
+  const consequence =
+    correction?.consequence ?? resolution?.consequence ?? confirmOnly?.consequence ?? ACTION_CONSEQUENCES[action.name];
+  const reasonOptional = isReviewWithNoAction || Boolean(confirmOnly);
+  const variant = correction || isResolution || isReviewWithNoAction || confirmOnly ? 'primary' : 'danger';
 
   const submit = async () => {
     setLoading(true);
@@ -40,9 +44,8 @@ export default function ModerationAction({ action, resource, record }) {
       });
       if (response.data.notice) addNotice(response.data.notice);
       if (response.data.notice?.type === 'success') {
-        window.location.assign(
-          `/admin/resources/${encodeURIComponent(resource.id)}/records/${encodeURIComponent(record.id)}/show`,
-        );
+        // Client-side navigation keeps the notice that addNotice just queued.
+        navigate(helpers.recordActionUrl({ resourceId: resource.id, recordId: record.id, actionName: 'show' }));
       }
     } catch {
       addNotice({ message: 'The moderation action failed.', type: 'error' });
@@ -67,7 +70,7 @@ export default function ModerationAction({ action, resource, record }) {
           maxLength={500}
           aria-describedby={consequence ? 'moderation-action-consequence' : undefined}
           onChange={(event) => setReason(event.target.value)}
-          placeholder="Explain why this action is required"
+          placeholder={reasonOptional ? 'Optional note for the audit log' : 'Explain why this action is required'}
         />
       </FormGroup>
       {isBan ? (
@@ -87,7 +90,7 @@ export default function ModerationAction({ action, resource, record }) {
         data-testid="moderation-action-submit"
         data-variant={variant}
         aria-busy={loading}
-        disabled={loading || (!isReviewWithNoAction && !reason.trim())}
+        disabled={loading || (!reasonOptional && !reason.trim())}
         onClick={() => void submit()}
       >
         {loading ? 'Applying…' : label}

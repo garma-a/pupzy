@@ -170,7 +170,7 @@ export function buildUsersResource(db, pool, components, cache) {
           after: stripPrivateFields,
         },
         banUser: buildBanUserAction(pool, components?.ModerationAction, cache),
-        unbanUser: buildUnbanUserAction(pool, cache),
+        unbanUser: buildUnbanUserAction(pool, components?.ModerationAction, cache),
       },
       editProperties: [...ALLOWED_USER_EDIT_FIELDS],
       listProperties: ['id', 'email', 'full_name', 'is_verified', 'is_banned', 'post_count', 'created_at'],

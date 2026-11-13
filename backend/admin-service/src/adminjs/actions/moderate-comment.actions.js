@@ -51,8 +51,7 @@ function buildCommentAction(pool, component, definition, cache) {
   return {
     actionType: 'record',
     icon: definition.icon,
-    guard: definition.guard,
-    component: definition.requiresForm ? component : false,
+    component,
     isAccessible: isAnyAdmin,
     isVisible: definition.isVisible,
     handler: async (request, _response, context) => {
@@ -95,7 +94,6 @@ export function buildCommentActions(pool, component, cache) {
       {
         actionType: 'COMMENT_RESTORED',
         icon: 'Check',
-        guard: 'Mark this comment clean and restore visibility?',
         successMessage: 'Comment restored.',
         isVisible: (context) => {
           const record = context?.record;
@@ -186,7 +184,6 @@ export function buildCommentActions(pool, component, cache) {
       {
         actionType: 'COMMENT_REMOVED',
         icon: 'Trash',
-        requiresForm: true,
         reasonRequired: true,
         successMessage: 'Comment permanently removed.',
         isVisible: (context) => {
