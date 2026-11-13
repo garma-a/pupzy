@@ -16,7 +16,8 @@
     "format": "prettier --write \"src/**/*.{js,jsx,json,css,md}\" \"test/**/*.{js,json}\" \"scripts/**/*.js\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,json,css,md}\" \"test/**/*.{js,json}\" \"scripts/**/*.js\"",
     "check:glossary": "node --test src/adminjs/glossary-conformance.test.js",
-    "seed:first-admin": "node scripts/seed-first-admin.js"
+    "seed:first-admin": "node scripts/seed-first-admin.js",
+    "local:admin": "node scripts/local-admin.mjs"
   },
   "dependencies": {
     "@adminjs/express": "^6",
