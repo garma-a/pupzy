@@ -14,6 +14,7 @@ This document is the authoritative client-facing contract for authenticated devi
 - **Push follows the notification.** A notification row is written first; its push intents are written in the same database transaction. A notification that never commits can never be pushed.
 - **Send-time rechecks.** Before every provider call the worker rechecks the recipient's push preference, account availability, current Block isolation and device ownership. A queued push can therefore be suppressed without removing the in-app notification.
 - **Bounded and deduplicated.** Each invocation handles a bounded batch; each intent is attempted a bounded number of times with backoff; one intent exists per notification per device; a delivered intent is never sent again.
+- **Priority.** Each intent has a claim priority (lower is claimed first). Everything time-sensitive uses the default `0`; an admin Announcement uses `10`, so a large announcement never delays a comment or an adoption approval and still drains whenever nothing more urgent is due.
 - **Localization uses the same stored text as the inbox.** Push title/body are rendered from the notification's English/Arabic columns using the recipient's explicitly synchronized language, so push and inbox cannot drift.
 - **No exactly-once promise.** A crash between provider acceptance and the durable `DELIVERED` write may repeat one send. The backend never claims provider-level exactly-once delivery.
 

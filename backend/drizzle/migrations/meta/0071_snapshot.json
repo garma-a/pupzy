@@ -1,5 +1,5 @@
 {
-  "id": "870cd45a-274d-4626-a562-f4b56639e22b",
+  "id": "5d3cf68c-fcf1-4f4c-9e88-960b678a83df",
   "prevId": "ca1b32d1-301a-40b8-a69b-2acfe4bbc706",
   "version": "7",
   "dialect": "postgresql",
@@ -4324,6 +4324,13 @@
           "primaryKey": false,
           "notNull": true
         },
+        "priority": {
+          "name": "priority",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
         "status": {
           "name": "status",
           "type": "varchar(16)",
@@ -4411,6 +4418,12 @@
           "columns": [
             {
               "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "priority",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

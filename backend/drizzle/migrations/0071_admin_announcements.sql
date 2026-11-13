@@ -38,7 +38,9 @@ CREATE TABLE "announcements" (
 	CONSTRAINT "announcements_text_not_blank" CHECK (btrim("announcements"."title_en") <> '' AND btrim("announcements"."body_en") <> '' AND btrim("announcements"."title_ar") <> '' AND btrim("announcements"."body_ar") <> '')
 );
 --> statement-breakpoint
+DROP INDEX IF EXISTS "idx_push_deliveries_due";--> statement-breakpoint
 ALTER TABLE "notifications" ADD COLUMN "announcement_id" uuid;--> statement-breakpoint
+ALTER TABLE "push_deliveries" ADD COLUMN "priority" smallint DEFAULT 0 NOT NULL;--> statement-breakpoint
 ALTER TABLE "announcements" ADD CONSTRAINT "announcements_sent_by_admin_id_admin_users_id_fk" FOREIGN KEY ("sent_by_admin_id") REFERENCES "public"."admin_users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "announcements" ADD CONSTRAINT "announcements_audience_city_id_cities_id_fk" FOREIGN KEY ("audience_city_id") REFERENCES "public"."cities"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "idx_announcements_work" ON "announcements" USING btree ("next_attempt_at","created_at") WHERE status IN ('PENDING', 'SENDING');--> statement-breakpoint
@@ -46,4 +48,5 @@ CREATE INDEX "idx_announcements_created" ON "announcements" USING btree ("create
 CREATE UNIQUE INDEX "uq_announcements_request_key" ON "announcements" USING btree ("request_key");--> statement-breakpoint
 ALTER TABLE "notifications" ADD CONSTRAINT "notifications_announcement_id_announcements_id_fk" FOREIGN KEY ("announcement_id") REFERENCES "public"."announcements"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "idx_users_home_city_id" ON "users" USING btree ("home_city_id","id");--> statement-breakpoint
-CREATE UNIQUE INDEX "uq_notifications_announcement_recipient" ON "notifications" USING btree ("announcement_id","recipient_id") WHERE announcement_id IS NOT NULL;
+CREATE UNIQUE INDEX "uq_notifications_announcement_recipient" ON "notifications" USING btree ("announcement_id","recipient_id") WHERE announcement_id IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "idx_push_deliveries_due" ON "push_deliveries" USING btree ("status","priority","next_attempt_at","created_at","id");

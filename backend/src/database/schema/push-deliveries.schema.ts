@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, text, integer, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, integer, smallint, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { users } from './users.schema';
 import { notifications } from './notifications.schema';
 import { deviceRegistrations } from './device-registrations.schema';
@@ -65,6 +65,14 @@ export const pushDeliveries = pgTable(
       .notNull()
       .references(() => deviceRegistrations.id, { onDelete: 'cascade' }),
 
+    /**
+     * Claim order: a LOWER number is claimed first. Time-sensitive pushes keep the
+     * default 0; bulk sends such as an admin Announcement use `PUSH_PRIORITY.BULK`,
+     * so a large burst never delays a comment or an adoption approval. Within a
+     * priority the order is unchanged (due time, then creation).
+     */
+    priority: smallint('priority').notNull().default(0),
+
     /** Delivery state; see `PUSH_DELIVERY_STATUSES`. */
     status: varchar('status', { length: 16 }).notNull().default('PENDING'),
 
@@ -97,7 +105,13 @@ export const pushDeliveries = pgTable(
       table.notificationId,
       table.deviceId,
     ),
-    dueIdx: index('idx_push_deliveries_due').on(table.status, table.nextAttemptAt, table.createdAt, table.id),
+    dueIdx: index('idx_push_deliveries_due').on(
+      table.status,
+      table.priority,
+      table.nextAttemptAt,
+      table.createdAt,
+      table.id,
+    ),
     processingLeaseIdx: index('idx_push_deliveries_processing_lease').on(table.leaseExpiresAt),
     deviceIdx: index('idx_push_deliveries_device').on(table.deviceId),
     recipientIdx: index('idx_push_deliveries_recipient').on(table.recipientId),

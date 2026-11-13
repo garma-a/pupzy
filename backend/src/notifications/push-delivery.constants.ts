@@ -54,3 +54,11 @@ export const PUSH_ENABLED_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = ne
 export function isPushDeliveryEnabled(type: NotificationType): boolean {
   return PUSH_ENABLED_NOTIFICATION_TYPES.has(type);
 }
+
+/**
+ * Claim priority of a push delivery intent: the worker claims the LOWER number
+ * first. Everything time-sensitive uses `DEFAULT`; a bulk send (an admin
+ * Announcement to many users) uses `BULK`, so it drains whenever nothing more
+ * urgent is due but never delays a comment or an adoption approval.
+ */
+export const PUSH_PRIORITY = { DEFAULT: 0, BULK: 10 } as const;

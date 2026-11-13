@@ -286,6 +286,15 @@ describe('Database Migration Runner Integration', () => {
       /UNIQUE INDEX .* \(announcement_id, recipient_id\) WHERE \(announcement_id IS NOT NULL\)/,
     );
     expect(announcementIndexes['uq_announcements_request_key']).toMatch(/UNIQUE INDEX .* \(request_key\)/);
+    const priorityColumn = await pool.query<{ data_type: string; is_nullable: string; column_default: string }>(`
+      SELECT data_type, is_nullable, column_default FROM information_schema.columns
+      WHERE table_name = 'push_deliveries' AND column_name = 'priority'
+    `);
+    expect(priorityColumn.rows).toEqual([{ data_type: 'smallint', is_nullable: 'NO', column_default: '0' }]);
+    const dueIndex = await pool.query<{ indexdef: string }>(
+      `SELECT indexdef FROM pg_indexes WHERE indexname = 'idx_push_deliveries_due'`,
+    );
+    expect(dueIndex.rows[0].indexdef).toMatch(/\(status, priority, next_attempt_at, created_at, id\)/);
     expect(announcementIndexes['idx_users_home_city_id']).toMatch(/\(home_city_id, id\)/);
     expect(announcementIndexes['idx_announcements_work']).toMatch(/WHERE \(status = ANY/);
 

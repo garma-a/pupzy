@@ -6,7 +6,7 @@ import * as schema from '../database/schema';
 import { announcements, type Announcement } from '../database/schema';
 import { positionalSql } from '../common/utils/positional-sql.util';
 import { ELIGIBLE_AUDIENCE_PREDICATE, MAX_ANNOUNCEMENT_ATTEMPTS, audienceValues } from './admin-announcement.contract';
-import { isPushDeliveryEnabled } from './push-delivery.constants';
+import { PUSH_PRIORITY, isPushDeliveryEnabled } from './push-delivery.constants';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -93,8 +93,8 @@ export class AdminAnnouncementRepository {
         ON CONFLICT (announcement_id, recipient_id) WHERE announcement_id IS NOT NULL DO NOTHING
         RETURNING id, recipient_id
       ), intents AS (
-        INSERT INTO push_deliveries (notification_id, recipient_id, actor_id, device_id)
-        SELECT i.id, i.recipient_id, NULL, d.id
+        INSERT INTO push_deliveries (notification_id, recipient_id, actor_id, device_id, priority)
+        SELECT i.id, i.recipient_id, NULL, d.id, $12::smallint
         FROM inserted i
         JOIN batch b ON b.id = i.recipient_id
         JOIN device_registrations d ON d.user_id = i.recipient_id
@@ -116,6 +116,7 @@ export class AdminAnnouncementRepository {
       announcement.bodyAr, // $9
       announcement.id, // $10
       isPushDeliveryEnabled('ADMIN_ANNOUNCEMENT'), // $11
+      PUSH_PRIORITY.BULK, // $12 (lets time-sensitive pushes through first)
     ];
     const result = await tx.execute<{
       scanned: number;
