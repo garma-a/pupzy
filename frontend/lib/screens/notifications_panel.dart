@@ -38,6 +38,7 @@ IconData _iconForType(String type) {
     case 'POST_INACTIVITY_NUDGE':
       return Icons.timer_outlined;
     case 'SYSTEM_ANNOUNCEMENT':
+    case 'ADMIN_ANNOUNCEMENT':
       return Icons.campaign_outlined;
     case 'NEW_COMMENT':
     case 'NEW_REPLY':
@@ -59,8 +60,77 @@ IconData _iconForType(String type) {
   }
 }
 
+/// A message a super admin sent to everyone, or to one City. It has no
+/// Post: tapping it shows its full text.
+const adminAnnouncementType = 'ADMIN_ANNOUNCEMENT';
+
+/// Shows an Announcement's full title and message. The list cuts the message
+/// at two lines, and it can be up to 500 characters with line breaks. The
+/// server already wrote it in the user's language; it is laid out in the
+/// app's reading direction.
+Future<void> showAnnouncementSheet(BuildContext context, AppNotification n) {
+  final lang = context.read<LangProvider>().lang;
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useRootNavigator: true,
+    backgroundColor: AppColors.background,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.card))),
+    builder: (ctx) => Directionality(
+      textDirection: lang == Lang.ar ? TextDirection.rtl : TextDirection.ltr,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.85),
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            key: const Key('announcementSheet'),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.lg, AppSpacing.xl, AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.12), shape: BoxShape.circle),
+                      child: const Icon(Icons.campaign_outlined, size: 20, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Text(
+                        t(ctx, 'Announcement', 'إعلان'),
+                        style: Theme.of(ctx).textTheme.labelLarge?.copyWith(color: AppColors.primary),
+                      ),
+                    ),
+                    Text(timeAgo(n.createdAt, lang), style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: AppColors.textMuted)),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                SelectableText(n.title, style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: AppSpacing.sm),
+                SelectableText(n.body, style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(height: 1.5)),
+                const SizedBox(height: AppSpacing.xl),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(t(ctx, 'Close', 'إغلاق'))),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class NotificationsPanel extends StatefulWidget {
-  const NotificationsPanel({super.key});
+  const NotificationsPanel({super.key, this.openAnnouncementId});
+
+  /// An Announcement to open as soon as the inbox has loaded: a tapped push
+  /// lands on its full text. The push tap has already marked it read.
+  final String? openAnnouncementId;
 
   @override
   State<NotificationsPanel> createState() => _NotificationsPanelState();
@@ -120,6 +190,21 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
     if (page.errorMessage == null) {
       context.read<NotificationCenter>().setUnreadCount(page.unreadCount);
     }
+    _openRequestedAnnouncement();
+  }
+
+  bool _openedRequestedAnnouncement = false;
+
+  /// Opens [NotificationsPanel.openAnnouncementId] once, if it is on the first
+  /// page. Shown as read here: the push tap already told the server.
+  void _openRequestedAnnouncement() {
+    final id = widget.openAnnouncementId;
+    if (id == null || _openedRequestedAnnouncement) return;
+    _openedRequestedAnnouncement = true;
+    final match = _notifications.where((x) => x.id == id && x.type == adminAnnouncementType);
+    if (match.isEmpty) return;
+    setState(() => _notifications = _notifications.map((x) => x.id == id ? x.copyWith(isRead: true) : x).toList());
+    showAnnouncementSheet(context, match.first);
   }
 
   Future<void> _loadMore() async {
@@ -182,6 +267,10 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
       });
       context.read<NotificationCenter>().markedOneRead();
       graphql.markNotificationRead(n.id);
+    }
+    if (n.type == adminAnnouncementType) {
+      await showAnnouncementSheet(context, n);
+      return;
     }
     final postId = n.relatedPostId;
     if (postId == null) return;

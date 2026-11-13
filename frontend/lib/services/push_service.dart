@@ -253,7 +253,8 @@ class PushService {
         context: navigator.context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (_) => const NotificationsPanel(),
+        // An Announcement opens straight on its full text.
+        builder: (_) => NotificationsPanel(openAnnouncementId: data['type'] == adminAnnouncementType ? notificationId : null),
       );
       return;
     }
