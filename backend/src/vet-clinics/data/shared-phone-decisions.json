@@ -1,10 +1,7 @@
 [
   {
     "phone": "+201145771015",
-    "sourceKeys": [
-      "WEB:ehab-saad-victoria",
-      "WEB:ehab-saad-smouha"
-    ],
+    "sourceKeys": ["WEB:ehab-saad-victoria", "WEB:ehab-saad-smouha"],
     "action": "separate",
     "reviewedAt": "2026-11-12",
     "sources": [
@@ -15,10 +12,7 @@
   },
   {
     "phone": "+201129357977",
-    "sourceKeys": [
-      "WEB:ehab-saad-victoria",
-      "WEB:ehab-saad-smouha"
-    ],
+    "sourceKeys": ["WEB:ehab-saad-victoria", "WEB:ehab-saad-smouha"],
     "action": "separate",
     "reviewedAt": "2026-11-12",
     "sources": [
@@ -29,10 +23,7 @@
   },
   {
     "phone": "+2034272289",
-    "sourceKeys": [
-      "WEB:ehab-saad-victoria",
-      "WEB:ehab-saad-smouha"
-    ],
+    "sourceKeys": ["WEB:ehab-saad-victoria", "WEB:ehab-saad-smouha"],
     "action": "separate",
     "reviewedAt": "2026-11-12",
     "sources": [
@@ -43,10 +34,7 @@
   },
   {
     "phone": "+201208997380",
-    "sourceKeys": [
-      "WEB:ehab-saad-victoria",
-      "WEB:ehab-saad-smouha"
-    ],
+    "sourceKeys": ["WEB:ehab-saad-victoria", "WEB:ehab-saad-smouha"],
     "action": "separate",
     "reviewedAt": "2026-11-12",
     "sources": [
