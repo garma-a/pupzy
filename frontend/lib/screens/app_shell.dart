@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
@@ -32,6 +34,12 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   double _maxDistance = 15.0;
   bool _postSheetOpen = false;
 
+  /// Set by a Back press on Home; a second press within [_exitWindow]
+  /// closes the app. See [_onBack].
+  bool _exitArmed = false;
+  Timer? _exitTimer;
+  static const _exitWindow = Duration(seconds: 2);
+
   @override
   void initState() {
     super.initState();
@@ -48,6 +56,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _exitTimer?.cancel();
     super.dispose();
   }
 
@@ -88,6 +97,23 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
     if (!mounted) return;
     ensureTermsAccepted(context);
+  }
+
+  /// The phone's Back button: from another tab it returns to Home; on Home
+  /// the first press only warns, and a second press soon after closes the
+  /// app, so one stray press doesn't throw the user out.
+  void _onBack(bool didPop) {
+    if (didPop) return;
+    if (_index != 0) {
+      _goToIndex(0);
+      return;
+    }
+    setState(() => _exitArmed = true);
+    _exitTimer?.cancel();
+    _exitTimer = Timer(_exitWindow, () {
+      if (mounted) setState(() => _exitArmed = false);
+    });
+    Fluttertoast.showToast(msg: t(context, 'Press back again to exit', 'اضغط رجوع مرة أخرى للخروج'));
   }
 
   void _goToIndex(int i) {
@@ -137,39 +163,43 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     // tab screens (Home/Help/Adopt/Market), since none of those are
     // separately-routed — they're plain children of this same build().
     context.watch<LangProvider>();
-    return DistanceProvider(
-      maxDistance: _maxDistance,
-      onChanged: (d) => setState(() => _maxDistance = d),
-      child: Scaffold(
-        extendBody: true,
-        body: IndexedStack(
-          index: _index,
-          children: [
-            HomeScreen(
-              onNavigateToHelp: () => _goToIndex(1),
-              onNavigateToAdopt: () => _openPets(0),
-              onNavigateToMating: () => _openPets(1),
-              onNavigateToMarket: () => _goToIndex(4),
-              active: _index == 0,
-            ),
-            _visitedIndices.contains(1) ? HelpScreen(active: _index == 1) : const SizedBox.shrink(),
-            const SizedBox.shrink(),
-            _visitedIndices.contains(3)
-                ? AdoptScreen(active: _index == 3, tab: _petsTab, tabRequest: _petsTabRequest)
-                : const SizedBox.shrink(),
-            _visitedIndices.contains(4) ? MarketScreen(active: _index == 4) : const SizedBox.shrink(),
-          ],
-        ),
-        bottomNavigationBar: _PupzyBottomNav(
-          currentIndex: _index,
-          postOpen: _postSheetOpen,
-          onTap: (i) {
-            if (i == 2) {
-              _openNewPost();
-            } else {
-              _goToIndex(i);
-            }
-          },
+    return PopScope(
+      canPop: _index == 0 && _exitArmed,
+      onPopInvokedWithResult: (didPop, _) => _onBack(didPop),
+      child: DistanceProvider(
+        maxDistance: _maxDistance,
+        onChanged: (d) => setState(() => _maxDistance = d),
+        child: Scaffold(
+          extendBody: true,
+          body: IndexedStack(
+            index: _index,
+            children: [
+              HomeScreen(
+                onNavigateToHelp: () => _goToIndex(1),
+                onNavigateToAdopt: () => _openPets(0),
+                onNavigateToMating: () => _openPets(1),
+                onNavigateToMarket: () => _goToIndex(4),
+                active: _index == 0,
+              ),
+              _visitedIndices.contains(1) ? HelpScreen(active: _index == 1) : const SizedBox.shrink(),
+              const SizedBox.shrink(),
+              _visitedIndices.contains(3)
+                  ? AdoptScreen(active: _index == 3, tab: _petsTab, tabRequest: _petsTabRequest)
+                  : const SizedBox.shrink(),
+              _visitedIndices.contains(4) ? MarketScreen(active: _index == 4) : const SizedBox.shrink(),
+            ],
+          ),
+          bottomNavigationBar: _PupzyBottomNav(
+            currentIndex: _index,
+            postOpen: _postSheetOpen,
+            onTap: (i) {
+              if (i == 2) {
+                _openNewPost();
+              } else {
+                _goToIndex(i);
+              }
+            },
+          ),
         ),
       ),
     );
