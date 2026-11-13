@@ -84,15 +84,15 @@ export function validateAnnouncementDraft(raw: unknown): AnnouncementValidation 
     const value = typeof raw === 'string' ? raw.trim() : '';
     text[field] = value;
     if (!value) {
-      errors[field] = `Enter the ${rule.label.toLowerCase()}.`;
+      errors[field] = `Enter the ${rule.label}.`;
     } else if (FORBIDDEN_CONTROL.test(value)) {
-      errors[field] = `The ${rule.label.toLowerCase()} contains a character that cannot be shown.`;
+      errors[field] = `The ${rule.label} contains a character that cannot be shown.`;
     } else if (characterLength(value) > rule.max) {
-      errors[field] = `The ${rule.label.toLowerCase()} must be at most ${rule.max} characters.`;
+      errors[field] = `The ${rule.label} must be at most ${rule.max} characters.`;
     } else if (rule.language === 'Arabic' && !ARABIC_LETTER.test(value)) {
-      errors[field] = `The ${rule.label.toLowerCase()} must be written in Arabic.`;
+      errors[field] = `The ${rule.label} must be written in Arabic.`;
     } else if (rule.language === 'English' && !LATIN_LETTER.test(value)) {
-      errors[field] = `The ${rule.label.toLowerCase()} must be written in English.`;
+      errors[field] = `The ${rule.label} must be written in English.`;
     }
   }
 

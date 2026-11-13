@@ -199,7 +199,10 @@ export default function AnnouncementCompose({ resource }) {
   const [busy, setBusy] = useState(false);
   const [stale, setStale] = useState(null);
 
-  const set = (field) => (value) => setForm((previous) => ({ ...previous, [field]: value }));
+  const set = (field) => (value) => {
+    setForm((previous) => ({ ...previous, [field]: value }));
+    setErrors((previous) => (previous[field] ? { ...previous, [field]: undefined } : previous));
+  };
 
   const check = async () => {
     setBusy(true);
@@ -270,7 +273,6 @@ export default function AnnouncementCompose({ resource }) {
   return (
     <div className="pupzy-announcement" data-testid="announcement-compose" data-step={step}>
       <header className="pupzy-announcement-header">
-        <h2>New announcement</h2>
         <p>
           A message to every eligible user, or to the users of one City. It is delivered in each user&apos;s language
           and cannot be edited or unsent once it is sent.
@@ -403,7 +405,7 @@ export default function AnnouncementCompose({ resource }) {
             />
           </div>
           <p className="pupzy-announcement-summary" data-testid="announcement-preview-audience">
-            <strong>{audienceSummary(form, preview)}</strong>
+            Audience: <strong>{audienceSummary(form, preview)}</strong>
           </p>
           <div className="pupzy-announcement-actions">
             <Button type="button" variant="text" data-testid="announcement-back" onClick={() => setStep('compose')}>

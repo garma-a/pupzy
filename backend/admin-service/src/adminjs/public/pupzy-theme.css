@@ -2062,6 +2062,7 @@ a[data-testid='action-removePost']:hover {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  width: 100%;
   max-width: 1080px;
   margin: 0 auto;
   padding: 24px 24px 40px;
@@ -2407,7 +2408,7 @@ a[data-testid='action-removePost']:hover {
 }
 .pupzy-announcement-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
   gap: 12px;
   margin: 0;
 }
@@ -2450,8 +2451,11 @@ a[data-testid='action-removePost']:hover {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 180px;
-  max-width: 320px;
+  min-width: 120px;
+  max-width: 150px;
+}
+td[data-property-name='audience'] {
+  white-space: nowrap !important;
 }
 .pupzy-announcement-cell strong {
   overflow: hidden;

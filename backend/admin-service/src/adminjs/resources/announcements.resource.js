@@ -8,6 +8,28 @@ import {
 import { attachShortUuid, enumProperty, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
 /**
+ * Column labels. Also registered as the resource's translations (AdminJS reads
+ * table headers from those, not from the property option).
+ */
+export const ANNOUNCEMENT_PROPERTY_LABELS = Object.freeze({
+  created_at: 'Sent',
+  sent_by_admin_id: 'Sent by',
+  audience: 'Audience',
+  audience_city_name: 'City',
+  title_en: 'English',
+  body_en: 'English message',
+  title_ar: 'Arabic',
+  body_ar: 'Arabic message',
+  failure_reason: 'Why it failed',
+  audience_cutoff_at: 'Audience frozen at',
+  expected_recipients: 'Recipients',
+  in_app_count: 'In-app',
+  push_intent_count: 'Push',
+  started_at: 'Started',
+  completed_at: 'Completed',
+});
+
+/**
  * Announcements: a SUPER_ADMIN's message to every eligible user or to one
  * City, written in English and Arabic. Read-only history; an announcement
  * cannot be edited or unsent. Every action is gated server-side by
@@ -16,23 +38,23 @@ import { attachShortUuid, enumProperty, stripPopulatedPasswordHashes } from './r
 export function buildAnnouncementsResource(db, pool, components = {}) {
   const properties = {
     id: { isTitle: false, isDisabled: true },
-    sent_by_admin_id: { label: 'Sent by', isDisabled: true },
-    audience: enumProperty(ENUMS.announcementAudience, { label: 'Audience', isDisabled: true }),
+    sent_by_admin_id: { isDisabled: true },
+    audience: enumProperty(ENUMS.announcementAudience, { isDisabled: true }),
     audience_city_id: { isVisible: false },
-    audience_city_name: { label: 'City', isDisabled: true },
-    title_en: { label: 'English', isTitle: true, isDisabled: true },
-    body_en: { label: 'English message', isDisabled: true },
-    title_ar: { label: 'Arabic', isDisabled: true },
-    body_ar: { label: 'Arabic message', isDisabled: true },
+    audience_city_name: { isDisabled: true },
+    title_en: { isTitle: true, isDisabled: true },
+    body_en: { isDisabled: true },
+    title_ar: { isDisabled: true },
+    body_ar: { isDisabled: true },
     status: enumProperty(ENUMS.announcementStatus, { isDisabled: true }),
-    failure_reason: { label: 'Why it failed', isDisabled: true },
-    audience_cutoff_at: { label: 'Audience frozen at', isDisabled: true },
-    expected_recipients: { label: 'Recipients', isDisabled: true },
-    in_app_count: { label: 'In-app', isDisabled: true },
-    push_intent_count: { label: 'Push', isDisabled: true },
-    started_at: { label: 'Started', isDisabled: true },
-    completed_at: { label: 'Completed', isDisabled: true },
-    created_at: { label: 'Sent', isDisabled: true },
+    failure_reason: { isDisabled: true },
+    audience_cutoff_at: { isDisabled: true },
+    expected_recipients: { isDisabled: true },
+    in_app_count: { isDisabled: true },
+    push_intent_count: { isDisabled: true },
+    started_at: { isDisabled: true },
+    completed_at: { isDisabled: true },
+    created_at: { isDisabled: true },
     cursor_user_id: { isVisible: false },
     attempts: { isVisible: false },
     last_error: { isVisible: false },
@@ -40,6 +62,9 @@ export function buildAnnouncementsResource(db, pool, components = {}) {
     updated_at: { isVisible: false },
   };
 
+  for (const [name, label] of Object.entries(ANNOUNCEMENT_PROPERTY_LABELS)) {
+    properties[name] = { ...properties[name], label };
+  }
   attachShortUuid(properties, ['id'], components, ['list', 'show']);
   if (components.ReferenceLink) {
     properties.sent_by_admin_id.components = { list: components.ReferenceLink, show: components.ReferenceLink };
@@ -58,7 +83,7 @@ export function buildAnnouncementsResource(db, pool, components = {}) {
   return {
     resource: db.table('announcements'),
     options: {
-      navigation: { name: 'Announcements', icon: 'Bell' },
+      navigation: { name: null, icon: 'Bell' },
       properties,
       sort: { sortBy: 'created_at', direction: 'desc' },
       listProperties: [

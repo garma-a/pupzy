@@ -82,12 +82,7 @@ export default function AnnouncementShow({ record: initialRecord, resource }) {
   return (
     <div className="pupzy-announcement" data-testid="announcement-show" data-status={params.status}>
       <header className="pupzy-announcement-header pupzy-announcement-show-header">
-        <div>
-          <h2>{params.title_en}</h2>
-          <p dir="rtl" lang="ar" className="pupzy-arabic pupzy-announcement-subtitle">
-            {params.title_ar}
-          </p>
-        </div>
+        <h2>{params.title_en}</h2>
         <span data-testid="announcement-status">
           <StateTag value={params.status} />
         </span>

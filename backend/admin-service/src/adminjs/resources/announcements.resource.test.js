@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { ENUMS } from '../enums.js';
-import { buildAnnouncementsResource } from './announcements.resource.js';
+import { ANNOUNCEMENT_PROPERTY_LABELS, buildAnnouncementsResource } from './announcements.resource.js';
 
 const db = { table: (name) => ({ name }) };
 const pool = {};
@@ -24,9 +24,10 @@ describe('Announcements resource', () => {
   const resource = buildAnnouncementsResource(db, pool, components);
   const { actions } = resource.options;
 
-  it('is registered on the announcements table under its own navigation entry', () => {
+  it('is registered on the announcements table as its own top-level navigation entry', () => {
     assert.equal(resource.resource.name, 'announcements');
-    assert.equal(resource.options.navigation.name, 'Announcements');
+    assert.equal(resource.options.navigation.name, null);
+    assert.equal(resource.options.navigation.icon, 'Bell');
   });
 
   it('lets only a super admin use every action, and a plain admin none of them', () => {
@@ -72,6 +73,12 @@ describe('Announcements resource', () => {
     assert.equal(properties.in_app_count.label, 'In-app');
     assert.equal(properties.push_intent_count.label, 'Push');
     assert.equal(properties.sent_by_admin_id.label, 'Sent by');
+  });
+
+  it('registers the same labels as translations so table headers use them', () => {
+    for (const [name, label] of Object.entries(ANNOUNCEMENT_PROPERTY_LABELS)) {
+      assert.equal(resource.options.properties[name].label, label, name);
+    }
   });
 
   it('uses the compose component for New announcement and the detail component for show', () => {

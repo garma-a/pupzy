@@ -8,7 +8,7 @@ import { buildDashboardHandler } from './dashboard/dashboard-handler.js';
 import { pupzyTheme } from './theme.js';
 import { PROPERTY_LABELS } from './property-labels.js';
 import { buildAdminUsersResource } from './resources/admin-users.resource.js';
-import { buildAnnouncementsResource } from './resources/announcements.resource.js';
+import { ANNOUNCEMENT_PROPERTY_LABELS, buildAnnouncementsResource } from './resources/announcements.resource.js';
 import { buildAdoptionApplicationsResource } from './resources/adoption-applications.resource.js';
 import { buildAdoptionPostsResource } from './resources/adoption-posts.resource.js';
 import { buildCitiesResource } from './resources/cities.resource.js';
@@ -225,7 +225,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
           properties: PROPERTY_LABELS,
           resources: {
             posts: { actions: { show: 'Review Post', list: 'Posts' } },
-            announcements: { actions: { new: 'New announcement', list: 'Announcements', show: 'Announcement' } },
+            announcements: {
+              actions: { new: 'New announcement', list: 'Announcements', show: 'Announcement' },
+              properties: ANNOUNCEMENT_PROPERTY_LABELS,
+            },
             post_reports: { actions: { removePost: 'Remove Post', banAuthor: 'Ban Author' } },
             comment_reports: {
               actions: { hideComment: 'Hide Comment', removeComment: 'Remove Comment', banAuthor: 'Ban Author' },
