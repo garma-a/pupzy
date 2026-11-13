@@ -1925,9 +1925,12 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal(vcRetData.record.populated.city_id.params.status, 'RETIRED');
 
     // 5c. Vet Clinic list view renders populated historical city titles
-    const vcListRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/actions/list`, {
-      headers: { cookie: superCookie },
-    });
+    const vcListRes = await fetch(
+      `${baseUrl}/admin/api/resources/vet_clinics/actions/list?filters.name_english=Historical`,
+      {
+        headers: { cookie: superCookie },
+      },
+    );
     assert.equal(vcListRes.status, 200);
     const vcListData = await vcListRes.json();
     const foundHistoricalVetClinic = vcListData.records.find((r) => r.id === historicalVetClinicId);
