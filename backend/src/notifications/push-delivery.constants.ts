@@ -10,6 +10,11 @@ import type { NotificationType } from './notification-templates';
  * reopening, and expiry/reminders — plus the remaining existing engagement and
  * adoption notifications.
  *
+ * `ADMIN_ANNOUNCEMENT` is an administrator's Announcement. Its fan-out writes the
+ * notification and its intents in one batch transaction (see
+ * `AdminAnnouncementProcessor`); the push worker rechecks preference, account
+ * state and isolation before sending, like every other type.
+ *
  * `SYSTEM_ANNOUNCEMENT` is deliberately excluded: it belonged to the retired
  * saved-search alert feature, has no creation site, and saved-search alerts are
  * out of push scope. Nearby-rescue broadcasts do not exist as notification
@@ -42,6 +47,7 @@ export const PUSH_ENABLED_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = ne
   'POST_REOPENED',
   'RESCUE_COMPLETED',
   'RESCUE_REOPENED',
+  'ADMIN_ANNOUNCEMENT',
 ]);
 
 /** True when a notification type should enqueue durable push delivery intents. */

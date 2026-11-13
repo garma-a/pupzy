@@ -58,6 +58,12 @@ const SAMPLE_PARAMS: NotificationTemplateParamsMap = {
   POST_REOPENED_BY_ADMIN: { postTitle: 'Missing cat' },
   POST_INACTIVITY_NUDGE: { postTitle: 'Missing cat' },
   SYSTEM_ANNOUNCEMENT: { postTitle: 'Missing cat' },
+  ADMIN_ANNOUNCEMENT: {
+    titleEn: 'Vaccination week',
+    bodyEn: 'Free rabies shots this week.',
+    titleAr: 'أسبوع التطعيم',
+    bodyAr: 'تطعيم مجاني هذا الأسبوع.',
+  },
   NEW_COMMENT: { actorName: 'Ahmed', postTitle: 'Missing cat' },
   NEW_REPLY: { actorName: 'Ahmed' },
   COMMENT_BOOSTED: { actorName: 'Ahmed', target: 'comment' },

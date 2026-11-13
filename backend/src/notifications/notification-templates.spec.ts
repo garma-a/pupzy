@@ -24,6 +24,12 @@ const SAMPLE_PARAMS: NotificationTemplateParamsMap = {
   POST_REOPENED_BY_ADMIN: { postTitle: 'Missing cat' },
   POST_INACTIVITY_NUDGE: { postTitle: 'Missing cat' },
   SYSTEM_ANNOUNCEMENT: { postTitle: 'Missing cat' },
+  ADMIN_ANNOUNCEMENT: {
+    titleEn: 'Vaccination week',
+    bodyEn: 'Free rabies shots this week.',
+    titleAr: 'أسبوع التطعيم',
+    bodyAr: 'تطعيم مجاني هذا الأسبوع.',
+  },
   NEW_COMMENT: { actorName: 'Ahmed', postTitle: 'Missing cat' },
   NEW_REPLY: { actorName: 'Ahmed' },
   COMMENT_BOOSTED: { actorName: 'Ahmed', target: 'comment' },
@@ -46,6 +52,41 @@ describe('notification templates', () => {
       expect(content.bodyArabic.trim().length).toBeGreaterThan(0);
       expect(content.titleArabic).not.toBe(content.title);
     }
+  });
+
+  it('renders an admin announcement from the stored per-language text, not a fixed template', () => {
+    expect(
+      buildNotificationContent('ADMIN_ANNOUNCEMENT', {
+        titleEn: 'Clinic closed Friday',
+        bodyEn: 'Partner clinics are closed this Friday for the holiday.',
+        titleAr: 'العيادات مغلقة يوم الجمعة',
+        bodyAr: 'العيادات الشريكة مغلقة يوم الجمعة بسبب الإجازة.',
+      }),
+    ).toEqual({
+      title: 'Clinic closed Friday',
+      body: 'Partner clinics are closed this Friday for the holiday.',
+      titleArabic: 'العيادات مغلقة يوم الجمعة',
+      bodyArabic: 'العيادات الشريكة مغلقة يوم الجمعة بسبب الإجازة.',
+    });
+  });
+
+  it('gives each recipient the announcement in their language preference', () => {
+    const row = {
+      ...buildNotificationContent('ADMIN_ANNOUNCEMENT', SAMPLE_PARAMS.ADMIN_ANNOUNCEMENT),
+    };
+    const stored = {
+      title: row.title,
+      body: row.body,
+      titleArabic: row.titleArabic,
+      bodyArabic: row.bodyArabic,
+    };
+    expect(localizeNotification(stored, 'ar').title).toBe('أسبوع التطعيم');
+    expect(localizeNotification(stored, 'ar').body).toBe('تطعيم مجاني هذا الأسبوع.');
+    expect(localizeNotification(stored, 'en').title).toBe('Vaccination week');
+    // An account that never synchronized a language, and an unknown value, read English.
+    expect(localizeNotification(stored, null).title).toBe('Vaccination week');
+    expect(localizeNotification(stored, undefined).title).toBe('Vaccination week');
+    expect(localizeNotification(stored, 'fr').title).toBe('Vaccination week');
   });
 
   it('preserves the existing English copy byte-for-byte', () => {

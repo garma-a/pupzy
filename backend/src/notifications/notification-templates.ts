@@ -54,6 +54,12 @@ export interface NotificationTemplateParamsMap {
   POST_REOPENED_BY_ADMIN: { postTitle: string };
   POST_INACTIVITY_NUDGE: { postTitle: string };
   SYSTEM_ANNOUNCEMENT: { postTitle: string };
+  /**
+   * An administrator's Announcement. The text is written by a person in both
+   * languages and stored on the announcement, so this template renders it as
+   * is instead of interpolating a fixed sentence.
+   */
+  ADMIN_ANNOUNCEMENT: { titleEn: string; bodyEn: string; titleAr: string; bodyAr: string };
   NEW_COMMENT: { actorName: string; postTitle: string; following?: boolean };
   NEW_REPLY: { actorName: string; postTitle?: string; following?: boolean };
   COMMENT_BOOSTED: { actorName: string; target: 'comment' | 'reply' };
@@ -243,6 +249,10 @@ const NOTIFICATION_TEMPLATES: NotificationTemplateRegistry = {
       title: 'نتيجة جديدة لبحثك المحفوظ',
       body: `يوجد منشور جديد يطابق بحثك المحفوظ: "${postTitle}"`,
     }),
+  },
+  ADMIN_ANNOUNCEMENT: {
+    en: ({ titleEn, bodyEn }) => ({ title: titleEn, body: bodyEn }),
+    ar: ({ titleAr, bodyAr }) => ({ title: titleAr, body: bodyAr }),
   },
   NEW_COMMENT: {
     en: ({ actorName, postTitle, following }) => ({
