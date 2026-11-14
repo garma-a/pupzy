@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:pupzy/localization/lang_provider.dart';
 import 'package:pupzy/screens/login_screen.dart';
+import 'package:pupzy/theme/app_theme.dart';
 import 'package:pupzy/utils/password_policy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -86,9 +87,47 @@ void main() {
       // No AuthService is provided: reaching Firebase would throw.
       expect(tester.takeException(), isNull);
       expect(
-        find.text('Use at least 12 characters, with an uppercase letter, a lowercase letter, a number and a symbol.'),
+        find.text(
+          r'Your password still needs at least 12 characters, an uppercase letter (A–Z), a lowercase letter (a–z) and a symbol, such as ! @ # $.',
+        ),
         findsOneWidget,
+        reason: 'names exactly what is missing (it has a number)',
       );
+      expect(find.byKey(const Key('passwordRule-length-missing')), findsOneWidget);
+      final lengthText = tester.widget<Text>(find.text('At least 12 characters'));
+      expect(lengthText.style?.color, AppColors.critical, reason: 'missing rules turn red after a refused attempt');
+
+      // The message follows the typing: only what is still missing.
+      await tester.enterText(field('Password'), 'Pupzy2026dog');
+      await tester.pump();
+      expect(find.text(r'Your password still needs a symbol, such as ! @ # $.'), findsOneWidget);
+
+      await tester.enterText(field('Password'), 'Pupzy-2026dog');
+      await tester.pump();
+      expect(find.textContaining('Your password still needs'), findsNothing);
+    });
+
+    testWidgets('in Arabic the message lists what is missing in Arabic', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final lang = LangProvider();
+      await lang.setLang(Lang.ar);
+      tester.view.physicalSize = const Size(1600, 3200);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(ChangeNotifierProvider<LangProvider>.value(value: lang, child: const MaterialApp(home: LoginScreen())));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('إنشاء حساب').first);
+      await tester.pumpAndSettle();
+
+      final fields = find.byType(TextFormField);
+      await tester.enterText(fields.at(0), 'aya@example.test');
+      await tester.enterText(fields.at(1), 'pupzy2026dog');
+      await tester.enterText(fields.at(2), 'pupzy2026dog');
+      await tester.ensureVisible(find.widgetWithText(OutlinedButton, 'إنشاء حساب'));
+      await tester.tap(find.widgetWithText(OutlinedButton, 'إنشاء حساب'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(r'كلمة المرور ما زالت تحتاج إلى حرف إنجليزي كبير (A–Z) ورمز، مثل ! @ # $.'), findsOneWidget);
     });
 
     testWidgets('signing in still accepts an older, shorter password', (tester) async {
