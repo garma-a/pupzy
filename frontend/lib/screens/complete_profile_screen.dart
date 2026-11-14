@@ -8,6 +8,7 @@ import '../localization/lang_provider.dart';
 import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/egypt_phone.dart';
 import '../utils/full_name.dart';
 import '../widgets/city_picker_sheet.dart';
 import 'app_shell.dart';
@@ -109,10 +110,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     setState(() => _submitting = true);
 
     final graphql = context.read<GraphQLService>();
-    final rawDigits = _phoneController.text.trim().replaceAll(RegExp(r'\D'), '');
-    final phone = rawDigits.startsWith('0')
-        ? '+2$rawDigits'
-        : '+20$rawDigits';
+    // With or without the leading 0, or with +20: always sent as +201XXXXXXXXX.
+    final phone = egyptMobileE164(_phoneController.text)!;
 
     final (result, errorMessage) = await graphql.completeProfile(
       fullName: normalizeFullName(_nameController.text),
@@ -311,7 +310,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     textInputAction: TextInputAction.done,
                     inputFormatters: [
                       FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(11),
+                      LengthLimitingTextInputFormatter(maxEgyptPhoneDigits),
                     ],
                     decoration: _inputDecoration('01012345678', Icons.phone_outlined).copyWith(
                       prefixIcon: Padding(
@@ -336,15 +335,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         ),
                       ),
                     ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return t(context, 'Phone number is required', 'رقم الهاتف مطلوب');
-                      final digits = v.trim().replaceAll(RegExp(r'\D'), '');
-                      if (digits.length != 11) return t(context, 'Phone number must be 11 digits', 'يجب أن يتكون رقم الهاتف من 11 رقمًا');
-                      if (!RegExp(r'^01[0125]\d{8}$').hasMatch(digits)) {
-                        return t(context, 'Must start with 010, 011, 012, or 015', 'يجب أن يبدأ بـ 010 أو 011 أو 012 أو 015');
-                      }
-                      return null;
-                    },
+                    validator: (v) => validateEgyptMobile(context, v, required: true),
                   ),
                   const SizedBox(height: AppSpacing.xl),
 
