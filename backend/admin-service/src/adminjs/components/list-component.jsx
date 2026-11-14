@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiClient, RecordsTable, useSelectedRecords } from 'adminjs';
+import PostQuickFilters from './post-quick-filters.jsx';
 import { Pagination } from '@adminjs/design-system';
 import { useLocation, useNavigate } from 'react-router';
 const api = new ApiClient();
@@ -8,6 +9,7 @@ export default function List({ resource, setTag }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [postQueues, setPostQueues] = useState([]);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
   const generation = useRef(0);
@@ -27,6 +29,7 @@ export default function List({ resource, setTag }) {
         return;
       }
       setData(response.data);
+      if (response.data.postQueues) setPostQueues(response.data.postQueues);
       setTag?.(String(response.data.meta.total));
     } catch {
       if (request === generation.current) setError(true);
@@ -50,6 +53,7 @@ export default function List({ resource, setTag }) {
   };
   return (
     <div data-css={`${resource.id}-list-table-wrapper`}>
+      {resource.id === 'posts' ? <PostQuickFilters queues={postQueues} /> : null}
       {error ? (
         <div className="pupzy-list-state" role="alert">
           Records could not be loaded.{' '}

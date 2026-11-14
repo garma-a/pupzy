@@ -89,7 +89,6 @@ describe('reference columns link to their record', () => {
 
   it('shows references in lists too, except the ones that only appear on show pages', () => {
     const showOnly = new Set([
-      'posts.creator_id',
       'posts.moderated_by_admin_id',
       'users.banned_by_admin_id',
       'notifications.related_post_id',
@@ -121,7 +120,11 @@ describe('reference columns link to their record', () => {
     for (const name of ['account_reports', 'moderation_actions']) {
       for (const action of ['list', 'show']) {
         const hooks = [resources[name].options.actions[action].after].flat();
-        assert.equal(hooks.length, 2, `${name}.${action} strips hashes and resolves the target`);
+        assert.equal(
+          hooks.length,
+          name === 'moderation_actions' && action === 'list' ? 3 : 2,
+          `${name}.${action} strips hashes and resolves the target`,
+        );
       }
     }
   });

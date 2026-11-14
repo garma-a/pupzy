@@ -230,11 +230,9 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
         'name_english',
         'name_arabic',
         'city_id',
-        'phone_number',
-        'address_english',
-        'address_arabic',
-        'source',
         'is_active',
+        'phone_number',
+        'clinic_address',
       ]);
       assert.ok(!res.options.listProperties.includes('coordinates'));
       assert.equal(res.options.properties.coordinates.isVisible.list, false);
@@ -265,16 +263,8 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
 
     it('moderation_actions is read-only, protects history, and uses ShortUuid for polymorphic IDs', () => {
       const res = buildModerationActionsResource(db, components);
-      assert.deepEqual(res.options.listProperties, [
-        'id',
-        'action_type',
-        'target_type',
-        'target_id',
-        'admin_user_id',
-        'reason',
-        'created_at',
-      ]);
-      assert.equal(res.options.properties.id.components.list, 'ShortUuidMock');
+      assert.deepEqual(res.options.listProperties, ['activity', 'target_id', 'created_at']);
+      assert.equal(res.options.properties.id.components.show, 'ShortUuidMock');
       assert.equal(res.options.properties.admin_user_id.components.list, 'ReferenceLinkMock');
       assert.equal(res.options.properties.target_id.components.list, 'ReferenceLinkMock');
       assert.equal(res.options.actions.new.isAccessible, false);

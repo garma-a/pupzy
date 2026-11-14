@@ -1,3 +1,5 @@
+import { attachAuditActors } from '../review/audit-sentence.js';
+import { listOnlyProperty } from '../review/list-summaries.js';
 import { ENUMS } from '../enums.js';
 import { buildPolymorphicReferenceHook } from '../reference-targets.js';
 import {
@@ -10,6 +12,7 @@ import {
 
 export function buildModerationActionsResource(db, components = {}, pool) {
   const properties = {
+    activity: listOnlyProperty(components?.AuditActivity, 'string'),
     id: { isTitle: true, isDisabled: true },
     admin_user_id: {},
     action_type: enumProperty(ENUMS.moderationActionType),
@@ -22,13 +25,13 @@ export function buildModerationActionsResource(db, components = {}, pool) {
     created_at: { isDisabled: true },
   };
 
-  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachShortUuid(properties, ['id'], components, ['show']);
   attachReferenceLink(properties, ['admin_user_id', 'target_id'], components, ['list', 'show']);
   const resolveTarget = buildPolymorphicReferenceHook(pool, { typeField: 'target_type', idField: 'target_id' });
 
   return buildReadOnlyResource(db, 'moderation_actions', { name: 'Admin Management', icon: 'Lock' }, properties, {
     sort: { sortBy: 'created_at', direction: 'desc' },
-    listProperties: ['id', 'action_type', 'target_type', 'target_id', 'admin_user_id', 'reason', 'created_at'],
+    listProperties: ['activity', 'target_id', 'created_at'],
     showProperties: [
       'id',
       'action_type',
@@ -41,7 +44,7 @@ export function buildModerationActionsResource(db, components = {}, pool) {
     ],
     filterProperties: ['id', 'action_type', 'target_type', 'target_id', 'admin_user_id', 'created_at'],
     actions: {
-      list: { after: [stripPopulatedPasswordHashes, resolveTarget] },
+      list: { after: [stripPopulatedPasswordHashes, resolveTarget, (response) => attachAuditActors(pool, response)] },
       show: { after: [stripPopulatedPasswordHashes, resolveTarget] },
     },
   });

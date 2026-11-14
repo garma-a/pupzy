@@ -1,3 +1,4 @@
+import { listOnlyProperty } from '../review/list-summaries.js';
 import { buildCommentActions } from '../actions/moderate-comment.actions.js';
 import { COMMENT_EVIDENCE_PARAM, attachCommentEvidence } from '../review/comment-evidence.js';
 import {
@@ -10,6 +11,8 @@ import {
 
 export function buildCommentsResource(db, pool, components = {}, cache) {
   const properties = {
+    open_reports: listOnlyProperty(),
+    images_count: listOnlyProperty(),
     id: { isTitle: true, isDisabled: true },
     post_id: { isDisabled: true },
     parent_id: { isDisabled: true },
@@ -31,7 +34,7 @@ export function buildCommentsResource(db, pool, components = {}, cache) {
     };
   }
 
-  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachShortUuid(properties, ['id'], components, ['show']);
   attachReferenceLink(properties, ['post_id', 'author_id', 'parent_id'], components, ['list', 'show']);
 
   return {
@@ -49,7 +52,7 @@ export function buildCommentsResource(db, pool, components = {}, cache) {
         },
         ...buildCommentActions(pool, components?.ModerationAction, cache),
       },
-      listProperties: ['id', 'post_id', 'author_id', 'status', 'reply_count', 'boost_count', 'created_at'],
+      listProperties: ['text', 'author_id', 'post_id', 'status', 'open_reports', 'images_count', 'created_at'],
       showProperties: [
         ...(hasEvidence ? [COMMENT_EVIDENCE_PARAM] : []),
         'id',

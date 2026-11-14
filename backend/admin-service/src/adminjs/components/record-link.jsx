@@ -47,7 +47,12 @@ export function RecordLink({
       <span
         dir="auto"
         title={title}
-        style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}
+        style={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          maxWidth: 'var(--pupzy-reference-width, 260px)',
+        }}
       >
         {title}
       </span>

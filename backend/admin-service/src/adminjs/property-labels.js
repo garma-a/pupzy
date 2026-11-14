@@ -4,6 +4,12 @@
  */
 export const PROPERTY_LABELS = Object.freeze({
   id: 'ID',
+  clinic_address: 'Address',
+  text: 'Comment',
+  post_state: 'Status',
+  open_reports: 'Open reports',
+  images_count: 'Images',
+  activity: 'Activity',
   review_status: 'Status',
   profile_photo: 'Profile photo',
   post_id: 'Post',

@@ -33,6 +33,7 @@ import { buildUsersResource } from './resources/users.resource.js';
 import { buildVetClinicsResource } from './resources/vet-clinics.resource.js';
 import { buildVetClinicLocationAuditsResource } from './resources/vet-clinic-location-audits.resource.js';
 import { buildCommentsResource } from './resources/comments.resource.js';
+import { attachReadableList } from './review/list-summaries.js';
 import { attachReportCase } from './review/case-view.js';
 import { attachPostDetailReviewWorkspace } from './review/post-review.js';
 
@@ -136,6 +137,15 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'ProfilePhoto',
       path.join(currentDirectory, 'components', 'profile-photo-component.jsx'),
     ),
+    ClinicList: componentLoader.add(
+      'ClinicList',
+      path.join(currentDirectory, 'components', 'clinic-list-component.jsx'),
+    ),
+    PostList: componentLoader.add('PostList', path.join(currentDirectory, 'components', 'post-list-component.jsx')),
+    AuditActivity: componentLoader.add(
+      'AuditActivity',
+      path.join(currentDirectory, 'components', 'audit-activity-component.jsx'),
+    ),
     ReportCase: componentLoader.add(
       'ReportCase',
       path.join(currentDirectory, 'components', 'report-case-component.jsx'),
@@ -205,7 +215,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
   ];
 
   const resources = rawResources.map((rawResource) => {
-    const resource = attachReportCase(rawResource, pool, components);
+    const resource = attachReadableList(attachReportCase(rawResource, pool, components), pool);
     const navigation = navigationFor(resource.resource.tableName);
     const properties = { ...resource.options.properties };
     for (const name of ['status', 'moderation_status', 'urgency', 'review_outcome', 'review_status', 'is_banned']) {
@@ -246,6 +256,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
           labels: { dashboard: 'Inbox' },
           properties: PROPERTY_LABELS,
           resources: withResourceLabels({
+            vet_clinics: { properties: { is_active: 'Status' }, actions: { needsPhone: 'Needs phone' } },
             posts: { actions: { show: 'Review Post', list: 'Posts' } },
             announcements: {
               actions: { new: 'New announcement', list: 'Announcements', show: 'Announcement' },

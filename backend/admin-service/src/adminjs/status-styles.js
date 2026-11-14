@@ -43,6 +43,7 @@ export function plainValue(value) {
     .toLowerCase();
   return (
     {
+      LOST: 'Lost & found',
       PENDING_AUTO_REVIEW: 'Pending review',
       NO_ACTION: 'No action',
       ACTION_TAKEN: 'Action taken',

@@ -343,8 +343,68 @@ after(async () => {
 });
 
 describe('Admin review experience real browser suite', { timeout: 180000 }, () => {
+  it('shows readable People, Comments and audit rows with counts and working record links', async () => {
+    const reporter = await insertUser('screen-reporter');
+    await database.pool.query("UPDATE users SET full_name_arabic='اسم المالك' WHERE id=$1", [fixture.ownerId]);
+    await database.pool.query(
+      "INSERT INTO account_reports(reporter_id,reported_user_id,reason) VALUES ($1,$2,'SPAM')",
+      [reporter, fixture.ownerId],
+    );
+    const comment = await insertComment({
+      postId: fixture.flaggedId,
+      authorId: fixture.commenterId,
+      text: 'تعليق للفحص',
+      createdAt: new Date(),
+    });
+    await insertCommentMedia(comment, `comments/screens/${comment}-wide.svg`);
+    await database.pool.query("INSERT INTO comment_reports(comment_id,reporter_id,reason) VALUES ($1,$2,'SPAM')", [
+      comment,
+      reporter,
+    ]);
+    await database.pool.query(
+      "INSERT INTO moderation_actions(admin_user_id,action_type,target_type,target_id,reason) VALUES ($1,'POST_FLAGGED','POST',$2,'Screen review')",
+      [principals.adminId, fixture.flaggedId],
+    );
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await page.goto(`${baseUrl}/admin/resources/users`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector(`tr[data-id="${fixture.ownerId}"]`);
+      const row = `tr[data-id="${fixture.ownerId}"]`;
+      assert.match(await page.$eval(row, (n) => n.innerText), /اسم المالك/);
+      assert.match(await page.$eval(row, (n) => n.innerText), /Active/);
+      assert.equal(await page.$eval(`${row} td[data-property-name="open_reports"]`, (n) => n.innerText), '1');
+      await page.goto(`${baseUrl}/admin/resources/comments`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector(`tr[data-id="${comment}"]`);
+      const commentRow = `tr[data-id="${comment}"]`;
+      assert.equal(
+        await page.$eval(`${commentRow} td[data-property-name="text"] [dir="auto"]`, (n) => n.innerText),
+        'تعليق للفحص',
+      );
+      assert.equal(await page.$eval(`${commentRow} td[data-property-name="open_reports"]`, (n) => n.innerText), '1');
+      assert.equal(await page.$eval(`${commentRow} td[data-property-name="images_count"]`, (n) => n.innerText), '1');
+      await page.click(`${commentRow} td[data-property-name="text"] a`);
+      await page.waitForSelector('[data-testid="pupzy-comment-evidence"]');
+      await page.goto(`${baseUrl}/admin/resources/moderation_actions`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector('.pupzy-audit-sentence');
+      assert.match(
+        await page.$eval('.pupzy-audit-sentence', (n) => n.innerText),
+        /Test Admin flagged post.*Screen review/,
+      );
+      await page.click('[data-reference-resource="posts"]');
+      await page.waitForSelector('[data-testid="pupzy-review-workspace"]');
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
   it('shows list loading and retry states and disables motion when requested', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    let releaseFailure;
+    const failureReady = new Promise((resolve) => {
+      releaseFailure = resolve;
+    });
     try {
       await loginAsAdmin(page, baseUrl);
       await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
@@ -352,14 +412,18 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       await page.setRequestInterception(true);
       page.on('request', async (request) => {
         if (request.url().includes('/api/resources/posts/actions/list') && unavailable) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          await failureReady;
           return request.respond({ status: 503, contentType: 'application/json', body: '{}' });
         }
         return request.continue();
       });
       await page.goto(`${baseUrl}/admin/resources/posts`, { waitUntil: 'domcontentloaded' });
       await page.waitForSelector('[aria-label="Loading records"]');
+      await page.waitForFunction(() =>
+        Boolean(getComputedStyle(document.documentElement).getPropertyValue('--pupzy-bg').trim()),
+      );
       assert.equal(await page.$eval('.pupzy-list-skeleton', (el) => getComputedStyle(el).animationName), 'none');
+      releaseFailure();
       await page.waitForSelector('.pupzy-list-state[role="alert"]');
       unavailable = false;
       await page.click('.pupzy-list-state button');
@@ -367,6 +431,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       assert.equal(await page.$eval('tr[data-id]', (el) => getComputedStyle(el).transitionProperty), 'none');
       assert.deepEqual(errors, []);
     } finally {
+      releaseFailure();
       await page.close();
     }
   });
@@ -773,11 +838,13 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         const cell = Array.from(document.querySelectorAll('td[data-property-name="title"]')).find((element) =>
           element.innerText.includes('deliberately long listing title'),
         );
+        const title = cell?.querySelector('a span[dir="auto"]') ?? cell;
         return {
           documentClientWidth: document.documentElement.clientWidth,
           documentScrollWidth: document.documentElement.scrollWidth,
-          textOverflow: cell ? getComputedStyle(cell).textOverflow : null,
-          truncated: cell ? cell.scrollWidth > cell.clientWidth : false,
+          textOverflow: title ? getComputedStyle(title).textOverflow : null,
+          truncated: title ? title.scrollWidth > title.clientWidth : false,
+          fullTitle: title?.title,
         };
       });
       assert.equal(
@@ -787,6 +854,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       );
       assert.equal(longTitleLayout.textOverflow, 'ellipsis', 'long list titles truncate instead of colliding');
       assert.equal(longTitleLayout.truncated, true, 'the long title is actually clipped inside its cell');
+      assert.match(longTitleLayout.fullTitle, /deliberately long listing title/);
       console.log(
         `[bwg-21 evidence] narrow long-title list ${await recordEvidence(page, '09-narrow-long-title-list')}`,
       );
@@ -1543,7 +1611,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         const withPhoto = rows.find((row) => row.text.includes('photo-with@example.com'));
         const without = rows.find((row) => row.text.includes('photo-without@example.com'));
         assert.equal(withPhoto.hasImage, true);
-        assert.equal(withPhoto.size, 32);
+        assert.equal(withPhoto.size, 28);
         assert.equal(without.hasImage, false);
         assert.match(without.text, /PW/, 'initials of "Photo without"');
         console.log(`[fix5 evidence] users list ${await recordEvidence(page, 'fix5-users-list')}`);

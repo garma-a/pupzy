@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiClient } from 'adminjs';
 import { Box, Button, H3, H4, Link, Loader, MessageBox, Text } from '@adminjs/design-system';
 
+import { RecordLink } from './record-link.jsx';
 import ModerationHistory from './moderation-history.jsx';
 import { BackToInbox } from './back-to-inbox.jsx';
 import { filteredListBackLink, inboxReturnFromSearch, recallListSearch, reportReviewHref } from './list-return.js';
@@ -244,7 +245,17 @@ export default function PostReviewWorkspace({ resource, record }) {
           <div>
             <dt>Owner</dt>
             <dd>
-              {post.owner?.name ?? 'Unknown'}
+              {post.owner?.id ? (
+                <RecordLink
+                  resourceId="users"
+                  recordId={post.owner.id}
+                  title={post.owner.name}
+                  pictureUrl={post.owner.pictureUrl}
+                  showAvatar
+                />
+              ) : (
+                'Deleted account'
+              )}
               <span>{post.owner?.email ?? 'No email available'}</span>
             </dd>
           </div>

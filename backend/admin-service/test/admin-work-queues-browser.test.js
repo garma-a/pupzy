@@ -366,6 +366,60 @@ after(async () => {
 });
 
 describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
+  it('restores all nine Post queues with matching counts and urgent rescue first', async () => {
+    const moderate = await insertPost(database.pool, {
+      userId: fixture.ownerId,
+      cityId: principals.cityId,
+      postType: 'RESCUE',
+      title: 'Moderate rescue',
+      moderationStatus: 'CLEAN',
+      urgency: 'MODERATE',
+    });
+    const expected = {
+      rescue: [fixture.rescueId, fixture.pendingPostId, moderate],
+      lost_pet: [fixture.lostPetId],
+      found_stray: [fixture.foundStrayId, fixture.flaggedPostId],
+      adoption: [fixture.adoptionId],
+      products: [fixture.productId, fixture.approvedPostId],
+      mating: [fixture.matingId],
+      completed: [fixture.completedId],
+      expired: [fixture.expiredId],
+      removed: [fixture.removedId],
+    };
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await openList(page, 'posts', {});
+      assert.equal(await page.$$eval('.pupzy-post-queues a', (nodes) => nodes.length), 9);
+      for (const [queue, ids] of Object.entries(expected)) {
+        await page.click(`[data-testid="pupzy-post-queue-${queue}"]`);
+        await page.waitForFunction(
+          (expectedIds) => {
+            const found = [...document.querySelectorAll('tr[data-id]')].map((n) => n.dataset.id).sort();
+            return JSON.stringify(found) === JSON.stringify([...expectedIds].sort());
+          },
+          {},
+          ids,
+        );
+        assert.equal(
+          Number(await page.$eval(`[data-testid="pupzy-post-queue-${queue}"] span`, (n) => n.innerText)),
+          ids.length,
+        );
+        assert.equal(
+          await page.$eval(`[data-testid="pupzy-post-queue-${queue}"]`, (n) => n.getAttribute('aria-current')),
+          'page',
+        );
+        if (queue === 'rescue') {
+          assert.equal(new URL(page.url()).searchParams.get('sortBy'), 'urgency');
+          assert.equal((await listRowIds(page)).at(-1), moderate);
+        }
+      }
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
   it('reviews a report case and returns to the same Inbox filter and second page', async () => {
     const reporter = await insertUser('case-page-reporter');
     await database.pool.query(

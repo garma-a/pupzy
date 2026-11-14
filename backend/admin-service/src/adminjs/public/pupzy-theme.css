@@ -14,7 +14,8 @@
   --pupzy-surface-warm: #f5ede3;
   --pupzy-text: #2d1506;
   --pupzy-text-secondary: #8b6355;
-  --pupzy-text-muted: #b8a499;
+  --pupzy-text-muted: #8b6355;
+  --pupzy-disabled: #b8a499;
   --pupzy-border: #e8ded5;
 
   /* Status Colors */
@@ -245,7 +246,7 @@ td,
 .adminjs_TableCell,
 [data-css*='TableBody'] td {
   border-bottom: 1px solid var(--pupzy-border) !important;
-  padding: 12px 16px !important;
+  padding: 4px 8px !important;
   color: var(--pupzy-text) !important;
   font-size: 14px !important;
   vertical-align: middle !important;
@@ -466,7 +467,7 @@ button[data-variant='danger']:not(:disabled):active {
 .adminjs_Button[data-variant='danger']:disabled,
 button[data-variant='primary']:disabled,
 button[data-variant='danger']:disabled {
-  background-color: var(--pupzy-text-muted) !important;
+  background-color: var(--pupzy-disabled) !important;
   border-color: var(--pupzy-text-muted) !important;
   color: var(--pupzy-surface) !important;
   opacity: 1 !important;
@@ -2795,5 +2796,129 @@ button.pupzy-tile {
     transition:
       background-color 180ms ease-out,
       color 180ms ease-out;
+  }
+}
+
+/* Post queues and finished record lists. */
+.pupzy-post-queues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 24px;
+}
+.pupzy-post-queues a {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 40px;
+  padding: 4px 12px;
+  border: 1px solid var(--pupzy-border);
+  border-radius: 999px;
+  background: var(--pupzy-surface);
+  color: var(--pupzy-text);
+  text-decoration: none;
+  font-size: 13px;
+}
+.pupzy-post-queues a[aria-current='page'] {
+  color: var(--pupzy-primary-pressed);
+  background: var(--pupzy-primary-subtle);
+  border-color: var(--pupzy-primary-pressed);
+}
+.pupzy-post-queues a:hover {
+  background: var(--pupzy-bg);
+}
+.pupzy-post-queues span {
+  font-variant-numeric: tabular-nums;
+  color: var(--pupzy-text-secondary);
+}
+.pupzy-table-scroll {
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+}
+.pupzy-table-scroll thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--pupzy-bg);
+}
+.pupzy-table-scroll td[data-property-name='open_reports'],
+.pupzy-table-scroll td[data-property-name='images_count'] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pupzy-audit-sentence {
+  display: block;
+  max-width: 560px;
+  white-space: normal;
+  line-height: 1.6;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pupzy-post-queues a {
+    transition:
+      background-color 180ms ease-out,
+      border-color 180ms ease-out;
+  }
+}
+
+/* Vet clinics keep Arabic names readable without stretching every row. */
+.pupzy-clinic-arabic {
+  width: 220px;
+  min-width: 220px;
+  max-width: 260px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+  line-height: 22px;
+  text-align: right;
+}
+.pupzy-clinic-address {
+  display: block;
+  width: 220px;
+  max-width: 240px;
+}
+.pupzy-clinic-address > span {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 22px;
+}
+/* Compact related facts together so all queue columns remain visible on laptops. */
+.pupzy-post-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  --pupzy-reference-width: 144px;
+}
+.pupzy-post-title > .pupzy-case-thumb {
+  flex: 0 0 40px;
+}
+.pupzy-post-state {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+}
+[data-css='posts-table'] [data-property-name='creator_id'] {
+  --pupzy-reference-width: 100px;
+}
+[data-css='posts-table'] [data-property-name='city_id'],
+[data-css='vet_clinics-table'] [data-property-name='city_id'] {
+  --pupzy-reference-width: 80px;
+}
+[data-css='vet_clinics-table'] [data-property-name='name_english'] {
+  --pupzy-reference-width: 140px;
+}
+@media (max-width: 1100px) {
+  .pupzy-post-title {
+    --pupzy-reference-width: 112px;
+  }
+  [data-css='posts-table'] [data-property-name='creator_id'] {
+    --pupzy-reference-width: 80px;
+  }
+  [data-css='posts-table'] [data-property-name='city_id'] {
+    --pupzy-reference-width: 64px;
   }
 }

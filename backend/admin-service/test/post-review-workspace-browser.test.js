@@ -422,7 +422,8 @@ describe('Post review workspace real browser suite', { timeout: 120000 }, () => 
       const listBoxes = await page.$$eval('[data-testid="post-media-preview"] img', (images) =>
         images.map((image) => {
           const rect = image.getBoundingClientRect();
-          return { width: rect.width, height: rect.height };
+          const thumbnail = image.closest('.pupzy-media-thumb').getBoundingClientRect();
+          return { width: rect.width, height: rect.height, thumbnailWidth: thumbnail.width };
         }),
       );
       assert.equal(listBoxes.length, 1, 'the available photo has a thumbnail');
@@ -432,8 +433,10 @@ describe('Post review workspace real browser suite', { timeout: 120000 }, () => 
         'the unavailable fixture keeps its fallback',
       );
       assert.ok(
-        listBoxes.every((rect) => rect.width > 40 && rect.width <= 128 && rect.height > 40 && rect.height <= 128),
-        'list previews must remain compact and visible',
+        listBoxes.every(
+          (rect) => rect.thumbnailWidth >= 40 && rect.thumbnailWidth <= 42 && rect.width === 40 && rect.height === 40,
+        ),
+        `list previews must remain visible inside the specified 40px thumbnail, allowing its border: ${JSON.stringify(listBoxes)}`,
       );
     } finally {
       await page.close();

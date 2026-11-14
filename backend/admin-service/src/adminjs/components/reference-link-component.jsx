@@ -5,7 +5,7 @@ import { formatShortUuid } from './short-uuid.js';
 import { RecordLink } from './record-link.jsx';
 import ShowField from './show-field.jsx';
 
-const MUTED = { color: '#B8A499' };
+const MUTED = { color: '#8B6355' };
 
 function CopyId({ value }) {
   const [copied, setCopied] = useState(false);
