@@ -195,12 +195,109 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } on FirebaseAuthException catch (e) {
-      if (mounted) {
+      if (mounted && _isSignUp && e.code == 'email-already-in-use') {
+        // Not a dead end: offer the ways forward (see _showAccountExists).
+        setState(() => _loading = false);
+        _showAccountExists();
+      } else if (mounted) {
         Fluttertoast.showToast(
           msg: _authErrorMessage(e),
           backgroundColor: AppColors.critical,
           textColor: Colors.white,
         );
+      }
+    } catch (_) {
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: t(context, 'Something went wrong. Please try again.', 'حدث خطأ ما. يرجى المحاولة مرة أخرى.'),
+          backgroundColor: AppColors.critical,
+          textColor: Colors.white,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  /// Sign-up found an account for this email: often one the user created
+  /// earlier but never verified. Offers to sign in with it, to send the
+  /// verification email again, or to reset the password, instead of a
+  /// dead-end error. (Firebase links accounts that share an email, so
+  /// "Continue with Google" also works for a Gmail address.)
+  Future<void> _showAccountExists() async {
+    final choice = await showDialog<_AccountExistsChoice>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        key: const Key('accountExistsDialog'),
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
+        title: Text(t(ctx, 'This email already has an account', 'هذا البريد مسجل بالفعل')),
+        content: Text(t(
+          ctx,
+          "Sign in with it instead. If you never confirmed your email, we'll send the verification link again. You can also use Continue with Google for a Gmail address.",
+          'سجّل الدخول به بدلًا من ذلك. إذا لم تؤكد بريدك من قبل، سنرسل رابط التحقق مرة أخرى. يمكنك أيضًا استخدام المتابعة باستخدام Google لعنوان Gmail.',
+        )),
+        actionsOverflowDirection: VerticalDirection.down,
+        actionsOverflowButtonSpacing: AppSpacing.xs,
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(_AccountExistsChoice.signIn),
+            child: Text(t(ctx, 'Sign in', 'تسجيل الدخول')),
+          ),
+          OutlinedButton(
+            onPressed: () => Navigator.of(ctx).pop(_AccountExistsChoice.resendVerification),
+            child: Text(t(ctx, 'Resend verification email', 'إعادة إرسال بريد التحقق')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(_AccountExistsChoice.resetPassword),
+            child: Text(t(ctx, 'Forgot password?', 'نسيت كلمة المرور؟')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(t(ctx, 'Cancel', 'إلغاء')),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || choice == null) return;
+    // Every way forward is on the Sign In tab, with the email kept.
+    setState(() {
+      _isSignUp = false;
+      _confirmPasswordController.clear();
+    });
+    // Let the form rebuild as Sign In (without the confirm field) first.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    switch (choice) {
+      case _AccountExistsChoice.signIn:
+        await _submitEmailForm();
+      case _AccountExistsChoice.resendVerification:
+        await _signInAndResendVerification();
+      case _AccountExistsChoice.resetPassword:
+        _showForgotPasswordDialog();
+    }
+  }
+
+  /// Signs in with the typed email and password (Firebase only sends a
+  /// verification email to a signed-in user), then sends the link again and
+  /// shows the "Verify your email" step. An already verified account just
+  /// signs in.
+  Future<void> _signInAndResendVerification() async {
+    setState(() => _loading = true);
+    final auth = context.read<AuthService>();
+    final email = _emailController.text.trim();
+    try {
+      await auth.signInWithEmail(email, _passwordController.text);
+      if (!mounted) return;
+      if (auth.currentUser?.emailVerified == true) {
+        await _afterAuthSuccess();
+        return;
+      }
+      setState(() => _pendingVerificationEmail = email);
+      await _resendVerification();
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        Fluttertoast.showToast(msg: _authErrorMessage(e), backgroundColor: AppColors.critical, textColor: Colors.white);
       }
     } catch (_) {
       if (mounted) {
@@ -668,6 +765,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
+/// The ways forward offered when sign-up finds an existing account.
+enum _AccountExistsChoice { signIn, resendVerification, resetPassword }
 
 class _GoogleLogo extends StatelessWidget {
   final double size;
