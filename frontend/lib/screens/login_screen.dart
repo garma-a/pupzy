@@ -10,6 +10,7 @@ import '../localization/lang_provider.dart';
 import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/password_policy.dart';
 import '../widgets/language_toggle.dart';
 import 'app_shell.dart';
 import 'complete_profile_screen.dart';
@@ -36,6 +37,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _loading = false;
   bool _isSignUp = false;
+
+  /// A sign-up was refused by the form: the password rules still missing are
+  /// shown in red, and the fields are re-checked as the user fixes them.
+  bool _triedSignUp = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String? _pendingVerificationEmail;
@@ -67,8 +72,13 @@ class _LoginScreenState extends State<LoginScreen> {
     switch (e.code) {
       case 'email-already-in-use':
         return t(context, 'An account already exists for this email.', 'يوجد حساب مسجل بهذا البريد الإلكتروني بالفعل.');
+      // Rejected by the Firebase password policy (see password_policy.dart):
+      // say what the typed password is missing (all rules if, against the
+      // form's check, it seems to meet them: the policy may have changed).
       case 'weak-password':
-        return t(context, 'Password must be at least 6 characters.', 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.');
+      case 'password-does-not-meet-requirements':
+        final missing = missingPasswordRules(_passwordController.text);
+        return passwordMissingMessage(context, missing.isEmpty ? null : _passwordController.text);
       case 'invalid-email':
         return t(context, 'Please enter a valid email address.', 'يرجى إدخال بريد إلكتروني صالح.');
       case 'user-not-found':
@@ -173,7 +183,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submitEmailForm() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      if (_isSignUp) setState(() => _triedSignUp = true);
+      return;
+    }
     setState(() => _loading = true);
 
     final auth = context.read<AuthService>();
@@ -575,6 +588,9 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: AppSpacing.lg),
         Form(
           key: _formKey,
+          // After a refused sign-up, errors update as the user types, so each
+          // one clears as soon as it's fixed.
+          autovalidateMode: _isSignUp && _triedSignUp ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
           child: Column(
             children: [
               TextFormField(
@@ -610,13 +626,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     tooltip: _obscurePassword ? t(context, 'Show password', 'إظهار كلمة المرور') : t(context, 'Hide password', 'إخفاء كلمة المرور'),
                   ),
                 ),
+                // A new password must meet the Firebase policy; signing in
+                // keeps accepting passwords set before it.
                 validator: (v) {
+                  if (_isSignUp) return validateNewPassword(context, v);
                   if (v == null || v.isEmpty) return t(context, 'Password is required', 'كلمة المرور مطلوبة');
                   if (v.length < 6) return t(context, 'At least 6 characters', '6 أحرف على الأقل');
                   return null;
                 },
               ),
               if (_isSignUp) ...[
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(start: AppSpacing.sm, top: AppSpacing.sm),
+                  child: PasswordRulesChecklist(controller: _passwordController, highlightMissing: _triedSignUp),
+                ),
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: _confirmPasswordController,
