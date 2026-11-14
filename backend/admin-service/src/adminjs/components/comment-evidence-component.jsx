@@ -39,7 +39,7 @@ function Meta({ label, children }) {
   );
 }
 
-function ReportItem({ report, isCurrent }) {
+export function ReportItem({ report, isCurrent, resourceId = 'comment_reports' }) {
   return (
     <li className="pupzy-report-row" data-testid="pupzy-comment-report" style={{ listStyle: 'none' }}>
       <div className="pupzy-discussion-meta">
@@ -81,7 +81,7 @@ function ReportItem({ report, isCurrent }) {
         </span>
         {isCurrent ? null : (
           <RecordLink
-            resourceId="comment_reports"
+            resourceId={resourceId}
             recordId={report.id}
             title="Open report"
             testId="pupzy-comment-report-link"
@@ -97,7 +97,7 @@ function ReportItem({ report, isCurrent }) {
  * hidden ones too, marked), where it sits, and every Comment Report raised
  * against it. Used on the Comment page and above the Comment Report fields.
  */
-export default function CommentEvidence({ record }) {
+export default function CommentEvidence({ record, showReports = true }) {
   const evidence = useMemo(() => parse(record?.params?.comment_evidence), [record]);
   const { openMedia, dialog } = useMediaLightbox();
   if (!evidence) return null;
@@ -181,18 +181,22 @@ export default function CommentEvidence({ record }) {
         </div>
       ) : null}
 
-      <H4 mb="sm" fontSize="sm">
-        Reports on this comment {reports.length ? `(${reports.length})` : ''}
-      </H4>
-      {reports.length ? (
-        <ul className="pupzy-report-list" style={{ padding: 0, margin: 0 }}>
-          {reports.map((report) => (
-            <ReportItem key={report.id} report={report} isCurrent={report.id === evidence.currentReportId} />
-          ))}
-        </ul>
-      ) : (
-        <Text color="grey60">No reports on this comment.</Text>
-      )}
+      {showReports ? (
+        <>
+          <H4 mb="sm" fontSize="sm">
+            Reports on this comment {reports.length ? `(${reports.length})` : ''}
+          </H4>
+          {reports.length ? (
+            <ul className="pupzy-report-list" style={{ padding: 0, margin: 0 }}>
+              {reports.map((report) => (
+                <ReportItem key={report.id} report={report} isCurrent={report.id === evidence.currentReportId} />
+              ))}
+            </ul>
+          ) : (
+            <Text color="grey60">No reports on this comment.</Text>
+          )}
+        </>
+      ) : null}
       {dialog}
     </Box>
   );

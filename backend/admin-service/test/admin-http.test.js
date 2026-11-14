@@ -170,6 +170,67 @@ describe('AdminJS HTTP security and resource behavior', () => {
     await sqlAdapterPool?.destroy();
     await database.stop();
   });
+  it('loads target evidence and bounded context on all three report case pages', async () => {
+    const {
+      rows: [reporter],
+    } = await database.pool.query(
+      "INSERT INTO users(firebase_user_id,email,full_name) VALUES ('case-reporter','case-reporter@example.test','Case reporter') RETURNING id",
+    );
+    const post = await insertPost(database.pool, {
+      userId: principals.userId,
+      cityId: principals.cityId,
+      title: 'Case evidence',
+      moderationStatus: 'CLEAN',
+    });
+    const {
+      rows: [comment],
+    } = await database.pool.query(
+      "INSERT INTO comments(post_id,author_id,text,status) VALUES ($1,$2,'Comment evidence','ACTIVE') RETURNING id",
+      [post, principals.userId],
+    );
+    const {
+      rows: [pr],
+    } = await database.pool.query(
+      "INSERT INTO post_reports(post_id,reporter_id,reason) VALUES ($1,$2,'SPAM') RETURNING id",
+      [post, reporter.id],
+    );
+    const {
+      rows: [cr],
+    } = await database.pool.query(
+      "INSERT INTO comment_reports(comment_id,reporter_id,reason) VALUES ($1,$2,'SPAM') RETURNING id",
+      [comment.id, reporter.id],
+    );
+    const {
+      rows: [ar],
+    } = await database.pool.query(
+      "INSERT INTO account_reports(reported_user_id,reporter_id,reason,source_type,source_id) VALUES ($1,$2,'SPAM','POST',$3) RETURNING id",
+      [principals.userId, reporter.id, post],
+    );
+    for (const [resource, id] of [
+      ['post_reports', pr.id],
+      ['comment_reports', cr.id],
+      ['account_reports', ar.id],
+    ]) {
+      const response = await fetch(`${baseUrl}/admin/api/resources/${resource}/records/${id}/show`, {
+        headers: { cookie: superCookie },
+      });
+      assert.equal(response.status, 200);
+      const { record } = await response.json();
+      const evidence = JSON.parse(record.params.report_case);
+      assert.ok(evidence.history.length <= 12);
+      assert.ok(evidence.reports.length <= 20);
+      if (resource === 'post_reports') assert.equal(evidence.post.title, 'Case evidence');
+      if (resource === 'comment_reports')
+        assert.equal(JSON.parse(record.params.comment_evidence).text, 'Comment evidence');
+      if (resource === 'account_reports') {
+        assert.equal(evidence.account.id, principals.userId);
+        assert.equal(evidence.account.open_reports, 1);
+        assert.equal(record.populated.source_id.resourceId, 'posts');
+      }
+      assert.doesNotMatch(JSON.stringify(evidence), /password_hash|phone_number|last_known_location/);
+    }
+  });
+
   it('renders the login page with Pupzy visual branding, logo, and theme stylesheet', async () => {
     const response = await fetch(`${baseUrl}/admin/login`);
     assert.equal(response.status, 200);
@@ -4066,8 +4127,15 @@ describe('AdminJS HTTP security and resource behavior', () => {
           assert.equal(evidence.author.name, 'هنا إبراهيم');
           assert.equal(evidence.post.title, 'Evidence post');
           assert.equal(evidence.parent.excerpt, 'Parent comment text');
-          assert.equal(evidence.reports.length, 2);
-          assert.equal(evidence.reports.filter((report) => report.isOpen).length, 1);
+          const contextReports =
+            response === shown
+              ? evidence.reports
+              : [
+                  { isOpen: !response.record.params.reviewed_at },
+                  ...JSON.parse(response.record.params.report_case).reports,
+                ];
+          assert.equal(contextReports.length, 2);
+          assert.equal(contextReports.filter((report) => report.isOpen).length, 1);
           assert.ok(!JSON.stringify(evidence).includes('storage_key'));
         }
         assert.equal(JSON.parse(shown.record.params.comment_evidence).currentReportId, null);

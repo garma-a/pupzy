@@ -66,7 +66,13 @@ export function buildCommentEvidence({ comment, media = [], reports = [] }, env 
  * Loads the evidence for many Comments with three queries (Comments, images,
  * Reports) however many are asked for. Resolves to a Map keyed by Comment id.
  */
-export async function loadCommentEvidence(pool, commentIds, env = process.env, currentReportIds = new Map()) {
+export async function loadCommentEvidence(
+  pool,
+  commentIds,
+  env = process.env,
+  currentReportIds = new Map(),
+  { includeReports = true } = {},
+) {
   const ids = [...new Set(commentIds.filter(Boolean))];
   const evidence = new Map();
   if (ids.length === 0) return evidence;
@@ -90,8 +96,9 @@ export async function loadCommentEvidence(pool, commentIds, env = process.env, c
        ORDER BY display_order ASC`,
       [ids],
     ),
-    pool.query(
-      `SELECT r.id, r.comment_id, r.reason, r.details, r.reviewed_at, r.review_outcome, r.created_at, r.reporter_id,
+    includeReports
+      ? pool.query(
+          `SELECT r.id, r.comment_id, r.reason, r.details, r.reviewed_at, r.review_outcome, r.created_at, r.reporter_id,
               a.full_name AS reviewed_by_name,
               ${USER_NAME_SQL} AS reporter_name, u.profile_picture_url AS reporter_picture
        FROM comment_reports r
@@ -99,8 +106,9 @@ export async function loadCommentEvidence(pool, commentIds, env = process.env, c
        LEFT JOIN admin_users a ON a.id = r.reviewed_by_admin_id
        WHERE r.comment_id = ANY($1::uuid[])
        ORDER BY (r.reviewed_at IS NOT NULL), r.created_at DESC`,
-      [ids],
-    ),
+          [ids],
+        )
+      : { rows: [] },
   ]);
 
   const group = (rows) => {
@@ -133,7 +141,7 @@ export const COMMENT_EVIDENCE_PARAM = 'comment_evidence';
  * the evidence on `record.params.comment_evidence`. `commentIdOf` picks the
  * Comment id from the record's params.
  */
-export function attachCommentEvidence(pool, { commentIdOf, reportIdOf = () => null }) {
+export function attachCommentEvidence(pool, { commentIdOf, reportIdOf = () => null, includeReports = true }) {
   return async (response) => {
     const record = response?.record;
     if (!record?.params || !pool?.query) return response;
@@ -142,7 +150,7 @@ export function attachCommentEvidence(pool, { commentIdOf, reportIdOf = () => nu
     const currentReportIds = new Map();
     const reportId = reportIdOf(record.params);
     if (reportId) currentReportIds.set(commentId, reportId);
-    const evidence = await loadCommentEvidence(pool, [commentId], process.env, currentReportIds);
+    const evidence = await loadCommentEvidence(pool, [commentId], process.env, currentReportIds, { includeReports });
     const found = evidence.get(commentId);
     if (found) record.params[COMMENT_EVIDENCE_PARAM] = JSON.stringify(found);
     return response;

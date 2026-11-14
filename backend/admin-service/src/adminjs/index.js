@@ -33,6 +33,7 @@ import { buildUsersResource } from './resources/users.resource.js';
 import { buildVetClinicsResource } from './resources/vet-clinics.resource.js';
 import { buildVetClinicLocationAuditsResource } from './resources/vet-clinic-location-audits.resource.js';
 import { buildCommentsResource } from './resources/comments.resource.js';
+import { attachReportCase } from './review/case-view.js';
 import { attachPostDetailReviewWorkspace } from './review/post-review.js';
 
 AdminJS.registerAdapter({ Database, Resource: QueueAwareSqlResource });
@@ -135,6 +136,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'ProfilePhoto',
       path.join(currentDirectory, 'components', 'profile-photo-component.jsx'),
     ),
+    ReportCase: componentLoader.add(
+      'ReportCase',
+      path.join(currentDirectory, 'components', 'report-case-component.jsx'),
+    ),
     StatusBadge: componentLoader.add(
       'StatusBadge',
       path.join(currentDirectory, 'components', 'status-badge-component.jsx'),
@@ -199,7 +204,8 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     buildAnnouncementsResource(db, pool, components),
   ];
 
-  const resources = rawResources.map((resource) => {
+  const resources = rawResources.map((rawResource) => {
+    const resource = attachReportCase(rawResource, pool, components);
     const navigation = navigationFor(resource.resource.tableName);
     const properties = { ...resource.options.properties };
     for (const name of ['status', 'moderation_status', 'urgency', 'review_outcome', 'review_status', 'is_banned']) {

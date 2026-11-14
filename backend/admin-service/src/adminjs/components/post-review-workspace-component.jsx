@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiClient } from 'adminjs';
 import { Box, Button, H3, H4, Link, Loader, MessageBox, Text } from '@adminjs/design-system';
 
+import ModerationHistory from './moderation-history.jsx';
 import { BackToInbox } from './back-to-inbox.jsx';
 import { filteredListBackLink, inboxReturnFromSearch, recallListSearch, reportReviewHref } from './list-return.js';
 import { MediaThumb, useMediaLightbox } from './media-lightbox.jsx';
@@ -373,36 +374,12 @@ export default function PostReviewWorkspace({ resource, record }) {
         )}
       </section>
 
-      <section
-        className="pupzy-post-review-section"
-        aria-labelledby="pupzy-review-history-heading"
-        data-testid="pupzy-action-history"
-      >
-        <H4 id="pupzy-review-history-heading" mb="md">
-          Action history
-        </H4>
-        {history.length ? (
-          <ul className="pupzy-history-list">
-            {history.map((entry) => (
-              <li key={entry.id} className="pupzy-history-row">
-                <div className="pupzy-discussion-meta">
-                  <Text fontWeight="bold">{entry.actionLabel}</Text>
-                  <StatusBadge value={entry.targetType}></StatusBadge>
-                  <Text color="grey60" fontSize="sm">
-                    {formatDateTime(entry.createdAt)}
-                  </Text>
-                </div>
-                <Text color="grey60" fontSize="sm" mt="xs">
-                  By {entry.adminName}
-                </Text>
-                {entry.reason ? <Text mt="xs">Reason: {entry.reason}</Text> : null}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <EmptyState>No administrator actions recorded for this Post.</EmptyState>
-        )}
-      </section>
+      <ModerationHistory
+        entries={history}
+        heading="Action history"
+        testId="pupzy-action-history"
+        headingId="pupzy-review-history-heading"
+      />
 
       {dialog}
     </Box>

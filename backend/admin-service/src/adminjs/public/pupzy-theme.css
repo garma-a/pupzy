@@ -815,8 +815,7 @@ svg[data-css*='Loader'] {
 /* Discussion */
 .pupzy-discussion-list,
 .pupzy-discussion-replies,
-.pupzy-report-list,
-.pupzy-history-list {
+.pupzy-report-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -826,8 +825,7 @@ svg[data-css*='Loader'] {
 }
 
 .pupzy-discussion-item,
-.pupzy-report-row,
-.pupzy-history-row {
+.pupzy-report-row {
   background-color: var(--pupzy-surface);
   border: 1px solid var(--pupzy-border);
   border-radius: var(--pupzy-radius-notice);
@@ -1315,9 +1313,6 @@ h3,
   box-shadow: none;
 }
 
-.pupzy-history-row {
-  border-left: 2px solid var(--pupzy-border);
-}
 @media (min-width: 1100px) {
   .pupzy-post-review {
     display: grid;
@@ -1595,14 +1590,14 @@ a[data-testid='action-approvePost']:hover {
   background: var(--pupzy-primary-pressed) !important;
 }
 
-a[data-testid='action-removePost'] {
+.adminjs_ActionHeader a[data-testid='action-removePost'] {
   margin-inline-start: 12px;
   color: var(--pupzy-error-dark) !important;
   border: 1px solid #eac3c8 !important;
   background: var(--pupzy-surface) !important;
 }
 
-a[data-testid='action-removePost']:hover {
+.adminjs_ActionHeader a[data-testid='action-removePost']:hover {
   background: var(--pupzy-error-light) !important;
 }
 
@@ -2658,5 +2653,147 @@ button.pupzy-tile {
     transition: none !important;
     animation: none !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Report case: evidence, decision and a shared moderation timeline. */
+.pupzy-case-view {
+  padding: 32px;
+  max-width: 1280px;
+  margin: auto;
+  box-sizing: border-box;
+}
+.pupzy-case-view h1 {
+  font-size: 28px;
+  margin: 16px 0 24px;
+}
+.pupzy-case-view h2 {
+  font-size: 20px;
+  margin: 0 0 16px;
+}
+.pupzy-case-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 24px;
+  align-items: start;
+}
+.pupzy-case-evidence,
+.pupzy-case-decision {
+  padding: 24px;
+  background: var(--pupzy-surface);
+  border: 1px solid var(--pupzy-border);
+  border-radius: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.pupzy-case-decision {
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+.pupzy-case-evidence .pupzy-media-grid {
+  margin-bottom: 24px;
+}
+.pupzy-case-text {
+  margin: 16px 0 24px;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+.pupzy-case-field {
+  margin-bottom: 16px;
+}
+.pupzy-case-field dt {
+  font-size: 13px;
+  color: var(--pupzy-text-secondary);
+  margin-bottom: 8px;
+}
+.pupzy-case-field dd {
+  margin: 0;
+  font-size: 14px;
+}
+.pupzy-case-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 24px 0;
+}
+.pupzy-case-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--pupzy-action);
+  background: var(--pupzy-action);
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+.pupzy-case-action[data-destructive='true'] {
+  background: var(--pupzy-surface);
+  border-color: var(--pupzy-error-dark);
+  color: var(--pupzy-error-dark);
+}
+.pupzy-case-action:hover {
+  background: var(--pupzy-primary-hover);
+  color: white;
+}
+.pupzy-case-action[data-destructive='true']:hover {
+  background: var(--pupzy-error-light);
+  color: var(--pupzy-error-dark);
+}
+.pupzy-case-other,
+.pupzy-case-technical {
+  border-top: 1px solid var(--pupzy-border);
+  padding: 16px 0;
+}
+.pupzy-case-technical {
+  margin-top: 24px;
+  font-size: 13px;
+}
+.pupzy-case-view summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 0;
+}
+.pupzy-case-timeline {
+  list-style: none;
+  padding: 0 0 0 16px;
+  border-left: 1px solid var(--pupzy-border);
+}
+.pupzy-case-timeline li {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 16px;
+  font-size: 13px;
+}
+.pupzy-case-timeline time,
+.pupzy-case-timeline span {
+  color: var(--pupzy-text-secondary);
+}
+.pupzy-case-timeline p {
+  margin: 4px 0;
+  white-space: pre-wrap;
+}
+@media (max-width: 1100px) {
+  .pupzy-case-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pupzy-case-decision {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+  .pupzy-case-view {
+    padding: 24px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pupzy-case-action {
+    transition:
+      background-color 180ms ease-out,
+      color 180ms ease-out;
   }
 }

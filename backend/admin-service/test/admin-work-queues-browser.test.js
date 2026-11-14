@@ -366,6 +366,38 @@ after(async () => {
 });
 
 describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
+  it('reviews a report case and returns to the same Inbox filter and second page', async () => {
+    const reporter = await insertUser('case-page-reporter');
+    await database.pool.query(
+      `WITH new_posts AS (
+      INSERT INTO posts(creator_id,post_type,title,description,status,moderation_status,city_id,coordinates)
+      SELECT $2,'ADOPTION','Paged case '||i,'Case evidence','ACTIVE','CLEAN',$3,ST_SetSRID(ST_MakePoint(31,30),4326) FROM generate_series(1,27) i RETURNING id)
+      INSERT INTO post_reports(post_id,reporter_id,reason,created_at) SELECT id,$1,'SPAM',now()-interval '2 days' FROM new_posts`,
+      [reporter, fixture.ownerId, principals.cityId],
+    );
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await openDashboard(page, '?kind=post_report&page=2');
+      await page.click('[data-testid="pupzy-case"][data-kind="post_report"] .pupzy-case-open');
+      await page.waitForSelector('[data-testid="pupzy-case-view"]');
+      await page.click('[data-testid="action-reviewWithNoAction"]');
+      await page.waitForSelector('#moderation-reason');
+      await page.type('#moderation-reason', 'Reviewed the full case; no action needed');
+      await page.click('[data-testid="moderation-action-submit"]');
+      await page.waitForSelector('[data-testid="pupzy-case-view"]');
+      assert.match(await page.$eval('[data-testid="pupzy-report-status"]', (n) => n.innerText), /Closed: no action/);
+      await page.click('[data-testid="pupzy-back-to-inbox"]');
+      await page.waitForSelector('[data-testid="pupzy-cases"]');
+      const query = new URL(page.url()).searchParams;
+      assert.equal(query.get('kind'), 'post_report');
+      assert.equal(query.get('page'), '2');
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
   it('counts grouped cases separately from reports in the heading', async () => {
     const reporter = await insertUser('extra-reporter');
     await database.pool.query("INSERT INTO post_reports(post_id,reporter_id,reason) VALUES ($1,$2,'SPAM')", [

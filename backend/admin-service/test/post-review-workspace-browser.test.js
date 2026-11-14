@@ -759,7 +759,7 @@ describe('Post review workspace real browser suite', { timeout: 120000 }, () => 
       assert.match(emptyText, /No Comments or Replies/);
       assert.match(emptyText, /No Post Reports/);
       assert.match(emptyText, /No Comment Reports/);
-      assert.match(emptyText, /No administrator actions/);
+      assert.match(emptyText, /No moderation actions recorded/);
 
       await openWorkspace(page);
 

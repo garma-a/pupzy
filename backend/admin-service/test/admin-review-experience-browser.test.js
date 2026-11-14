@@ -1074,7 +1074,9 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         await page.waitForSelector('[data-testid="pupzy-reference-link"]', { timeout: 60000 });
       };
       const clickReference = async (resourceId) => {
-        await page.click(`[data-testid="pupzy-reference-link"][data-reference-resource="${resourceId}"]`);
+        const scope =
+          resourceId === 'users' && (await page.$('[data-testid="pupzy-case-view"]')) ? '.pupzy-case-decision ' : '';
+        await page.click(`${scope}[data-testid="pupzy-reference-link"][data-reference-resource="${resourceId}"]`);
       };
 
       await loginAsAdmin(page, baseUrl);
@@ -1176,6 +1178,51 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         await page.goto(`${baseUrl}/admin/resources/${resourceId}/records/${recordId}/show`, {
           waitUntil: 'networkidle0',
         });
+        if (resourceId.endsWith('_reports')) {
+          await page.waitForSelector('[data-testid="pupzy-case-view"]');
+          const fields = await page.$$eval('.pupzy-case-field dt', (nodes) => nodes.map((n) => n.innerText));
+          for (const label of ['Status', 'Reason', 'Details', 'Reported by'])
+            assert.ok(fields.includes(label), `${resourceId}: ${label}`);
+          for (const width of [1440, 1280, 1024]) {
+            await page.setViewport({ width, height: width === 1440 ? 900 : 800 });
+            const layout = await page.evaluate(() => {
+              const evidence = document.querySelector('.pupzy-case-evidence').getBoundingClientRect();
+              const decision = document.querySelector('.pupzy-case-decision').getBoundingClientRect();
+              return {
+                overflow: document.documentElement.scrollWidth > innerWidth,
+                evidenceBottom: evidence.bottom,
+                evidenceRight: evidence.right,
+                decisionLeft: decision.left,
+                decisionTop: decision.top,
+                decisionRight: decision.right,
+                position: getComputedStyle(document.querySelector('.pupzy-case-decision')).position,
+              };
+            });
+            assert.equal(layout.overflow, false);
+            assert.ok(layout.decisionRight <= width, `${resourceId}: decision column fits ${width}`);
+            if (width > 1100) {
+              assert.ok(layout.decisionLeft > layout.evidenceRight);
+              assert.equal(layout.position, 'sticky');
+            } else {
+              assert.ok(layout.decisionTop > layout.evidenceBottom);
+              assert.equal(layout.position, 'static');
+            }
+            const screenshot = path.resolve(
+              currentDirectory,
+              `../../.scratch/admin-ui-redesign/screenshots/step3-after-${resourceId}-${width}.png`,
+            );
+            fs.mkdirSync(path.dirname(screenshot), { recursive: true });
+            await page.screenshot({ path: screenshot });
+          }
+          await page.setViewport({ width: 1280, height: 900 });
+          assert.equal(await page.$eval('.pupzy-case-technical', (node) => node.open), false);
+          await page.click('.pupzy-case-technical summary');
+          const technical = await page.$eval('.pupzy-case-technical', (node) => node.innerText);
+          assert.match(technical, /ID/);
+          assert.doesNotMatch(technical, /reviewed_at|post_id|reporter_id/);
+          if (resourceId === 'post_reports') assert.match(technical, /Reviewed[\s\S]*—/);
+          continue;
+        }
         await page.waitForSelector('main label, [data-css*="show"] label, label', { timeout: 60000 });
         await new Promise((resolve) => setTimeout(resolve, 800));
         const rows = await page.evaluate(() => {
@@ -1307,7 +1354,8 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         });
         await page.waitForSelector('[data-testid="pupzy-comment-evidence"]', { timeout: 60000 });
         await waitForImages(page, 2);
-        const text = await page.$eval('[data-testid="pupzy-comment-evidence"]', (n) => n.innerText);
+        await page.click('.pupzy-case-other summary');
+        const text = await page.$eval('[data-testid="pupzy-case-view"]', (n) => n.innerText);
         assert.match(text, /Evidence for the report page/);
         assert.match(text, /Images hidden from users/);
         assert.doesNotMatch(text, /Image hidden/, 'one badge, not two saying the same thing');
@@ -1317,11 +1365,11 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
           'the reporter and date read as one line',
         );
         assert.equal(await page.$$eval('[data-testid="pupzy-image-hidden-badge"]', (n) => n.length), 2);
-        assert.match(text, /Reports on this comment \(2\)/);
+        assert.match(text, /Other reports on this \(1\)/);
         assert.match(text, /first details/);
         assert.match(text, /second details/);
-        assert.match(text, /This report/);
-        assert.equal(await page.$$eval('[data-testid="pupzy-comment-report"]', (n) => n.length), 2);
+        assert.match(text, /Reported by/);
+        assert.equal(await page.$$eval('[data-testid="pupzy-comment-report"]', (n) => n.length), 1);
         assert.equal(
           await page.$$eval('[data-testid="pupzy-comment-report-link"]', (n) => n.length),
           1,
@@ -1332,7 +1380,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
           (n) => n.getBoundingClientRect().top,
         );
         const statusTop = await page.$eval('[data-testid="pupzy-report-status"]', (n) => n.getBoundingClientRect().top);
-        assert.ok(evidenceTop < statusTop, 'the evidence sits above the report fields');
+        assert.ok(evidenceTop <= statusTop, 'the evidence leads the case layout');
         console.log(`[fix4 evidence] comment report show ${await recordEvidence(page, 'fix4-comment-report-show')}`);
 
         await page.click('[data-testid="pupzy-comment-post"]');
