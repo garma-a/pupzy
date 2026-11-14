@@ -156,7 +156,12 @@ export function buildUsersResource(db, pool, components, cache) {
     lost_post_count: { isDisabled: true },
     adoption_post_count: { isDisabled: true },
     product_post_count: { isDisabled: true },
-    language_preference: {},
+    language_preference: {
+      availableValues: [
+        { value: 'en', label: 'English' },
+        { value: 'ar', label: 'Arabic' },
+      ],
+    },
     notifications_enabled: {},
     terms_accepted_version: { isDisabled: true },
     terms_accepted_at: { isDisabled: true },

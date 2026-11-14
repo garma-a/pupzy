@@ -227,7 +227,8 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       language: 'en',
       translations: {
         en: {
-          actions: { show: 'Details', list: 'Records' },
+          actions: { show: 'Details', list: 'Records', reviewWithNoAction: 'Review with no action' },
+          labels: { dashboard: 'Inbox' },
           properties: PROPERTY_LABELS,
           resources: withResourceLabels({
             posts: { actions: { show: 'Review Post', list: 'Posts' } },

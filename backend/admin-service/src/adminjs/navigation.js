@@ -71,7 +71,11 @@ export function navigationFor(resourceId) {
 export function withResourceLabels(resourceTranslations = {}) {
   const result = { ...resourceTranslations };
   for (const [id, label] of Object.entries(RESOURCE_LABELS)) {
-    result[id] = { ...result[id], labels: { ...result[id]?.labels, [id]: label } };
+    result[id] = {
+      ...result[id],
+      actions: { list: label, ...result[id]?.actions },
+      labels: { ...result[id]?.labels, [id]: label },
+    };
   }
   return result;
 }

@@ -1,3 +1,4 @@
+import { plainValue } from './status-styles.js';
 import { Property } from '@adminjs/sql';
 
 import { COMPLETED_POST_STATUSES, LOST_SUBTYPE_VALUES, REPORT_REVIEW_STATE_VALUES } from './queue-constants.js';
@@ -45,7 +46,7 @@ const REPORT_TABLES = Object.freeze(['post_reports', 'comment_reports', 'account
 
 /**
  * Read-only, display-only `review_status` column for the three report tables.
- * It has no database column: `ReportStatus` derives the words from the row's
+ * It has no database column: `StatusBadge` derives the words from the row's
  * `reviewed_at` and `review_outcome`.
  */
 export function reportStatusProperties(tableName) {
@@ -68,7 +69,7 @@ export function virtualFilterOptions(tableName) {
     Object.entries(definitions).map(([name, values]) => [
       name,
       {
-        availableValues: values.map((value) => ({ value, label: value.replaceAll('_', ' ') })),
+        availableValues: values.map((value) => ({ value, label: plainValue(value) })),
         isVisible: { list: false, show: false, edit: false, filter: true },
       },
     ]),
