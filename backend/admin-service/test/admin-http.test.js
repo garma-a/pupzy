@@ -364,7 +364,8 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.match(cssText, /--pupzy-primary:\s*#c4622d/i);
     assert.match(cssText, /--pupzy-bg:\s*#faf6f1/i);
     assert.match(cssText, /--pupzy-text:\s*#2d1506/i);
-    assert.match(cssText, /pupzy-metric-grid/);
+    assert.match(cssText, /pupzy-tiles/);
+    assert.doesNotMatch(cssText, /pupzy-metric-grid/);
   });
 
   it('loads the Cities list without fetch errors and exposes read-only official catalog data', async () => {

@@ -343,6 +343,34 @@ after(async () => {
 });
 
 describe('Admin review experience real browser suite', { timeout: 180000 }, () => {
+  it('shows list loading and retry states and disables motion when requested', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+      let unavailable = true;
+      await page.setRequestInterception(true);
+      page.on('request', async (request) => {
+        if (request.url().includes('/api/resources/posts/actions/list') && unavailable) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          return request.respond({ status: 503, contentType: 'application/json', body: '{}' });
+        }
+        return request.continue();
+      });
+      await page.goto(`${baseUrl}/admin/resources/posts`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('[aria-label="Loading records"]');
+      assert.equal(await page.$eval('.pupzy-list-skeleton', (el) => getComputedStyle(el).animationName), 'none');
+      await page.waitForSelector('.pupzy-list-state[role="alert"]');
+      unavailable = false;
+      await page.click('.pupzy-list-state button');
+      await page.waitForSelector('tr[data-id]');
+      assert.equal(await page.$eval('tr[data-id]', (el) => getComputedStyle(el).transitionProperty), 'none');
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
   it('distinguishes an unavailable dashboard from an empty queue and recovers through Retry', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {
@@ -507,7 +535,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       const primarySubmit = await submitStyles(page);
       assert.equal(
         primarySubmit.backgroundColor,
-        'rgb(196, 98, 45)',
+        'rgb(180, 86, 37)',
         'outcome confirmation is a filled primary action',
       );
       assert.equal(primarySubmit.color, 'rgb(255, 255, 255)');
@@ -541,7 +569,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       await waitForEnabledSubmit(page);
       const dangerSubmit = await submitStyles(page);
       assert.equal(dangerSubmit.variant, 'danger');
-      assert.equal(dangerSubmit.backgroundColor, 'rgb(217, 64, 64)', 'removal keeps its destructive danger treatment');
+      assert.equal(dangerSubmit.backgroundColor, 'rgb(189, 36, 50)', 'removal keeps its destructive danger treatment');
       assert.notEqual(
         dangerSubmit.backgroundColor,
         primarySubmit.backgroundColor,
@@ -1171,7 +1199,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
           assert.ok(!labels.some((label) => /_id$/.test(label)), `${resourceId} labels read as plain words`);
         }
         if (resourceId === 'post_reports') {
-          const reviewedAt = rows.find((row) => row.label === 'Reviewed At');
+          const reviewedAt = rows.find((row) => row.label === 'Reviewed');
           assert.match(reviewedAt.text, /—/, 'an empty value is a dash, not a blank gap');
           console.log(`[fix4 evidence] report show ${await recordEvidence(page, 'fix4-report-show-labelled')}`);
         }

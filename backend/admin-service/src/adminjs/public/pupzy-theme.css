@@ -2401,3 +2401,35 @@ button.pupzy-tile {
   font-size: 13px;
   color: var(--pupzy-text-secondary);
 }
+
+/* Shared tables and list states */
+.pupzy-table-scroll th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.pupzy-table-scroll td {
+  height: 52px;
+  box-sizing: border-box;
+}
+
+.pupzy-table-scroll td[data-property-name*='count'],
+.pupzy-table-scroll td[data-property-name*='score'],
+.pupzy-table-scroll td[data-property-name*='price'] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.pupzy-list-state {
+  padding: 32px;
+  background: var(--pupzy-surface);
+  border-radius: 8px;
+}
+
+.pupzy-list-skeleton {
+  height: 40px;
+  margin: 12px 0;
+  border-radius: 8px;
+  background: var(--pupzy-bg);
+}

@@ -91,6 +91,15 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     'RecordsTable',
     path.join(currentDirectory, 'components', 'scrollable-records-table-component.jsx'),
   );
+  componentLoader.override(
+    'DefaultListProperty',
+    path.join(currentDirectory, 'components', 'default-list-property-component.jsx'),
+  );
+  componentLoader.override(
+    'DefaultDatetimeListProperty',
+    path.join(currentDirectory, 'components', 'datetime-list-component.jsx'),
+  );
+  componentLoader.override('DefaultListAction', path.join(currentDirectory, 'components', 'list-component.jsx'));
   const components = {
     Dashboard: componentLoader.add('Dashboard', path.join(currentDirectory, 'dashboard', 'inbox-component.jsx')),
     ModerationAction: componentLoader.add(

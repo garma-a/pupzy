@@ -39,12 +39,18 @@ export function RecordLink({
         alignItems: 'center',
         gap: 6,
         minWidth: 0,
-        color: '#C4622D',
+        color: '#A84E1F',
         textDecoration: 'none',
       }}
     >
-      {showAvatar ? <Avatar name={title} src={pictureUrl} size={22} /> : null}
-      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>{title}</span>
+      {showAvatar ? <Avatar name={title} src={pictureUrl} size={28} /> : null}
+      <span
+        dir="auto"
+        title={title}
+        style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}
+      >
+        {title}
+      </span>
     </a>
   );
 }
