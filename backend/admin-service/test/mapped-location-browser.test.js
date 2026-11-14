@@ -265,6 +265,70 @@ after(async () => {
 });
 
 describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, () => {
+  it('keeps clinic Arabic names readable, marks status and missing phones, and combines addresses', async () => {
+    const {
+      rows: [city],
+    } = await database.pool.query("SELECT id FROM cities WHERE status='OFFICIAL' LIMIT 1");
+    const arabic =
+      'المركز البيطري المتكامل لرعاية الحيوانات الأليفة والطوارئ والخدمات العلاجية المتخصصة بالقاهرة الجديدة';
+    await database.pool.query(
+      `INSERT INTO vet_clinics(name_english,name_arabic,city_id,coordinates,source,location_provenance,address_english,address_arabic,phone_number,is_active)
+      VALUES ('Redesign clinic one',$1,$2,ST_SetSRID(ST_MakePoint(31.2,30),4326),'OSM','LEGACY_IMPORT','10 Nile Street','١٠ شارع النيل',NULL,false),
+      ('Redesign clinic two',$1,$2,ST_SetSRID(ST_MakePoint(31.2,30),4326),'OSM','LEGACY_IMPORT','20 Nile Street','٢٠ شارع النيل','+201012345678',true)`,
+      [arabic, city.id],
+    );
+    const { page, errors } = await createTestPage(browser);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      for (const width of [1440, 1280, 1024]) {
+        await page.setViewport({ width, height: width === 1440 ? 900 : 800 });
+        await page.goto(`${baseUrl}/admin/resources/vet_clinics?filters.name_english=Redesign`, {
+          waitUntil: 'networkidle0',
+        });
+        await page.waitForSelector('.pupzy-clinic-arabic');
+        const state = await page.evaluate(() => {
+          const name = document.querySelector('.pupzy-clinic-arabic'),
+            style = getComputedStyle(name);
+          const rows = [...document.querySelectorAll('tr[data-id]')];
+          return {
+            width: name.getBoundingClientRect().width,
+            height: name.getBoundingClientRect().height,
+            lineHeight: parseFloat(style.lineHeight),
+            dir: name.dir,
+            title: name.title,
+            text: rows.map((n) => n.innerText).join(' '),
+            cityLinks: document.querySelectorAll('[data-reference-resource="cities"]').length,
+            addresses: document.querySelectorAll('td[data-property-name="clinic_address"]').length,
+            overflow: document.documentElement.scrollWidth > innerWidth,
+          };
+        });
+        assert.ok(state.width >= 220);
+        assert.ok(state.height <= state.lineHeight * 2 + 1);
+        assert.equal(state.dir, 'rtl');
+        assert.equal(state.title, arabic);
+        assert.match(state.text, /Active/);
+        assert.match(state.text, /Closed/);
+        assert.match(state.text, /No phone/);
+        assert.match(state.text, /10 Nile Street/);
+        assert.match(state.text, /١٠ شارع النيل/);
+        assert.equal(state.cityLinks, 2);
+        assert.equal(state.addresses, 2);
+        assert.equal(state.overflow, false);
+        const file = path.resolve(
+          currentDirectory,
+          `../../.scratch/admin-ui-redesign/screenshots/step4-after-vet-clinics-journey-${width}.png`,
+        );
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        await page.screenshot({ path: file });
+      }
+      await page.click('[data-reference-resource="cities"]');
+      await page.waitForFunction(() => location.pathname.includes('/resources/cities/records/'));
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
   it('keeps horizontal overflow inside resource tables on desktop and mobile', async () => {
     const { page, errors } = await createTestPage(browser);
     try {
@@ -398,7 +462,7 @@ describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, ()
         const markerCount = document.querySelectorAll('.leaflet-marker-icon').length;
         const pageText = document.body.innerText;
         const hasCenteredNotice = pageText.includes('Map viewport centered on Cairo');
-        const hasNoPinBadge = pageText.includes('NO PIN');
+        const hasNoPinBadge = pageText.includes('No pin');
 
         return { latVal, lngVal, confirmed, markerCount, hasCenteredNotice, hasNoPinBadge };
       });
@@ -451,7 +515,7 @@ describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, ()
           lngVal,
           confirmed,
           markerCount,
-          isUnconfirmed: pageText.includes('UNCONFIRMED'),
+          isUnconfirmed: pageText.includes('Unconfirmed'),
         };
       });
 

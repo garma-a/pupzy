@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
+import { adminRootPath } from './list-return.js';
 import ShowField from './show-field.jsx';
 
 export default function PostMediaPreview(props) {
@@ -13,7 +14,7 @@ function PostMediaPreviewValue({ property, record, where }) {
   const postId = record?.params?.post_id;
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [url]);
-  const root = (typeof window !== 'undefined' && window.REDUX_STATE?.paths?.rootPath) || '/admin';
+  const root = adminRootPath();
   const stopRowNavigation = (event) => event.stopPropagation();
 
   return (
@@ -21,7 +22,7 @@ function PostMediaPreviewValue({ property, record, where }) {
       {url && !failed ? (
         <a
           className="pupzy-media-thumb"
-          style={{ width: '112px', maxWidth: '100%' }}
+          style={{ width: where === 'list' ? '40px' : '112px', maxWidth: '100%' }}
           href={url}
           target="_blank"
           rel="noopener noreferrer"

@@ -110,3 +110,17 @@ describe('loadCommentEvidence', () => {
     assert.equal(JSON.parse(response.record.params.comment_evidence).currentReportId, 'r9');
   });
 });
+
+it('omits the legacy reports query when the bounded case panel owns the report context', async () => {
+  const queries = [];
+  const pool = {
+    query: async (sql) => {
+      queries.push(sql);
+      return { rows: sql.includes('FROM comments c') ? [{ id: 'c', text: 'Evidence', status: 'ACTIVE' }] : [] };
+    },
+  };
+  const evidence = await loadCommentEvidence(pool, ['c'], {}, new Map(), { includeReports: false });
+  assert.equal(queries.length, 2);
+  assert.ok(queries.every((sql) => !sql.includes('FROM comment_reports')));
+  assert.deepEqual(evidence.get('c').reports, []);
+});

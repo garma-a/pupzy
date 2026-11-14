@@ -17,12 +17,12 @@ describe('AdminJS Comments Resource & Actions (Ticket 09)', () => {
 
     assert.equal(resource.resource.name, 'comments');
     assert.deepEqual(resource.options.listProperties, [
-      'id',
-      'post_id',
+      'text',
       'author_id',
+      'post_id',
       'status',
-      'reply_count',
-      'boost_count',
+      'open_reports',
+      'images_count',
       'created_at',
     ]);
     assert.deepEqual(resource.options.filterProperties, ['status', 'post_id', 'author_id', 'created_at']);

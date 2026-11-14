@@ -1,3 +1,5 @@
+import { loadWorkQueueCounts } from './work-queues.js';
+
 export async function computeStats(pool, clock = () => Date.now()) {
   const { rows } = await pool.query(`
     SELECT
@@ -13,15 +15,18 @@ export async function computeStats(pool, clock = () => Date.now()) {
   return { ...rows[0], computedAt: new Date(clock()).toISOString() };
 }
 
-export class DashboardStatsCache {
+/** Shared TTL, coalescing and invalidation fencing for dashboard queries. */
+class DashboardQueryCache {
   /**
    * @param {Object} [options]
    * @param {number} [options.ttlMs=120000]
    * @param {() => number} [options.clock=Date.now]
+   * @param {(pool: import('pg').Pool, clock: () => number) => Promise<Object>} options.compute
    */
   constructor(options = {}) {
     this.ttlMs = options.ttlMs ?? 120_000;
     this.clock = options.clock ?? (() => Date.now());
+    this.compute = options.compute;
     this.cached = null;
     this.invalidationVersion = 0;
     this.normalRefresh = null;
@@ -36,7 +41,7 @@ export class DashboardStatsCache {
    * @param {boolean} [options.fresh=false]
    * @returns {Promise<Object>}
    */
-  async getStats(pool, options = {}) {
+  async get(pool, options = {}) {
     const fresh = options.fresh === true || options.fresh === 'true';
     const now = this.clock();
 
@@ -70,7 +75,7 @@ export class DashboardStatsCache {
     const maximumAttempts = 3;
     for (let attempt = 0; attempt < maximumAttempts; attempt += 1) {
       const startVersion = this.invalidationVersion;
-      const stats = await computeStats(pool, this.clock);
+      const stats = await this.compute(pool, this.clock);
       const completedAt = this.clock();
 
       if (this.invalidationVersion === startVersion) {
@@ -92,5 +97,30 @@ export class DashboardStatsCache {
   invalidate() {
     this.cached = null;
     this.invalidationVersion += 1;
+  }
+}
+
+/** Community totals retain their TTL; both consumers share 30-second queue counts. */
+export class DashboardStatsCache extends DashboardQueryCache {
+  constructor(options = {}) {
+    super({ ...options, compute: computeStats });
+    this.queueCountsCache = new DashboardQueryCache({
+      ttlMs: 30_000,
+      clock: this.clock,
+      compute: loadWorkQueueCounts,
+    });
+  }
+
+  getStats(pool, options = {}) {
+    return this.get(pool, options);
+  }
+
+  getQueueCounts(pool, options = {}) {
+    return this.queueCountsCache.get(pool, options);
+  }
+
+  invalidate() {
+    super.invalidate();
+    this.queueCountsCache.invalidate();
   }
 }

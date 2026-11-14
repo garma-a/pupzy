@@ -233,8 +233,9 @@ describe('AdminJS Vet Clinics Resource', () => {
     assert.equal(props.coordinates.isVisible.show, true);
     assert.equal(props.coordinates.isVisible.edit, true);
 
-    assert.ok(resource.options.listProperties.includes('address_english'));
-    assert.ok(resource.options.listProperties.includes('address_arabic'));
+    assert.ok(resource.options.listProperties.includes('clinic_address'));
+    assert.ok(resource.options.showProperties.includes('address_english'));
+    assert.ok(resource.options.showProperties.includes('address_arabic'));
     assert.ok(resource.options.listProperties.includes('city_id'));
     assert.ok(resource.options.showProperties.includes('location_provenance'));
     assert.ok(resource.options.showProperties.includes('location_captured_at'));

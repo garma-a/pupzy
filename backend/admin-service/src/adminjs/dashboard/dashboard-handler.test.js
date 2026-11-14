@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 
 import { buildDashboardHandler } from './dashboard-handler.js';
 import { WORK_QUEUES } from './work-queues.js';
+import { DashboardStatsCache } from './dashboard-cache.js';
 
 function createPool() {
   const queries = [];
@@ -10,29 +11,16 @@ function createPool() {
     queries,
     async query(sql) {
       queries.push(sql);
-      if (sql.includes('open_report_count')) {
-        return {
-          rows: [
-            {
-              id: 'post-1',
-              title: 'Flagged Post',
-              post_type: 'LOST',
-              moderation_status: 'FLAGGED',
-              created_at: new Date('2026-09-01T00:00:00Z'),
-              open_report_count: 2,
-            },
-          ],
-        };
-      }
+      if (sql.includes('WITH cases(')) return { rows: [] };
       return { rows: [{ flagged: '4', open_post_reports: '2' }] };
     },
   };
 }
 
 function createCache(stats) {
-  return {
-    getStats: async () => stats,
-  };
+  const cache = new DashboardStatsCache();
+  cache.getStats = async () => stats;
+  return cache;
 }
 
 describe('Admin dashboard handler work queues', () => {
@@ -54,15 +42,19 @@ describe('Admin dashboard handler work queues', () => {
     assert.equal(unseeded.count, 0);
   });
 
-  it('counts outstanding work from unreviewed Reports, not the historical report counter', async () => {
+  it('lists open cases from unreviewed Reports and Posts awaiting review, not the historical report counter', async () => {
     const pool = createPool();
     const handler = buildDashboardHandler(pool, createCache({}));
 
-    const result = await handler({ query: {} });
+    const result = await handler({ query: { kind: 'post_report', order: 'newest', page: '2' } });
 
-    const reviewQuery = pool.queries.find((sql) => sql.includes('open_report_count'));
-    assert.match(reviewQuery, /reviewed_at IS NULL/);
-    assert.doesNotMatch(reviewQuery, /p\.report_count/);
-    assert.equal(result.needsReview[0].open_report_count, 2);
+    const caseQuery = pool.queries.find((sql) => sql.includes('WITH cases('));
+    assert.match(caseQuery, /reviewed_at IS NULL/);
+    assert.match(caseQuery, /ORDER BY latest DESC/);
+    assert.doesNotMatch(caseQuery, /report_count\b\s*(>|=|FROM)/);
+    assert.doesNotMatch(caseQuery, /comment_reports|account_reports/, 'a filter queries only its own kinds');
+    assert.equal(result.inbox.kind, 'post_report');
+    assert.equal(result.inbox.order, 'newest');
+    assert.deepEqual(result.inbox.items, []);
   });
 });

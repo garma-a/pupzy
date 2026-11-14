@@ -19,7 +19,7 @@ export default function ProfilePhoto({ property, record, where }) {
   const name = userDisplayName(params, record?.id);
   const url = hasUrl(params.profile_picture_url) ? params.profile_picture_url : null;
 
-  if (where !== 'show') return <Avatar name={name} src={url} size={32} />;
+  if (where !== 'show') return <Avatar name={name} src={url} size={28} />;
 
   const avatar = <Avatar name={name} src={url} size={96} />;
   return (

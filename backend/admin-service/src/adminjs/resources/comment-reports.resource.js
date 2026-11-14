@@ -66,6 +66,7 @@ export function buildCommentReportsResource(db, components = {}, pool, cache) {
               attachCommentEvidence(pool, {
                 commentIdOf: (params) => params.comment_id,
                 reportIdOf: (params) => params.id,
+                includeReports: !components?.ReportCase,
               }),
             ],
           },

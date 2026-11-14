@@ -35,12 +35,11 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
 
   it('declares concise intentional listProperties, showProperties, and editProperties', () => {
     assert.deepEqual(resource.options.listProperties, [
-      'id',
-      'email',
       'full_name',
-      'is_verified',
+      'full_name_arabic',
+      'email',
       'is_banned',
-      'post_count',
+      'open_reports',
       'created_at',
     ]);
     assert.ok(resource.options.showProperties.includes('firebase_user_id'));
@@ -68,7 +67,7 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
   it('wires ShortUuid component to id and banned_by_admin_id', () => {
     const customComponents = { ShortUuid: 'CustomShortUuid', ReferenceLink: 'CustomReferenceLink' };
     const res = buildUsersResource(db, pool, customComponents);
-    assert.equal(res.options.properties.id.components.list, 'CustomShortUuid');
+    assert.equal(res.options.properties.id.components.show, 'CustomShortUuid');
     assert.equal(res.options.properties.id.components.show, 'CustomShortUuid');
     assert.equal(res.options.properties.banned_by_admin_id.components.show, 'CustomReferenceLink');
   });

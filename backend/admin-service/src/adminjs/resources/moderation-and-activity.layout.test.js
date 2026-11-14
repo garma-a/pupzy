@@ -74,32 +74,31 @@ describe('Moderation and Activity Tables Curation & Layout Rules (Task 10)', () 
     it('posts resource declares concise scan-oriented columns and ShortUuid', () => {
       const postsRes = buildPostsResource(db, pool, components);
       assert.deepEqual(postsRes.options.listProperties, [
-        'id',
         'title',
         'post_type',
-        'status',
-        'moderation_status',
-        'report_count',
+        'post_state',
+        'creator_id',
+        'city_id',
+        'open_reports',
         'created_at',
       ]);
       assert.ok(!postsRes.options.listProperties.includes('description'), 'description must not be in listProperties');
       assert.ok(!postsRes.options.listProperties.includes('coordinates'), 'coordinates must not be in listProperties');
-      assert.equal(postsRes.options.properties.id.components.list, 'ShortUuidMock');
+      assert.equal(postsRes.options.properties.id.components.show, 'ShortUuidMock');
       assert.equal(postsRes.options.properties.creator_id.components.show, 'ReferenceLinkMock');
     });
 
     it('users resource declares concise scan-oriented columns and ShortUuid', () => {
       const usersRes = buildUsersResource(db, pool, components);
       assert.deepEqual(usersRes.options.listProperties, [
-        'id',
-        'email',
         'full_name',
-        'is_verified',
+        'full_name_arabic',
+        'email',
         'is_banned',
-        'post_count',
+        'open_reports',
         'created_at',
       ]);
-      assert.equal(usersRes.options.properties.id.components.list, 'ShortUuidMock');
+      assert.equal(usersRes.options.properties.id.components.show, 'ShortUuidMock');
       assert.equal(usersRes.options.properties.banned_by_admin_id.components.show, 'ReferenceLinkMock');
     });
 

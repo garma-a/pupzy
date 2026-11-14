@@ -527,7 +527,7 @@ describe('Admin announcements real browser suite', { timeout: 240000 }, () => {
     try {
       await loginStaff(page);
       await page.goto(`${baseUrl}/admin`, { waitUntil: 'networkidle0' });
-      await page.waitForSelector('[data-testid="pupzy-work-queues"], nav, aside');
+      await page.waitForSelector('[data-testid="pupzy-tiles"], nav, aside');
       const navText = await page.evaluate(() => document.body.innerText);
       assert.doesNotMatch(navText, /Announcements/);
 
@@ -545,7 +545,7 @@ describe('Admin announcements real browser suite', { timeout: 240000 }, () => {
     try {
       await loginSuper(page);
       await page.goto(`${baseUrl}/admin`, { waitUntil: 'networkidle0' });
-      await page.waitForSelector('[data-testid="pupzy-work-queues"]');
+      await page.waitForSelector('[data-testid="pupzy-tiles"]');
       assert.match(await page.evaluate(() => document.body.innerText), /Announcements/);
     } finally {
       await page.close();

@@ -1,3 +1,4 @@
+import { listOnlyProperty } from '../review/list-summaries.js';
 import { ValidationError } from 'adminjs';
 import { ENUMS } from '../enums.js';
 import { buildPostActions } from '../actions/moderate-post.actions.js';
@@ -119,9 +120,11 @@ export function buildPostsResource(db, pool, components, cache) {
   }
 
   const properties = {
+    post_state: listOnlyProperty(components?.PostList, 'string'),
+    open_reports: listOnlyProperty(),
     id: { isDisabled: true },
     creator_id: { isDisabled: true },
-    title: { isTitle: true },
+    title: { isTitle: true, components: { list: components?.PostList } },
     description: {},
     post_type: enumProperty(ENUMS.postType, { isDisabled: true }),
     status: enumProperty(ENUMS.postStatus, { isDisabled: true }),
@@ -152,8 +155,9 @@ export function buildPostsResource(db, pool, components, cache) {
     ...virtualFilterOptions('posts'),
   };
 
-  attachShortUuid(properties, ['id'], components, ['list', 'show']);
-  attachReferenceLink(properties, ['creator_id', 'moderated_by_admin_id'], components, ['show']);
+  attachShortUuid(properties, ['id'], components, ['show']);
+  attachReferenceLink(properties, ['creator_id', 'city_id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['moderated_by_admin_id'], components, ['show']);
 
   // The review workspace is a virtual read-only property rendered by a custom
   // component. Without the component (unit tests, reduced builds) the virtual
@@ -187,7 +191,7 @@ export function buildPostsResource(db, pool, components, cache) {
         ...buildPostActions(pool, components?.ModerationAction, cache),
         ...buildPostReviewActions(pool),
       },
-      listProperties: ['id', 'title', 'post_type', 'status', 'moderation_status', 'report_count', 'created_at'],
+      listProperties: ['title', 'post_type', 'post_state', 'creator_id', 'city_id', 'open_reports', 'created_at'],
       showProperties: [
         ...(hasReviewWorkspace ? [POST_REVIEW_WORKSPACE_PARAM] : []),
         'id',

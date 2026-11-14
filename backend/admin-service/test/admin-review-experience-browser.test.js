@@ -37,6 +37,7 @@ const LONG_TITLE =
 let server;
 let baseUrl;
 let sqlAdapterPool;
+let dashboardCache;
 let principals;
 let browser;
 let fixture;
@@ -88,7 +89,8 @@ async function loginAsAdmin(page, url) {
 
 async function openDashboard(page) {
   await page.goto(`${baseUrl}/admin`, { waitUntil: 'networkidle0' });
-  await page.waitForSelector('[data-testid="pupzy-work-queues"]', { timeout: 60000 });
+  await page.waitForSelector('[data-testid="pupzy-tiles"]', { timeout: 60000 });
+  await page.waitForSelector('[data-testid="pupzy-cases"], [data-testid="pupzy-inbox-empty"]', { timeout: 60000 });
 }
 
 async function openWorkspace(page, postId) {
@@ -291,6 +293,7 @@ before(async () => {
 
   const built = await buildAdminJs(connectionString, databaseName, database.pool);
   sqlAdapterPool = built.sqlAdapterPool;
+  dashboardCache = built.cache;
   await built.admin.initialize();
   app.use(
     '/admin',
@@ -327,6 +330,7 @@ before(async () => {
 beforeEach(async () => {
   await database.pool.query(`TRUNCATE TABLE ${BUSINESS_TABLES} CASCADE`);
   await seedReviewExperienceFixture();
+  dashboardCache.invalidate();
 });
 
 after(async () => {
@@ -342,6 +346,154 @@ after(async () => {
 });
 
 describe('Admin review experience real browser suite', { timeout: 180000 }, () => {
+  it('shows readable People, Comments and audit rows with counts and working record links', async () => {
+    const reporter = await insertUser('screen-reporter');
+    await database.pool.query("UPDATE users SET full_name_arabic='اسم المالك' WHERE id=$1", [fixture.ownerId]);
+    await database.pool.query(
+      "INSERT INTO account_reports(reporter_id,reported_user_id,reason) VALUES ($1,$2,'SPAM')",
+      [reporter, fixture.ownerId],
+    );
+    const comment = await insertComment({
+      postId: fixture.flaggedId,
+      authorId: fixture.commenterId,
+      text: 'تعليق للفحص',
+      createdAt: new Date(),
+    });
+    await insertCommentMedia(comment, `comments/screens/${comment}-wide.svg`);
+    await database.pool.query("INSERT INTO comment_reports(comment_id,reporter_id,reason) VALUES ($1,$2,'SPAM')", [
+      comment,
+      reporter,
+    ]);
+    await database.pool.query(
+      "INSERT INTO moderation_actions(admin_user_id,action_type,target_type,target_id,reason) VALUES ($1,'POST_FLAGGED','POST',$2,'Screen review')",
+      [principals.adminId, fixture.flaggedId],
+    );
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await page.goto(`${baseUrl}/admin/resources/users`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector(`tr[data-id="${fixture.ownerId}"]`);
+      const row = `tr[data-id="${fixture.ownerId}"]`;
+      assert.match(await page.$eval(row, (n) => n.innerText), /اسم المالك/);
+      assert.match(await page.$eval(row, (n) => n.innerText), /Active/);
+      assert.equal(await page.$eval(`${row} td[data-property-name="open_reports"]`, (n) => n.innerText), '1');
+      await page.goto(`${baseUrl}/admin/resources/comments`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector(`tr[data-id="${comment}"]`);
+      const commentRow = `tr[data-id="${comment}"]`;
+      assert.equal(
+        await page.$eval(`${commentRow} td[data-property-name="text"] [dir="auto"]`, (n) => n.innerText),
+        'تعليق للفحص',
+      );
+      assert.equal(await page.$eval(`${commentRow} td[data-property-name="open_reports"]`, (n) => n.innerText), '1');
+      assert.equal(await page.$eval(`${commentRow} td[data-property-name="images_count"]`, (n) => n.innerText), '1');
+      await page.click(`${commentRow} td[data-property-name="text"] a`);
+      await page.waitForSelector('[data-testid="pupzy-comment-evidence"]');
+      await page.goto(`${baseUrl}/admin/resources/moderation_actions`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector('.pupzy-audit-sentence');
+      assert.match(
+        await page.$eval('.pupzy-audit-sentence', (n) => n.innerText),
+        /Test Admin flagged post.*Screen review/,
+      );
+      await page.click('[data-reference-resource="posts"]');
+      await page.waitForSelector('[data-testid="pupzy-review-workspace"]');
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('gives Post titles and City names room at every laptop width', async () => {
+    const {
+      rows: [originalCity],
+    } = await database.pool.query(
+      "SELECT id,name_arabic FROM cities WHERE name_english='Heliopolis' AND governorate='Cairo' LIMIT 1",
+    );
+    assert.ok(originalCity, 'the catalog includes Heliopolis');
+    await database.pool.query("UPDATE cities SET name_arabic='' WHERE id=$1", [originalCity.id]);
+    await database.pool.query('UPDATE posts SET city_id=$2 WHERE id=$1', [fixture.activeId, originalCity.id]);
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await page.goto(`${baseUrl}/admin/resources/posts`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector('tr[data-id]');
+      for (const width of [1440, 1280, 1024]) {
+        await page.setViewport({ width, height: width === 1440 ? 900 : 800 });
+        const layout = await page.evaluate((title) => {
+          const cell = [...document.querySelectorAll('td[data-property-name="title"]')].find((n) =>
+            n.innerText.includes(title),
+          );
+          const text = cell.querySelector('a span[dir="auto"]');
+          const city = cell.closest('tr').querySelector('td[data-property-name="city_id"] a span[dir="auto"]');
+          return {
+            overflow: document.documentElement.scrollWidth > innerWidth,
+            tableOverflow:
+              cell.closest('.pupzy-table-scroll').scrollWidth > cell.closest('.pupzy-table-scroll').clientWidth,
+            tableScrollWidth: cell.closest('.pupzy-table-scroll').scrollWidth,
+            tableClientWidth: cell.closest('.pupzy-table-scroll').clientWidth,
+            titleWidth: text.getBoundingClientRect().width,
+            columnWidth: cell.getBoundingClientRect().width,
+            fullTitle: text.title,
+            truncated: text.scrollWidth > text.clientWidth,
+            cityWidth: city.getBoundingClientRect().width,
+            cityTruncated: city.scrollWidth > city.clientWidth,
+          };
+        }, LONG_TITLE);
+        assert.equal(layout.overflow, false, `${width}: no horizontal page scroll`);
+        assert.equal(layout.tableOverflow, false, `${width}: every table column fits: ${JSON.stringify(layout)}`);
+        if (width >= 1280)
+          assert.ok(layout.columnWidth >= (width === 1440 ? 280 : 220), `${width}: ${JSON.stringify(layout)}`);
+        assert.equal(layout.fullTitle, LONG_TITLE);
+        assert.equal(layout.truncated, true);
+        assert.ok(layout.cityWidth <= 160);
+        assert.equal(layout.cityTruncated, false, `${width}: the City name is fully readable`);
+      }
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+      await database.pool.query('UPDATE cities SET name_arabic=$2 WHERE id=$1', [
+        originalCity.id,
+        originalCity.name_arabic,
+      ]);
+    }
+  });
+
+  it('shows list loading and retry states and disables motion when requested', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    let releaseFailure;
+    const failureReady = new Promise((resolve) => {
+      releaseFailure = resolve;
+    });
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+      let unavailable = true;
+      await page.setRequestInterception(true);
+      page.on('request', async (request) => {
+        if (request.url().includes('/api/resources/posts/actions/list') && unavailable) {
+          await failureReady;
+          return request.respond({ status: 503, contentType: 'application/json', body: '{}' });
+        }
+        return request.continue();
+      });
+      await page.goto(`${baseUrl}/admin/resources/posts`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('[aria-label="Loading records"]');
+      await page.waitForFunction(() =>
+        Boolean(getComputedStyle(document.documentElement).getPropertyValue('--pupzy-bg').trim()),
+      );
+      assert.equal(await page.$eval('.pupzy-list-skeleton', (el) => getComputedStyle(el).animationName), 'none');
+      releaseFailure();
+      await page.waitForSelector('.pupzy-list-state[role="alert"]');
+      unavailable = false;
+      await page.click('.pupzy-list-state button');
+      await page.waitForSelector('tr[data-id]');
+      assert.equal(await page.$eval('tr[data-id]', (el) => getComputedStyle(el).transitionProperty), 'none');
+      assert.deepEqual(errors, []);
+    } finally {
+      releaseFailure();
+      await page.close();
+    }
+  });
+
   it('distinguishes an unavailable dashboard from an empty queue and recovers through Retry', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {
@@ -360,25 +512,22 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       await loginAsAdmin(page, baseUrl);
       await page.waitForSelector('[role="alert"]');
       assert.equal(
-        await page.$('[data-testid="pupzy-work-queues"]'),
-        null,
+        await page.$eval('[data-testid="pupzy-tile-count-flagged"]', (node) => node.innerText),
+        '–',
         'failed data is never shown as zero counts',
       );
       assert.equal(
-        await page.$('.pupzy-inbox-empty'),
+        await page.$('[data-testid="pupzy-inbox-empty"]'),
         null,
-        'a failed request must not claim the review queue is clear',
+        'a failed request must not claim the Inbox is clear',
       );
-      assert.equal(await page.$('.pupzy-metric-grid'), null, 'unavailable totals must not be rendered as zeros');
+      assert.equal(await page.$('[data-testid="pupzy-cases"]'), null, 'no cases are invented for a failed request');
       unavailable = false;
       await page.click('[role="alert"] button');
-      await page.waitForSelector('[data-testid="pupzy-work-queues"]');
+      await page.waitForSelector('[data-testid="pupzy-cases"]');
       assert.equal(await page.$('[role="alert"]'), null);
-      const count = await page.$eval(
-        '[data-testid="pupzy-queue-flagged"] .pupzy-queue-button-count',
-        (node) => node.innerText,
-      );
-      assert.equal(count, '1', 'Retry restores the actual review queue');
+      const count = await page.$eval('[data-testid="pupzy-tile-count-flagged"]', (node) => node.innerText);
+      assert.equal(count, '1', 'Retry restores the actual counts');
       assert.deepEqual(errors, []);
     } finally {
       await page.close();
@@ -407,7 +556,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       });
 
       await loginAsAdmin(page, baseUrl);
-      await page.waitForSelector('[data-testid="pupzy-work-queues"]', { timeout: 60000 });
+      await page.waitForSelector('[data-testid="pupzy-cases"]', { timeout: 60000 });
 
       const refreshIdle = await page.evaluate(() => {
         const button = document.querySelector('.pupzy-dashboard-refresh');
@@ -472,11 +621,8 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
 
       await page.waitForSelector('[role="alert"]');
       const errorState = await page.$eval('[role="alert"]', (element) => element.innerText);
-      assert.match(errorState, /Dashboard data could not be loaded/);
-      assert.ok(
-        await page.$('[data-testid="pupzy-work-queues"]'),
-        'a failed refresh keeps the last good dashboard visible',
-      );
+      assert.match(errorState, /The inbox could not be loaded/);
+      assert.ok(await page.$('[data-testid="pupzy-cases"]'), 'a failed refresh keeps the last good Inbox visible');
       console.log(`[bwg-21 evidence] dashboard error state ${await recordEvidence(page, '02-dashboard-error-state')}`);
 
       await Promise.all([
@@ -512,7 +658,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       const primarySubmit = await submitStyles(page);
       assert.equal(
         primarySubmit.backgroundColor,
-        'rgb(196, 98, 45)',
+        'rgb(180, 86, 37)',
         'outcome confirmation is a filled primary action',
       );
       assert.equal(primarySubmit.color, 'rgb(255, 255, 255)');
@@ -546,7 +692,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       await waitForEnabledSubmit(page);
       const dangerSubmit = await submitStyles(page);
       assert.equal(dangerSubmit.variant, 'danger');
-      assert.equal(dangerSubmit.backgroundColor, 'rgb(217, 64, 64)', 'removal keeps its destructive danger treatment');
+      assert.equal(dangerSubmit.backgroundColor, 'rgb(189, 36, 50)', 'removal keeps its destructive danger treatment');
       assert.notEqual(
         dangerSubmit.backgroundColor,
         primarySubmit.backgroundColor,
@@ -560,23 +706,11 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
     }
   });
 
-  it('reaches expired history from the dashboard and returns to the same filtered list', async () => {
+  it('reaches expired history from a filtered Posts list and returns to the same filtered list', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {
       await loginAsAdmin(page, baseUrl);
-      await openDashboard(page);
-
-      const expiredQueue = await page.$eval('[data-testid="pupzy-queue-expired"]', (element) => ({
-        label: element.innerText,
-        count: element.querySelector('.pupzy-queue-button-count')?.innerText,
-      }));
-      assert.match(expiredQueue.label, /Expired/);
-      assert.equal(expiredQueue.count, '1', 'the expired history queue counts the seeded expired listing');
-
-      await Promise.all([
-        page.waitForNavigation({ waitUntil: 'networkidle0' }),
-        page.click('[data-testid="pupzy-queue-expired"]'),
-      ]);
+      await page.goto(`${baseUrl}/admin/resources/posts?filters.status=EXPIRED`, { waitUntil: 'networkidle0' });
       const url = new URL(page.url());
       assert.equal(url.pathname, '/admin/resources/posts');
       assert.equal(url.searchParams.get('filters.status'), 'EXPIRED');
@@ -675,11 +809,11 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       await openDashboard(page);
 
       const dashboardLayout = await page.evaluate(() => {
-        const cards = Array.from(document.querySelectorAll('.pupzy-metric-grid > *')).map((element) => {
+        const cards = Array.from(document.querySelectorAll('[data-testid="pupzy-tiles"] > *')).map((element) => {
           const box = element.getBoundingClientRect();
           return { width: box.width, left: box.left };
         });
-        const queue = document.querySelector('[data-testid="pupzy-queue-flagged"]');
+        const queue = document.querySelector('[data-testid="pupzy-tile-flagged"]');
         const refresh = document.querySelector('.pupzy-dashboard-refresh');
         return {
           documentClientWidth: document.documentElement.clientWidth,
@@ -694,18 +828,18 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       assert.equal(
         dashboardLayout.documentScrollWidth,
         dashboardLayout.documentClientWidth,
-        'the dashboard does not scroll horizontally at 390px',
+        'the Inbox does not scroll horizontally at 390px',
       );
       assert.ok(
         Math.max(...dashboardLayout.cardWidths) - Math.min(...dashboardLayout.cardWidths) <= 1,
-        'metric cards keep a shared width',
+        'count tiles keep a shared width',
       );
       assert.equal(
         new Set(dashboardLayout.cardLefts.map(Math.round)).size,
         2,
-        'compact totals align to two mobile columns',
+        'count tiles align to two mobile columns',
       );
-      assert.ok(dashboardLayout.queueTransition <= 0.001, 'reduced motion collapses queue button transitions');
+      assert.ok(dashboardLayout.queueTransition <= 0.001, 'reduced motion collapses tile transitions');
       assert.ok(dashboardLayout.refreshTransition <= 0.001, 'reduced motion collapses refresh transitions');
       assert.ok(dashboardLayout.refreshHeight >= 38, 'the refresh action keeps a usable touch target');
 
@@ -738,22 +872,23 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       console.log(`[bwg-21 evidence] narrow dashboard ${await recordEvidence(page, '08-narrow-dashboard')}`);
 
       const queueFocus = await page.evaluate(() => {
-        document.querySelector('[data-testid="pupzy-queue-flagged"]').focus();
+        document.querySelector('[data-testid="pupzy-tile-flagged"]').focus();
         return {
           testId: document.activeElement?.dataset?.testid,
           focusVisible: document.activeElement?.matches(':focus-visible'),
           outlineWidth: getComputedStyle(document.activeElement).outlineWidth,
         };
       });
-      assert.equal(queueFocus.testId, 'pupzy-queue-flagged');
+      assert.equal(queueFocus.testId, 'pupzy-tile-flagged');
       assert.equal(queueFocus.focusVisible, true);
       assert.notEqual(queueFocus.outlineWidth, '0px');
-      await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }), page.keyboard.press('Enter')]);
-      assert.match(page.url(), /filters\.moderation_status=FLAGGED/);
-      await page.waitForSelector('tr[data-id]');
-      assert.deepEqual(await page.$$eval('tr[data-id]', (rows) => rows.map((row) => row.dataset.id)), [
-        fixture.flaggedId,
-      ]);
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => new URL(location.href).searchParams.get('kind') === 'flagged');
+      await page.waitForFunction(() => document.querySelectorAll('[data-testid="pupzy-case"]').length === 1);
+      assert.match(
+        await page.$eval('.pupzy-case-title', (element) => element.innerText),
+        /Flagged case awaiting review/,
+      );
 
       await page.goto(`${baseUrl}/admin/resources/posts`, { waitUntil: 'networkidle0' });
       await page.waitForSelector('tr[data-id]');
@@ -761,11 +896,13 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         const cell = Array.from(document.querySelectorAll('td[data-property-name="title"]')).find((element) =>
           element.innerText.includes('deliberately long listing title'),
         );
+        const title = cell?.querySelector('a span[dir="auto"]') ?? cell;
         return {
           documentClientWidth: document.documentElement.clientWidth,
           documentScrollWidth: document.documentElement.scrollWidth,
-          textOverflow: cell ? getComputedStyle(cell).textOverflow : null,
-          truncated: cell ? cell.scrollWidth > cell.clientWidth : false,
+          textOverflow: title ? getComputedStyle(title).textOverflow : null,
+          truncated: title ? title.scrollWidth > title.clientWidth : false,
+          fullTitle: title?.title,
         };
       });
       assert.equal(
@@ -775,19 +912,22 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       );
       assert.equal(longTitleLayout.textOverflow, 'ellipsis', 'long list titles truncate instead of colliding');
       assert.equal(longTitleLayout.truncated, true, 'the long title is actually clipped inside its cell');
+      assert.match(longTitleLayout.fullTitle, /deliberately long listing title/);
       console.log(
         `[bwg-21 evidence] narrow long-title list ${await recordEvidence(page, '09-narrow-long-title-list')}`,
       );
 
       await openDashboard(page);
       await page.evaluate(() => {
-        document.querySelector('[data-testid="pupzy-needs-review-table"] tbody tr td a[href*="/records/"]').focus();
+        document
+          .querySelector('[data-testid="pupzy-case"][data-kind="flagged"] [data-testid="pupzy-case-open"]')
+          .focus();
       });
       const focusedTitle = await page.evaluate(() => ({
         focusVisible: document.activeElement?.matches(':focus-visible'),
         href: document.activeElement?.getAttribute('href'),
       }));
-      assert.equal(focusedTitle.focusVisible, true, 'the review-table title link is keyboard reachable');
+      assert.equal(focusedTitle.focusVisible, true, 'the Open case link is keyboard reachable');
       assert.match(focusedTitle.href ?? '', /\/admin\/resources\/posts\/records\/.+\/show/);
       await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }), page.keyboard.press('Enter')]);
       await page.waitForSelector('[data-testid="pupzy-review-workspace"]', { timeout: 60000 });
@@ -1060,7 +1200,9 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         await page.waitForSelector('[data-testid="pupzy-reference-link"]', { timeout: 60000 });
       };
       const clickReference = async (resourceId) => {
-        await page.click(`[data-testid="pupzy-reference-link"][data-reference-resource="${resourceId}"]`);
+        const scope =
+          resourceId === 'users' && (await page.$('[data-testid="pupzy-case-view"]')) ? '.pupzy-case-decision ' : '';
+        await page.click(`${scope}[data-testid="pupzy-reference-link"][data-reference-resource="${resourceId}"]`);
       };
 
       await loginAsAdmin(page, baseUrl);
@@ -1101,7 +1243,14 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         '[data-testid="pupzy-reference-link"][data-reference-resource="comments"]',
         (node) => node.innerText,
       );
-      assert.match(commentLink, /A comment that someone reported/);
+      assert.equal(commentLink, 'Comment');
+      assert.equal(
+        (await page.$eval('.pupzy-case-evidence', (node) => node.innerText)).split(
+          'A comment that someone reported for review',
+        ).length - 1,
+        1,
+        'the comment text appears once beneath its linked heading',
+      );
       await clickReference('comments');
       await waitForPath(`/resources/comments/records/${commentId}/show`);
       await page.waitForSelector('[data-testid="pupzy-reference-link"][data-reference-resource="users"]');
@@ -1162,6 +1311,75 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         await page.goto(`${baseUrl}/admin/resources/${resourceId}/records/${recordId}/show`, {
           waitUntil: 'networkidle0',
         });
+        if (resourceId.endsWith('_reports')) {
+          await page.waitForSelector('[data-testid="pupzy-case-view"]');
+          const fields = await page.$$eval('.pupzy-case-field dt', (nodes) => nodes.map((n) => n.innerText));
+          for (const label of ['Status', 'Reason', 'Details', 'Reported by'])
+            assert.ok(fields.includes(label), `${resourceId}: ${label}`);
+          const targetResource = { post_reports: 'posts', comment_reports: 'comments', account_reports: 'users' }[
+            resourceId
+          ];
+          const targetLink = `.pupzy-case-evidence h2 a[data-reference-resource="${targetResource}"], .pupzy-case-evidence h4 a[data-reference-resource="${targetResource}"]`;
+          assert.equal((await page.$$(targetLink)).length, 1, `${resourceId}: one target link in the heading`);
+          const evidenceFields = await page.$$eval('.pupzy-case-evidence .pupzy-case-field dt', (nodes) =>
+            nodes.map((n) => n.innerText),
+          );
+          assert.ok(
+            !evidenceFields.includes(
+              { post_reports: 'Post', comment_reports: 'Comment', account_reports: 'Account' }[resourceId],
+            ),
+            `${resourceId}: no duplicate target field`,
+          );
+          for (const width of [1440, 1280, 1024]) {
+            await page.setViewport({ width, height: width === 1440 ? 900 : 800 });
+            const layout = await page.evaluate(() => {
+              const evidence = document.querySelector('.pupzy-case-evidence').getBoundingClientRect();
+              const decision = document.querySelector('.pupzy-case-decision').getBoundingClientRect();
+              return {
+                overflow: document.documentElement.scrollWidth > innerWidth,
+                evidenceBottom: evidence.bottom,
+                evidenceRight: evidence.right,
+                decisionLeft: decision.left,
+                decisionTop: decision.top,
+                decisionRight: decision.right,
+                position: getComputedStyle(document.querySelector('.pupzy-case-decision')).position,
+              };
+            });
+            assert.equal(layout.overflow, false);
+            assert.ok(layout.decisionRight <= width, `${resourceId}: decision column fits ${width}`);
+            if (width > 1100) {
+              assert.ok(layout.decisionLeft > layout.evidenceRight);
+              assert.equal(layout.position, 'sticky');
+            } else {
+              assert.ok(layout.decisionTop > layout.evidenceBottom);
+              assert.equal(layout.position, 'static');
+            }
+            const screenshot = path.resolve(
+              currentDirectory,
+              `../../.scratch/admin-ui-redesign/screenshots/step3-after-${resourceId}-${width}.png`,
+            );
+            fs.mkdirSync(path.dirname(screenshot), { recursive: true });
+            await page.screenshot({ path: screenshot });
+          }
+          await page.setViewport({ width: 1280, height: 900 });
+          assert.equal(await page.$eval('.pupzy-case-technical', (node) => node.open), false);
+          await page.click('.pupzy-case-technical summary');
+          const technical = await page.$eval('.pupzy-case-technical', (node) => node.innerText);
+          assert.match(technical, /ID/);
+          assert.doesNotMatch(technical, /reviewed_at|post_id|reporter_id/);
+          if (resourceId === 'post_reports') assert.match(technical, /Reviewed[\s\S]*—/);
+          const targetHref = await page.$eval(targetLink, (node) => node.href);
+          await page.click(targetLink);
+          await page.waitForFunction((href) => location.href === href, {}, targetHref);
+          await page.waitForSelector(
+            resourceId === 'post_reports'
+              ? '[data-testid="pupzy-review-workspace"]'
+              : resourceId === 'comment_reports'
+                ? '[data-testid="pupzy-comment-evidence"]'
+                : '[data-testid="pupzy-profile-photo-none"], [data-testid="pupzy-profile-photo-open"]',
+          );
+          continue;
+        }
         await page.waitForSelector('main label, [data-css*="show"] label, label', { timeout: 60000 });
         await new Promise((resolve) => setTimeout(resolve, 800));
         const rows = await page.evaluate(() => {
@@ -1185,7 +1403,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
           assert.ok(!labels.some((label) => /_id$/.test(label)), `${resourceId} labels read as plain words`);
         }
         if (resourceId === 'post_reports') {
-          const reviewedAt = rows.find((row) => row.label === 'Reviewed At');
+          const reviewedAt = rows.find((row) => row.label === 'Reviewed');
           assert.match(reviewedAt.text, /—/, 'an empty value is a dash, not a blank gap');
           console.log(`[fix4 evidence] report show ${await recordEvidence(page, 'fix4-report-show-labelled')}`);
         }
@@ -1293,7 +1511,8 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         });
         await page.waitForSelector('[data-testid="pupzy-comment-evidence"]', { timeout: 60000 });
         await waitForImages(page, 2);
-        const text = await page.$eval('[data-testid="pupzy-comment-evidence"]', (n) => n.innerText);
+        await page.click('.pupzy-case-other summary');
+        const text = await page.$eval('[data-testid="pupzy-case-view"]', (n) => n.innerText);
         assert.match(text, /Evidence for the report page/);
         assert.match(text, /Images hidden from users/);
         assert.doesNotMatch(text, /Image hidden/, 'one badge, not two saying the same thing');
@@ -1303,11 +1522,11 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
           'the reporter and date read as one line',
         );
         assert.equal(await page.$$eval('[data-testid="pupzy-image-hidden-badge"]', (n) => n.length), 2);
-        assert.match(text, /Reports on this comment \(2\)/);
+        assert.match(text, /Other reports on this \(1\)/);
         assert.match(text, /first details/);
         assert.match(text, /second details/);
-        assert.match(text, /This report/);
-        assert.equal(await page.$$eval('[data-testid="pupzy-comment-report"]', (n) => n.length), 2);
+        assert.match(text, /Reported by/);
+        assert.equal(await page.$$eval('[data-testid="pupzy-comment-report"]', (n) => n.length), 1);
         assert.equal(
           await page.$$eval('[data-testid="pupzy-comment-report-link"]', (n) => n.length),
           1,
@@ -1318,7 +1537,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
           (n) => n.getBoundingClientRect().top,
         );
         const statusTop = await page.$eval('[data-testid="pupzy-report-status"]', (n) => n.getBoundingClientRect().top);
-        assert.ok(evidenceTop < statusTop, 'the evidence sits above the report fields');
+        assert.ok(evidenceTop <= statusTop, 'the evidence leads the case layout');
         console.log(`[fix4 evidence] comment report show ${await recordEvidence(page, 'fix4-comment-report-show')}`);
 
         await page.click('[data-testid="pupzy-comment-post"]');
@@ -1481,7 +1700,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         const withPhoto = rows.find((row) => row.text.includes('photo-with@example.com'));
         const without = rows.find((row) => row.text.includes('photo-without@example.com'));
         assert.equal(withPhoto.hasImage, true);
-        assert.equal(withPhoto.size, 32);
+        assert.equal(withPhoto.size, 28);
         assert.equal(without.hasImage, false);
         assert.match(without.text, /PW/, 'initials of "Photo without"');
         console.log(`[fix5 evidence] users list ${await recordEvidence(page, 'fix5-users-list')}`);
@@ -1616,7 +1835,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
     });
   });
 
-  it('shows the dashboard empty state when no review work remains', async () => {
+  it('shows the Inbox empty state when no review work remains', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {
       await database.pool.query(`TRUNCATE TABLE ${BUSINESS_TABLES} CASCADE`);
@@ -1635,18 +1854,15 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       await openDashboard(page);
 
       const dashboardText = await page.$eval('body', (element) => element.innerText);
-      assert.match(dashboardText, /Review queue clear/);
-      assert.match(dashboardText, /There are no active Posts awaiting review/);
-      const flaggedCount = await page.$eval(
-        '[data-testid="pupzy-queue-flagged"] .pupzy-queue-button-count',
-        (element) => element.innerText,
+      assert.match(dashboardText, /Nothing needs attention\. Nice work\./);
+      assert.match(
+        await page.$eval('[data-testid="pupzy-inbox-empty"] a', (el) => el.getAttribute('href')),
+        /post_reports\?filters\.review_state=REVIEWED/,
       );
+      const flaggedCount = await page.$eval('[data-testid="pupzy-tile-count-flagged"]', (element) => element.innerText);
       assert.equal(flaggedCount, '0');
-      assert.equal(await page.$('[data-testid="pupzy-needs-review-table"] tbody tr'), null);
-      assert.ok(
-        await page.$('[data-testid="pupzy-work-queues"]'),
-        'queue navigation stays available when the queue is empty',
-      );
+      assert.equal(await page.$('[data-testid="pupzy-case"]'), null);
+      assert.ok(await page.$('[data-testid="pupzy-tiles"]'), 'the count tiles stay available when the Inbox is empty');
       console.log(`[bwg-21 evidence] dashboard empty state ${await recordEvidence(page, '12-dashboard-empty-state')}`);
 
       assert.deepEqual(errors, []);

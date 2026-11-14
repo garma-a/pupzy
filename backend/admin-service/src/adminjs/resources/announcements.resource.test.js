@@ -9,7 +9,7 @@ const pool = {};
 const components = {
   ShortUuid: 'ShortUuid',
   ReferenceLink: 'ReferenceLink',
-  RecordStatus: 'RecordStatus',
+  StatusBadge: 'StatusBadge',
   AnnouncementCompose: 'AnnouncementCompose',
   AnnouncementShow: 'AnnouncementShow',
   AnnouncementText: 'AnnouncementText',

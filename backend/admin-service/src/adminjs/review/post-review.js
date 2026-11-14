@@ -327,6 +327,7 @@ export async function loadReports(pool, postId) {
       reviewedByName: row.reviewed_by_name ?? null,
       isOpen: status.isOpen,
       statusLabel: status.label,
+      statusState: status.state,
       createdAt: row.created_at,
     };
   };
@@ -388,7 +389,7 @@ export async function loadPostReview(pool, postId, options = {}) {
     `SELECT p.id, p.title, p.description, p.post_type, p.status, p.moderation_status, p.moderation_reason,
             p.urgency, p.area_name, p.created_at, p.creator_id, p.city_id,
             c.name_english AS city_name, c.name_arabic AS city_name_arabic, c.governorate AS city_governorate,
-            ${USER_NAME_SQL} AS owner_name, u.email AS owner_email
+            ${USER_NAME_SQL} AS owner_name, u.email AS owner_email, u.profile_picture_url AS owner_picture
      FROM posts p
      LEFT JOIN cities c ON c.id = p.city_id
      LEFT JOIN users u ON u.id = p.creator_id
@@ -448,6 +449,7 @@ export async function loadPostReview(pool, postId, options = {}) {
         id: post.creator_id,
         name: post.owner_name ?? 'Deleted account',
         email: post.owner_email ?? null,
+        pictureUrl: post.owner_picture ?? null,
       },
     },
     photos: photoRows.map(toPhoto),

@@ -5,6 +5,7 @@ import { Database } from '@adminjs/sql';
 
 import { DashboardStatsCache } from './dashboard/dashboard-cache.js';
 import { buildDashboardHandler } from './dashboard/dashboard-handler.js';
+import { navigationFor, withResourceLabels } from './navigation.js';
 import { pupzyTheme } from './theme.js';
 import { PROPERTY_LABELS } from './property-labels.js';
 import { buildAdminUsersResource } from './resources/admin-users.resource.js';
@@ -32,6 +33,8 @@ import { buildUsersResource } from './resources/users.resource.js';
 import { buildVetClinicsResource } from './resources/vet-clinics.resource.js';
 import { buildVetClinicLocationAuditsResource } from './resources/vet-clinic-location-audits.resource.js';
 import { buildCommentsResource } from './resources/comments.resource.js';
+import { attachReadableList } from './review/list-summaries.js';
+import { attachReportCase } from './review/case-view.js';
 import { attachPostDetailReviewWorkspace } from './review/post-review.js';
 
 AdminJS.registerAdapter({ Database, Resource: QueueAwareSqlResource });
@@ -63,6 +66,14 @@ export const ADMIN_RESOURCE_TABLES = Object.freeze([
 ]);
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
+const BADGE_PROPERTIES = new Set([
+  'status',
+  'moderation_status',
+  'urgency',
+  'review_outcome',
+  'review_status',
+  'is_banned',
+]);
 
 export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}) {
   const cache =
@@ -83,11 +94,24 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     path.join(currentDirectory, 'components', 'default-datetime-show-component.jsx'),
   );
   componentLoader.override(
+    'SidebarResourceSection',
+    path.join(currentDirectory, 'components', 'sidebar-resource-section-component.jsx'),
+  );
+  componentLoader.override(
     'RecordsTable',
     path.join(currentDirectory, 'components', 'scrollable-records-table-component.jsx'),
   );
+  componentLoader.override(
+    'DefaultListProperty',
+    path.join(currentDirectory, 'components', 'default-list-property-component.jsx'),
+  );
+  componentLoader.override(
+    'DefaultDatetimeListProperty',
+    path.join(currentDirectory, 'components', 'datetime-list-component.jsx'),
+  );
+  componentLoader.override('DefaultListAction', path.join(currentDirectory, 'components', 'list-component.jsx'));
   const components = {
-    Dashboard: componentLoader.add('Dashboard', path.join(currentDirectory, 'dashboard', 'dashboard-component.jsx')),
+    Dashboard: componentLoader.add('Dashboard', path.join(currentDirectory, 'dashboard', 'inbox-component.jsx')),
     ModerationAction: componentLoader.add(
       'ModerationAction',
       path.join(currentDirectory, 'components', 'moderation-action-component.jsx'),
@@ -121,13 +145,22 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'ProfilePhoto',
       path.join(currentDirectory, 'components', 'profile-photo-component.jsx'),
     ),
-    ReportStatus: componentLoader.add(
-      'ReportStatus',
-      path.join(currentDirectory, 'components', 'report-status-component.jsx'),
+    ClinicList: componentLoader.add(
+      'ClinicList',
+      path.join(currentDirectory, 'components', 'clinic-list-component.jsx'),
     ),
-    RecordStatus: componentLoader.add(
-      'RecordStatus',
-      path.join(currentDirectory, 'components', 'record-status-component.jsx'),
+    PostList: componentLoader.add('PostList', path.join(currentDirectory, 'components', 'post-list-component.jsx')),
+    AuditActivity: componentLoader.add(
+      'AuditActivity',
+      path.join(currentDirectory, 'components', 'audit-activity-component.jsx'),
+    ),
+    ReportCase: componentLoader.add(
+      'ReportCase',
+      path.join(currentDirectory, 'components', 'report-case-component.jsx'),
+    ),
+    StatusBadge: componentLoader.add(
+      'StatusBadge',
+      path.join(currentDirectory, 'components', 'status-badge-component.jsx'),
     ),
     AnnouncementCompose: componentLoader.add(
       'AnnouncementCompose',
@@ -189,17 +222,24 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     buildAnnouncementsResource(db, pool, components),
   ];
 
-  const resources = rawResources.map((resource) => {
+  const resources = rawResources.map((rawResource) => {
+    const resource = attachReadableList(attachReportCase(rawResource, pool, components), pool, cache);
+    const navigation = navigationFor(resource.resource.tableName);
     const properties = { ...resource.options.properties };
-    for (const name of ['status', 'moderation_status', 'urgency', 'review_outcome']) {
-      if (!properties[name]?.availableValues) continue;
-      properties[name] = {
-        ...properties[name],
-        components: { ...properties[name].components, list: components.RecordStatus, show: components.RecordStatus },
-      };
+    for (const name of BADGE_PROPERTIES) {
+      const property = properties[name];
+      if (property && (property.availableValues || name === 'review_status' || name === 'is_banned')) {
+        properties[name] = {
+          ...property,
+          components: { ...property.components, list: components.StatusBadge, show: components.StatusBadge },
+        };
+      }
     }
     return attachPopulatedSanitizer(
-      attachCacheInvalidation({ ...resource, options: { ...resource.options, properties } }, cache),
+      attachCacheInvalidation(
+        { ...resource, options: { ...resource.options, properties, ...(navigation ? { navigation } : {}) } },
+        cache,
+      ),
     );
   });
 
@@ -221,9 +261,11 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       language: 'en',
       translations: {
         en: {
-          actions: { show: 'Details', list: 'Records' },
+          actions: { show: 'Details', list: 'Records', reviewWithNoAction: 'Review with no action' },
+          labels: { dashboard: 'Inbox' },
           properties: PROPERTY_LABELS,
-          resources: {
+          resources: withResourceLabels({
+            vet_clinics: { properties: { is_active: 'Status' }, actions: { needsPhone: 'Needs phone' } },
             posts: { actions: { show: 'Review Post', list: 'Posts' } },
             announcements: {
               actions: { new: 'New announcement', list: 'Announcements', show: 'Announcement' },
@@ -234,7 +276,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
               actions: { hideComment: 'Hide Comment', removeComment: 'Remove Comment', banAuthor: 'Ban Author' },
             },
             account_reports: { actions: { banUser: 'Ban User' } },
-          },
+          }),
           components: {
             Login: {
               welcomeHeader: 'Welcome to Pupzy',

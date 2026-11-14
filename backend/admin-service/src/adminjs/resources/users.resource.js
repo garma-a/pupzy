@@ -1,3 +1,4 @@
+import { listOnlyProperty } from '../review/list-summaries.js';
 import { ValidationError } from 'adminjs';
 import { buildBanUserAction, buildUnbanUserAction } from '../actions/ban-user.action.js';
 import { buildRemoveProfilePhotoAction } from '../actions/remove-profile-photo.action.js';
@@ -141,6 +142,7 @@ export function buildUsersResource(db, pool, components, cache) {
   }
 
   const properties = {
+    open_reports: listOnlyProperty(),
     id: { isDisabled: true },
     firebase_user_id: { isDisabled: true },
     email: { isTitle: true, isDisabled: true },
@@ -156,7 +158,12 @@ export function buildUsersResource(db, pool, components, cache) {
     lost_post_count: { isDisabled: true },
     adoption_post_count: { isDisabled: true },
     product_post_count: { isDisabled: true },
-    language_preference: {},
+    language_preference: {
+      availableValues: [
+        { value: 'en', label: 'English' },
+        { value: 'ar', label: 'Arabic' },
+      ],
+    },
     notifications_enabled: {},
     terms_accepted_version: { isDisabled: true },
     terms_accepted_at: { isDisabled: true },
@@ -183,7 +190,7 @@ export function buildUsersResource(db, pool, components, cache) {
     };
   }
 
-  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachShortUuid(properties, ['id'], components, ['show']);
   attachReferenceLink(properties, ['banned_by_admin_id'], components, ['show']);
 
   return {
@@ -208,12 +215,11 @@ export function buildUsersResource(db, pool, components, cache) {
       editProperties: [...ALLOWED_USER_EDIT_FIELDS],
       listProperties: [
         ...(hasProfilePhoto ? ['profile_photo'] : []),
-        'id',
-        'email',
         'full_name',
-        'is_verified',
+        'full_name_arabic',
+        'email',
         'is_banned',
-        'post_count',
+        'open_reports',
         'created_at',
       ],
       showProperties: [

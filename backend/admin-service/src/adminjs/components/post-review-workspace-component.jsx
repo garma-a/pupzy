@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiClient } from 'adminjs';
-import { Badge, Box, Button, H3, H4, Link, Loader, MessageBox, Text } from '@adminjs/design-system';
+import { Box, Button, H3, H4, Link, Loader, MessageBox, Text } from '@adminjs/design-system';
 
-import { filteredListBackLink, recallListSearch, reportReviewHref } from './list-return.js';
+import { RecordLink } from './record-link.jsx';
+import ModerationHistory from './moderation-history.jsx';
+import { BackToInbox } from './back-to-inbox.jsx';
+import { filteredListBackLink, inboxReturnFromSearch, recallListSearch, reportReviewHref } from './list-return.js';
 import { MediaThumb, useMediaLightbox } from './media-lightbox.jsx';
-import { StateTag } from './record-status-component.jsx';
+import { StatusBadge } from './status-badge-component.jsx';
 
 const api = new ApiClient();
 const DISCUSSION_ACTION = 'postReviewDiscussion';
@@ -16,14 +19,6 @@ function adminRootPath() {
 function adminResourceUrl(path) {
   return `${adminRootPath()}/resources/${path}`;
 }
-
-const COMMENT_BADGE_VARIANTS = {
-  ACTIVE: 'success',
-  IMAGE_HIDDEN: 'warning',
-  HIDDEN: 'warning',
-  DELETED: 'default',
-  REMOVED: 'danger',
-};
 
 function parseJson(value) {
   if (!value) return null;
@@ -53,14 +48,14 @@ function DiscussionItem({ item, onOpenMedia }) {
         <Text color="grey60" fontSize="sm">
           {formatDateTime(item.createdAt)}
         </Text>
-        <Badge variant={COMMENT_BADGE_VARIANTS[item.status] ?? 'default'}>{item.statusLabel}</Badge>
+        <StatusBadge value={item.status}>{item.statusLabel}</StatusBadge>
         {item.boostCount > 0 ? (
           <Text color="grey60" fontSize="sm">
             {item.boostCount} {item.boostCount === 1 ? 'Boost' : 'Boosts'}
           </Text>
         ) : null}
       </div>
-      <Text mt="sm" className="pupzy-discussion-text">
+      <Text mt="sm" dir="auto" className="pupzy-discussion-text">
         {item.text}
       </Text>
       {item.attachments?.length ? (
@@ -94,16 +89,20 @@ function ReportRow({ report, reviewHref, context }) {
     <li className="pupzy-report-row">
       <div className="pupzy-discussion-meta">
         <Text fontWeight="bold">{report.reasonLabel}</Text>
-        <Badge variant={report.isOpen ? 'warning' : 'default'} data-testid="pupzy-report-status">
+        <StatusBadge value={report.statusState} data-testid="pupzy-report-status">
           {report.statusLabel}
-        </Badge>
+        </StatusBadge>
       </div>
       {context ? (
         <Text color="grey60" fontSize="sm" mt="xs">
           {context}
         </Text>
       ) : null}
-      {report.details ? <Text mt="xs">{report.details}</Text> : null}
+      {report.details ? (
+        <Text mt="xs" dir="auto">
+          {report.details}
+        </Text>
+      ) : null}
       <div className="pupzy-discussion-meta pupzy-report-footer">
         <Text color="grey60" fontSize="sm">
           Reported by {report.reporterName} on {formatDateTime(report.createdAt)}
@@ -204,19 +203,28 @@ export default function PostReviewWorkspace({ resource, record }) {
             Open Post for moderation
           </Link>
         ) : null}
+        {inboxReturnFromSearch(currentSearch, adminRootPath()) ? <BackToInbox /> : null}
         <Link href={backLink.href} data-testid="pupzy-back-to-queue" style={{ fontWeight: 600 }}>
           ← {backLink.label}
         </Link>
       </Box>
 
       <Box className="pupzy-review-header" mb="xl">
-        <H3 mb="sm">{post.title}</H3>
+        <H3 mb="sm" dir="auto">
+          {post.title}
+        </H3>
         <div className="pupzy-discussion-meta">
-          <Badge variant="primary">{post.typeLabel}</Badge>
-          {post.subtypeLabel ? <Badge variant="secondary">{post.subtypeLabel}</Badge> : null}
-          <StateTag value={post.status} label={post.statusLabel} />
-          <StateTag value={post.moderationStatus} label={post.moderationStatusLabel} />
-          {post.urgency ? <StateTag value={post.urgency} /> : null}
+          <StatusBadge value="CLOSED" label={post.typeLabel}>
+            {post.typeLabel}
+          </StatusBadge>
+          {post.subtypeLabel ? (
+            <StatusBadge value="CLOSED" label={post.subtypeLabel}>
+              {post.subtypeLabel}
+            </StatusBadge>
+          ) : null}
+          <StatusBadge value={post.status} label={post.statusLabel} />
+          <StatusBadge value={post.moderationStatus} label={post.moderationStatusLabel} />
+          {post.urgency ? <StatusBadge value={post.urgency} /> : null}
         </div>
         {post.description ? (
           <p className="pupzy-post-description" dir="auto">
@@ -237,7 +245,17 @@ export default function PostReviewWorkspace({ resource, record }) {
           <div>
             <dt>Owner</dt>
             <dd>
-              {post.owner?.name ?? 'Unknown'}
+              {post.owner?.id ? (
+                <RecordLink
+                  resourceId="users"
+                  recordId={post.owner.id}
+                  title={post.owner.name}
+                  pictureUrl={post.owner.pictureUrl}
+                  showAvatar
+                />
+              ) : (
+                'Deleted account'
+              )}
               <span>{post.owner?.email ?? 'No email available'}</span>
             </dd>
           </div>
@@ -367,36 +385,12 @@ export default function PostReviewWorkspace({ resource, record }) {
         )}
       </section>
 
-      <section
-        className="pupzy-post-review-section"
-        aria-labelledby="pupzy-review-history-heading"
-        data-testid="pupzy-action-history"
-      >
-        <H4 id="pupzy-review-history-heading" mb="md">
-          Action history
-        </H4>
-        {history.length ? (
-          <ul className="pupzy-history-list">
-            {history.map((entry) => (
-              <li key={entry.id} className="pupzy-history-row">
-                <div className="pupzy-discussion-meta">
-                  <Text fontWeight="bold">{entry.actionLabel}</Text>
-                  <Badge variant="default">{entry.targetType}</Badge>
-                  <Text color="grey60" fontSize="sm">
-                    {formatDateTime(entry.createdAt)}
-                  </Text>
-                </div>
-                <Text color="grey60" fontSize="sm" mt="xs">
-                  By {entry.adminName}
-                </Text>
-                {entry.reason ? <Text mt="xs">Reason: {entry.reason}</Text> : null}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <EmptyState>No administrator actions recorded for this Post.</EmptyState>
-        )}
-      </section>
+      <ModerationHistory
+        entries={history}
+        heading="Action history"
+        testId="pupzy-action-history"
+        headingId="pupzy-review-history-heading"
+      />
 
       {dialog}
     </Box>

@@ -4,7 +4,7 @@ import { useTranslation } from 'adminjs';
 
 /** Muted dash AdminJS-style show pages use for an empty value. */
 export function EmptyValue() {
-  return <span style={{ color: '#B8A499' }}>—</span>;
+  return <span style={{ color: '#8B6355' }}>—</span>;
 }
 
 /**

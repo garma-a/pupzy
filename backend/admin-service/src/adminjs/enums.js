@@ -1,3 +1,4 @@
+import { plainValue } from './status-styles.js';
 export const ENUMS = {
   postType: ['RESCUE', 'LOST', 'ADOPTION', 'PRODUCT', 'MATING'],
   lostFoundType: ['LOST_PET', 'FOUND_STRAY'],
@@ -68,6 +69,7 @@ export const ENUMS = {
     'COMMENT_REMOVED',
     'POST_REPORT_REVIEWED_NO_ACTION',
     'ACCOUNT_REPORT_REVIEWED_NO_ACTION',
+    'COMMENT_REPORT_REVIEWED_NO_ACTION',
     'USER_PROFILE_PHOTO_REMOVED',
     'COMMENT_HIDDEN',
     'COMMENT_IMAGES_HIDDEN',
@@ -80,5 +82,5 @@ export const ENUMS = {
 };
 
 export function toAvailableValues(values) {
-  return values.map((value) => ({ value, label: value.replaceAll('_', ' ') }));
+  return values.map((value) => ({ value, label: plainValue(value) }));
 }

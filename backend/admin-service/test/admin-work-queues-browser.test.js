@@ -33,6 +33,7 @@ const BUSINESS_TABLES = `
 let server;
 let baseUrl;
 let sqlAdapterPool;
+let dashboardCache;
 let principals;
 let browser;
 let fixture;
@@ -81,9 +82,25 @@ async function loginAsAdmin(page, url, email = 'staff@example.com', password = '
   await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }), page.click('form button')]);
 }
 
-async function openDashboard(page) {
-  await page.goto(`${baseUrl}/admin`, { waitUntil: 'networkidle0' });
-  await page.waitForSelector('[data-testid="pupzy-work-queues"]', { timeout: 60000 });
+async function openDashboard(page, search = '') {
+  await page.goto(`${baseUrl}/admin${search}`, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('[data-testid="pupzy-tiles"]', { timeout: 60000 });
+  await page.waitForSelector('[data-testid="pupzy-cases"], [data-testid="pupzy-inbox-empty"]', { timeout: 60000 });
+}
+
+function tileCount(page, kind) {
+  return page.$eval(`[data-testid="pupzy-tile-count-${kind}"]`, (element) => element.innerText);
+}
+
+function inboxCases(page) {
+  return page.$$eval('[data-testid="pupzy-case"]', (rows) =>
+    rows.map((row) => ({
+      kind: row.dataset.kind,
+      text: row.innerText,
+      title: row.querySelector('.pupzy-case-title')?.innerText,
+      count: row.querySelector('[data-testid="pupzy-case-count"]')?.innerText,
+    })),
+  );
 }
 
 async function openList(page, resource, filters) {
@@ -304,6 +321,7 @@ before(async () => {
 
   const built = await buildAdminJs(connectionString, databaseName, database.pool);
   sqlAdapterPool = built.sqlAdapterPool;
+  dashboardCache = built.cache;
   await built.admin.initialize();
   app.use(
     '/admin',
@@ -340,6 +358,7 @@ before(async () => {
 beforeEach(async () => {
   await database.pool.query(`TRUNCATE TABLE ${BUSINESS_TABLES} CASCADE`);
   await seedQueueFixture();
+  dashboardCache.invalidate();
 });
 
 after(async () => {
@@ -350,72 +369,173 @@ after(async () => {
 });
 
 describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
-  it('reaches flagged Posts from one labeled dashboard action and counts the same work', async () => {
+  it('restores all nine Post queues with matching counts and urgent rescue first', async () => {
+    const moderate = await insertPost(database.pool, {
+      userId: fixture.ownerId,
+      cityId: principals.cityId,
+      postType: 'RESCUE',
+      title: 'Moderate rescue',
+      moderationStatus: 'CLEAN',
+      urgency: 'MODERATE',
+    });
+    const expected = {
+      rescue: [fixture.rescueId, fixture.pendingPostId, moderate],
+      lost_pet: [fixture.lostPetId],
+      found_stray: [fixture.foundStrayId, fixture.flaggedPostId],
+      adoption: [fixture.adoptionId],
+      products: [fixture.productId, fixture.approvedPostId],
+      mating: [fixture.matingId],
+      completed: [fixture.completedId],
+      expired: [fixture.expiredId],
+      removed: [fixture.removedId],
+    };
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await openList(page, 'posts', {});
+      assert.equal(await page.$$eval('.pupzy-post-queues a', (nodes) => nodes.length), 9);
+      for (const [queue, ids] of Object.entries(expected)) {
+        await page.click(`[data-testid="pupzy-post-queue-${queue}"]`);
+        await page.waitForFunction(
+          (expectedIds) => {
+            const found = [...document.querySelectorAll('tr[data-id]')].map((n) => n.dataset.id).sort();
+            return JSON.stringify(found) === JSON.stringify([...expectedIds].sort());
+          },
+          {},
+          ids,
+        );
+        assert.equal(
+          Number(await page.$eval(`[data-testid="pupzy-post-queue-${queue}"] span`, (n) => n.innerText)),
+          ids.length,
+        );
+        assert.equal(
+          await page.$eval(`[data-testid="pupzy-post-queue-${queue}"]`, (n) => n.getAttribute('aria-current')),
+          'page',
+        );
+        if (queue === 'rescue') {
+          assert.equal(new URL(page.url()).searchParams.get('sortBy'), 'urgency');
+          assert.equal((await listRowIds(page)).at(-1), moderate);
+        }
+      }
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('reviews a report case and returns to the same Inbox filter and second page', async () => {
+    const reporter = await insertUser('case-page-reporter');
+    await database.pool.query(
+      `WITH new_posts AS (
+      INSERT INTO posts(creator_id,post_type,title,description,status,moderation_status,city_id,coordinates)
+      SELECT $2,'ADOPTION','Paged case '||i,'Case evidence','ACTIVE','CLEAN',$3,ST_SetSRID(ST_MakePoint(31,30),4326) FROM generate_series(1,27) i RETURNING id)
+      INSERT INTO post_reports(post_id,reporter_id,reason,created_at) SELECT id,$1,'SPAM',now()-interval '2 days' FROM new_posts`,
+      [reporter, fixture.ownerId, principals.cityId],
+    );
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await openDashboard(page, '?kind=post_report&page=2');
+      await page.click('[data-testid="pupzy-case"][data-kind="post_report"] .pupzy-case-open');
+      await page.waitForSelector('[data-testid="pupzy-case-view"]');
+      await page.click('[data-testid="action-reviewWithNoAction"]');
+      await page.waitForSelector('#moderation-reason');
+      await page.type('#moderation-reason', 'Reviewed the full case; no action needed');
+      await page.click('[data-testid="moderation-action-submit"]');
+      await page.waitForSelector('[data-testid="pupzy-case-view"]');
+      assert.match(await page.$eval('[data-testid="pupzy-report-status"]', (n) => n.innerText), /Closed: no action/);
+      await page.click('[data-testid="pupzy-back-to-inbox"]');
+      await page.waitForSelector('[data-testid="pupzy-cases"]');
+      const query = new URL(page.url()).searchParams;
+      assert.equal(query.get('kind'), 'post_report');
+      assert.equal(query.get('page'), '2');
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('counts grouped cases separately from reports in the heading', async () => {
+    const reporter = await insertUser('extra-reporter');
+    await database.pool.query("INSERT INTO post_reports(post_id,reporter_id,reason) VALUES ($1,$2,'SPAM')", [
+      fixture.approvedPostId,
+      reporter,
+    ]);
+    const { page } = await createTestPage(browser);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await openDashboard(page, '?kind=post_report');
+      assert.equal(
+        await page.$eval('[data-testid="pupzy-cases-heading"]', (el) => el.innerText),
+        'Open Post Reports · 2 cases, 3 reports',
+      );
+      assert.equal((await inboxCases(page)).length, 2);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('counts the same open work in the Inbox tiles as the lists show, and filters the Inbox from a tile', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {
       await loginAsAdmin(page, baseUrl);
       await openDashboard(page);
 
-      const labels = await page.$$eval('[data-testid^="pupzy-queue-group-"]', (groups) =>
-        groups.map((group) => ({ id: group.dataset.testid, text: group.innerText })),
+      assert.equal(await page.$eval('h1', (element) => element.innerText), 'Inbox');
+      const tiles = await page.$$eval('[data-testid="pupzy-tiles"] button', (links) =>
+        links.map((link) => link.innerText),
       );
-      const groupText = labels.map((group) => group.text).join('\n');
-      for (const heading of ['Needs review', 'Rescue', 'Lost & found', 'Listings', 'History']) {
-        assert.match(groupText, new RegExp(heading.replace('&', '&')));
-      }
-      for (const queueId of [
-        'flagged',
-        'pending_moderation',
-        'open_post_reports',
-        'open_comment_reports',
-        'open_account_reports',
-        'rescue',
-        'lost_found',
-        'lost_pet',
-        'found_stray',
-        'adoption',
-        'products',
-        'mating',
-        'completed',
-        'expired',
-        'removed',
-      ]) {
-        assert.ok(await page.$(`[data-testid="pupzy-queue-${queueId}"]`), `queue ${queueId} must be visible`);
-      }
+      assert.deepEqual(
+        tiles.map((text) => text.split('\n')[1]),
+        ['Open Post Reports', 'Open Comment Reports', 'Open Account Reports', 'Flagged posts', 'Pending review'],
+      );
+      assert.equal(await tileCount(page, 'flagged'), '1', 'the flagged tile counts flagged active Posts');
+      assert.equal(await tileCount(page, 'pending'), '1');
+      assert.equal(await tileCount(page, 'post_report'), '2', 'open Reports are counted separately from flags');
+      assert.equal(await tileCount(page, 'comment_report'), '0');
+      assert.equal(await tileCount(page, 'account_report'), '0');
+      assert.match(
+        await page.$eval('[data-testid="pupzy-cases-heading"]', (el) => el.innerText),
+        /^All open cases · \d+$/,
+      );
+      console.log(`[bwg-05 evidence] inbox tiles ${await recordEvidence(page, '01-inbox-tiles', { fullPage: true })}`);
 
-      const flaggedLabel = await page.$eval('[data-testid="pupzy-queue-flagged"]', (element) => element.innerText);
-      assert.match(flaggedLabel, /Flagged — needs review/);
-      const flaggedCount = await page.$eval(
-        '[data-testid="pupzy-queue-flagged"] .pupzy-queue-button-count',
-        (element) => element.innerText,
+      await page.click('[data-testid="pupzy-tile-flagged"]');
+      await page.waitForFunction(() => new URL(location.href).searchParams.get('kind') === 'flagged');
+      await page.waitForFunction(
+        () =>
+          document.querySelectorAll('[data-testid="pupzy-case"]').length === 1 &&
+          document.querySelector('[data-testid="pupzy-case"]').dataset.kind === 'flagged',
       );
-      assert.equal(flaggedCount, '1', 'the flagged queue shows the count of flagged active Posts');
-      const openReportsCount = await page.$eval(
-        '[data-testid="pupzy-queue-open_post_reports"] .pupzy-queue-button-count',
-        (element) => element.innerText,
+      const flaggedCases = await inboxCases(page);
+      assert.equal(
+        flaggedCases.length,
+        Number(await tileCount(page, 'flagged')),
+        'the filtered Inbox holds the tile count',
       );
-      assert.equal(openReportsCount, '2', 'open Reports are counted separately from moderation flags');
-      console.log(
-        `[bwg-05 evidence] dashboard queues ${await recordEvidence(page, '01-dashboard-queues', { fullPage: true })}`,
-      );
+      assert.match(flaggedCases[0].title, /Flagged browser case/);
+      const pressed = (kind) =>
+        page.$eval(`[data-testid="pupzy-tile-${kind}"]`, (el) => el.getAttribute('aria-pressed'));
+      assert.equal(await pressed('flagged'), 'true');
+      assert.equal(await pressed('post_report'), 'false');
+      assert.equal(await page.$eval('[data-testid="pupzy-cases-heading"]', (el) => el.innerText), 'Flagged posts · 1');
+      await page.click('[data-testid="pupzy-tile-flagged"]');
+      await page.waitForFunction(() => !new URL(location.href).searchParams.has('kind'));
+      assert.equal(await pressed('flagged'), 'false', 'clicking the active tile goes back to all cases');
+      await page.click('[data-testid="pupzy-tile-flagged"]');
+      await page.waitForFunction(() => new URL(location.href).searchParams.get('kind') === 'flagged');
+      await page.click('[data-testid="pupzy-all-cases"]');
+      await page.waitForFunction(() => !new URL(location.href).searchParams.has('kind'));
+      await page.click('[data-testid="pupzy-tile-flagged"]');
+      await page.waitForFunction(() => document.querySelectorAll('[data-testid="pupzy-case"]').length === 1);
+      console.log(`[bwg-05 evidence] flagged filter ${await recordEvidence(page, '02-flagged-filter')}`);
 
-      await Promise.all([
-        page.waitForNavigation({ waitUntil: 'networkidle0' }),
-        page.click('[data-testid="pupzy-queue-flagged"]'),
-      ]);
-      const url = new URL(page.url());
-      assert.equal(url.pathname, '/admin/resources/posts');
-      assert.equal(url.searchParams.get('filters.moderation_status'), 'FLAGGED');
-      assert.equal(url.searchParams.get('filters.status'), 'ACTIVE');
-
+      // The same work is reachable as a Posts list with the same total.
+      await page.goto(`${baseUrl}/admin/resources/posts?filters.moderation_status=FLAGGED&filters.status=ACTIVE`, {
+        waitUntil: 'networkidle0',
+      });
       await page.waitForSelector('tr[data-id]');
-      const rowIds = await listRowIds(page);
-      assert.deepEqual(rowIds, [fixture.flaggedPostId], 'one labeled action reaches exactly the flagged Posts');
-      const listText = await page.evaluate(() => document.body.innerText);
-      assert.match(listText, /Flagged browser case/);
-      assert.doesNotMatch(listText, /Approved case with an open report/);
-      assert.equal(rowIds.length, Number(flaggedCount), 'the list page holds the same total as the queue count');
-      console.log(`[bwg-05 evidence] flagged queue ${await recordEvidence(page, '02-flagged-queue')}`);
+      assert.deepEqual(await listRowIds(page), [fixture.flaggedPostId]);
 
       assert.deepEqual(errors, []);
     } finally {
@@ -479,37 +599,49 @@ describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
       await loginAsAdmin(page, baseUrl);
       await openDashboard(page);
 
-      const reviewRows = await page.$$eval('[data-testid="pupzy-needs-review-table"] tbody tr', (rows) =>
-        rows.map((row) => row.innerText),
-      );
-      const flaggedRow = reviewRows.find((row) => row.includes('Flagged browser case'));
-      const pendingRow = reviewRows.find((row) => row.includes('Pending moderation browser case'));
-      assert.ok(flaggedRow, 'the flagged Post appears in the review table');
-      assert.ok(pendingRow, 'the pending-moderation Post appears in the review table');
-      assert.match(flaggedRow, /1/, 'the flagged Post shows its one open Report');
-      assert.match(pendingRow, /0/, 'pending moderation is not represented as an open Report');
+      const cases = await inboxCases(page);
+      const flaggedCase = cases.find((row) => row.title === 'Flagged browser case' && row.kind === 'flagged');
+      const pendingCase = cases.find((row) => row.title === 'Pending moderation browser case');
+      assert.ok(flaggedCase, 'the flagged Post appears in the Inbox');
+      assert.ok(pendingCase, 'the pending-moderation Post appears in the Inbox');
+      assert.equal(pendingCase.kind, 'pending');
+      assert.match(pendingCase.text, /Automatic review/);
       assert.equal(
-        reviewRows.some((row) => row.includes('Approved case with an open report')),
-        false,
-        'an approved Post is not presented as moderation work',
+        (pendingCase.text.match(/Automatic review/g) ?? []).length,
+        1,
+        'Automatic review appears once on a system row',
+      );
+      assert.doesNotMatch(pendingCase.text, /Waiting for automatic review/);
+      assert.equal(flaggedCase.count, '1 report', 'the flagged Post shows its one open Report');
+      assert.equal(pendingCase.count, 'No reports', 'pending moderation is not represented as an open Report');
+      const approved = cases.filter((row) => row.title === 'Approved case with an open report');
+      assert.deepEqual(
+        approved.map((row) => row.kind),
+        ['post_report'],
+        'an approved Post is shown only as a Post report, never as flagged or pending work',
       );
 
-      await Promise.all([
-        page.waitForNavigation({ waitUntil: 'networkidle0' }),
-        page.click('[data-testid="pupzy-queue-open_post_reports"]'),
-      ]);
-      const url = new URL(page.url());
-      assert.equal(url.pathname, '/admin/resources/post_reports');
-      assert.equal(url.searchParams.get('filters.review_state'), 'OPEN');
-      await page.waitForSelector('tr[data-id]');
+      await page.click('[data-testid="pupzy-tile-post_report"]');
+      await page.waitForFunction(() => document.querySelectorAll('[data-testid="pupzy-case"]').length === 2);
+      assert.equal(
+        await page.$eval('[data-testid="pupzy-cases-heading"]', (el) => el.innerText),
+        'Open Post Reports · 2 cases, 2 reports',
+      );
+      assert.deepEqual(
+        new Set((await inboxCases(page)).map((row) => row.title)),
+        new Set(['Flagged browser case', 'Approved case with an open report']),
+        'only Posts with unreviewed Reports are listed, once each',
+      );
+
+      await openList(page, 'post_reports', { review_state: 'OPEN' });
       const reportIds = await listRowIds(page);
       assert.deepEqual(
         new Set(reportIds),
         new Set([fixture.openReportOnFlaggedId, fixture.openReportOnApprovedId]),
-        'only unreviewed Reports are listed',
+        'the Reports list holds the same open work',
       );
       assert.equal(reportIds.includes(fixture.reviewedReportId), false, 'a reviewed Report leaves the open queue');
-      console.log(`[bwg-05 evidence] open reports queue ${await recordEvidence(page, '04-open-reports-queue')}`);
+      console.log(`[bwg-05 evidence] open reports list ${await recordEvidence(page, '04-open-reports-queue')}`);
 
       assert.deepEqual(errors, []);
     } finally {
@@ -517,48 +649,228 @@ describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
     }
   });
 
-  it('keeps queue navigation usable on a narrow screen with focus, hover and reduced-motion support', async () => {
+  it('groups the sidebar by task, collapses Records and hides super-admin entries from admins', async () => {
+    const sidebar = (page) =>
+      page.$eval('[data-css="sidebar-resources"]', (element) =>
+        element.innerText
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean),
+      );
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await openDashboard(page);
+      assert.deepEqual(await sidebar(page), [
+        'Navigation',
+        'Inbox',
+        'Reports',
+        'Post Reports',
+        'Comment Reports',
+        'Account Reports',
+        'Content',
+        'Posts',
+        'Comments',
+        'Post photos',
+        'People',
+        'Users',
+        'Places',
+        'Cities',
+        'Vet clinics',
+        'Admin',
+        'Audit log',
+        'Notifications',
+        'Records',
+      ]);
+      console.log(`[inbox evidence] admin sidebar ${await recordEvidence(page, '08-sidebar-admin')}`);
+
+      await page.evaluate(() => {
+        const label = Array.from(document.querySelectorAll('[data-css="sidebar-resources"] *')).find(
+          (element) => element.children.length === 0 && element.textContent.trim() === 'Records',
+        );
+        label.click();
+      });
+      await page.waitForFunction(() =>
+        document.querySelector('[data-css="sidebar-resources"]').innerText.includes('Saved posts'),
+      );
+      const opened = await sidebar(page);
+      assert.deepEqual(opened.slice(opened.indexOf('Records')), [
+        'Records',
+        'Rescue details',
+        'Lost and found details',
+        'Adoption details',
+        'Product details',
+        'Mating details',
+        'Saved posts',
+        'Upvotes',
+        'Contact requests',
+        'Adoption applications',
+        'Vet clinic location audits',
+      ]);
+
+      await page.goto(`${baseUrl}/admin/resources/post_reports`, { waitUntil: 'networkidle0' });
+      assert.equal(
+        await page.$eval(
+          '[data-css="sidebar-resources"] a[aria-current], [data-css="sidebar-resources"] a[href$="/resources/post_reports"]',
+          (el) => el.getAttribute('href'),
+        ),
+        '/admin/resources/post_reports',
+      );
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+
+    const superPage = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      await superPage.page.goto(`${baseUrl}/admin/login`, { waitUntil: 'networkidle0' });
+      assert.match(
+        await superPage.page.evaluate(() => localStorage.getItem('pupzy:nav-open')),
+        /"Records":true/,
+        'opening Records is remembered for this browser',
+      );
+      await superPage.page.evaluate(() => localStorage.clear());
+      await loginAsAdmin(superPage.page, baseUrl, 'admin@example.com', 'super secure password');
+      await superPage.page.waitForSelector('[data-testid="pupzy-tiles"]', { timeout: 60000 });
+      const entries = await sidebar(superPage.page);
+      assert.deepEqual(entries.slice(entries.indexOf('Places')), [
+        'Places',
+        'Cities',
+        'Vet clinics',
+        'Announcements',
+        'Admin',
+        'Admin users',
+        'Audit log',
+        'Notifications',
+        'Records',
+      ]);
+      console.log(`[inbox evidence] super admin sidebar ${await recordEvidence(superPage.page, '09-sidebar-super')}`);
+      assert.deepEqual(superPage.errors, []);
+    } finally {
+      await superPage.page.close();
+    }
+  });
+
+  it('opens a case from the Inbox, reviews it and goes back to the same filter and page', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      // 25 older cases push the fixture's two Post Reports onto page 2 of the oldest-first list.
+      const reporterId = await insertUser('journey-reporter');
+      for (let index = 0; index < 25; index += 1) {
+        const target = await insertPost(database.pool, {
+          userId: fixture.ownerId,
+          cityId: principals.cityId,
+          postType: 'PRODUCT',
+          title: `Older reported listing ${index}`,
+          status: 'ACTIVE',
+          moderationStatus: 'CLEAN',
+          marketCategory: 'FOOD',
+        });
+        await database.pool.query(
+          `INSERT INTO post_reports (post_id, reporter_id, reason, created_at)
+           VALUES ($1, $2, 'SPAM', now() - interval '10 days' - make_interval(mins => $3::int))`,
+          [target, reporterId, 25 - index],
+        );
+      }
+
+      await loginAsAdmin(page, baseUrl);
+      await openDashboard(page, '?kind=post_report&page=2');
+      const secondPage = await inboxCases(page);
+      assert.deepEqual(
+        secondPage.map((row) => row.title),
+        ['Flagged browser case', 'Approved case with an open report'],
+        'page 2 holds the two newest cases, the oldest first',
+      );
+      assert.match(await page.$eval('[data-testid="pupzy-pager"]', (el) => el.innerText), /Page 2 of 2/);
+
+      await page.click('[data-testid="pupzy-case"][data-kind="post_report"] [data-testid="pupzy-case-open"]');
+      await page.waitForSelector('[data-testid="pupzy-back-to-inbox"]', { timeout: 60000 });
+      assert.match(
+        page.url(),
+        new RegExp(`/admin/resources/post_reports/records/${fixture.openReportOnApprovedId}/show`),
+      );
+      assert.equal(
+        await page.$eval('[data-testid="pupzy-back-to-inbox"]', (el) => el.getAttribute('href')),
+        '/admin?kind=post_report&page=2',
+      );
+
+      await page.click('[data-testid="action-reviewWithNoAction"]');
+      await page.waitForSelector('[data-testid="moderation-action-submit"]', { timeout: 60000 });
+      assert.ok(await page.$('[data-testid="pupzy-back-to-inbox"]'), 'the action page also offers the way back');
+      await page.click('[data-testid="moderation-action-submit"]');
+      await page.waitForSelector('[data-testid="pupzy-report-status"]', { timeout: 60000 });
+      assert.match(await page.$eval('[data-testid="pupzy-report-status"]', (el) => el.innerText), /Closed: no action/);
+      console.log(`[inbox evidence] case after review ${await recordEvidence(page, '06-case-after-review')}`);
+
+      await page.click('[data-testid="pupzy-back-to-inbox"]');
+      await page.waitForSelector('[data-testid="pupzy-cases"]', { timeout: 60000 });
+      assert.equal(new URL(page.url()).search, '?kind=post_report&page=2', 'back to the same filter and page');
+      await page.waitForFunction(() => document.querySelectorAll('[data-testid="pupzy-case"]').length === 1);
+      const remaining = await inboxCases(page);
+      assert.deepEqual(
+        remaining.map((row) => row.title),
+        ['Flagged browser case'],
+        'the reviewed case left the Inbox',
+      );
+      assert.equal(await tileCount(page, 'post_report'), '26');
+      console.log(`[inbox evidence] back at page 2 ${await recordEvidence(page, '07-back-to-inbox')}`);
+
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('keeps Inbox navigation usable on a narrow screen with focus, hover and reduced-motion support', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    const selector = '[data-testid="pupzy-tile-flagged"]';
     try {
       await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
       await loginAsAdmin(page, baseUrl);
       await page.setViewport({ width: 390, height: 844 });
       await openDashboard(page);
 
-      const layout = await page.evaluate(() => {
-        const button = document.querySelector('[data-testid="pupzy-queue-flagged"]');
+      const layout = await page.evaluate((target) => {
+        const button = document.querySelector(target);
         const box = button.getBoundingClientRect();
+        const row = document.querySelector('[data-testid="pupzy-case"]').getBoundingClientRect();
         return {
           documentClientWidth: document.documentElement.clientWidth,
           documentScrollWidth: document.documentElement.scrollWidth,
           buttonLeft: box.left,
           buttonRight: box.right,
           buttonHeight: box.height,
+          rowRight: row.right,
           transitionSeconds: parseFloat(getComputedStyle(button).transitionDuration),
         };
-      });
+      }, selector);
       assert.equal(layout.documentScrollWidth, layout.documentClientWidth, 'no horizontal scroll at 390px');
       assert.ok(layout.buttonLeft >= 0 && layout.buttonRight <= layout.documentClientWidth + 1);
-      assert.ok(layout.buttonHeight >= 38, 'queue buttons keep a usable touch target');
+      assert.ok(layout.rowRight <= layout.documentClientWidth + 1, 'case rows fit the screen');
+      assert.ok(layout.buttonHeight >= 38, 'tiles keep a usable touch target');
       assert.ok(
         layout.transitionSeconds <= 0.001,
-        `reduced motion collapses queue button transitions (saw ${layout.transitionSeconds}s)`,
+        `reduced motion collapses tile transitions (saw ${layout.transitionSeconds}s)`,
+      );
+      assert.equal(
+        await page.$eval(selector, (element) => getComputedStyle(element).transitionProperty),
+        'none',
+        'reduced motion disables transitions entirely',
       );
       console.log(
-        `[bwg-05 evidence] narrow dashboard ${await recordEvidence(page, '05-narrow-dashboard', { fullPage: true })}`,
+        `[bwg-05 evidence] narrow inbox ${await recordEvidence(page, '05-narrow-dashboard', { fullPage: true })}`,
       );
 
       await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
-      const selector = '[data-testid="pupzy-queue-flagged"]';
-      const beforeHover = await page.$eval(selector, (element) => getComputedStyle(element).backgroundColor);
       const transitionSeconds = await page.$eval(selector, (element) =>
         parseFloat(getComputedStyle(element).transitionDuration),
       );
-      assert.ok(transitionSeconds > 0, 'queue buttons keep a brief transition when motion is allowed');
+      assert.ok(transitionSeconds > 0, 'tiles keep a brief transition when motion is allowed');
+      const beforeHover = await page.$eval(selector, (element) => getComputedStyle(element).transform);
       await page.hover(selector);
       await new Promise((resolve) => setTimeout(resolve, 300));
-      const afterHover = await page.$eval(selector, (element) => getComputedStyle(element).backgroundColor);
-      assert.notEqual(afterHover, beforeHover, 'hovering a queue button changes its surface');
+      const afterHover = await page.$eval(selector, (element) => getComputedStyle(element).transform);
+      assert.notEqual(afterHover, beforeHover, 'hovering a tile lifts it');
 
       await page.keyboard.press('Tab');
       await page.evaluate((target) => document.querySelector(target).focus(), selector);
@@ -567,13 +879,14 @@ describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
         focusVisible: document.activeElement?.matches(':focus-visible'),
         outlineWidth: getComputedStyle(document.activeElement).outlineWidth,
       }));
-      assert.equal(focus.testId, 'pupzy-queue-flagged');
-      assert.equal(focus.focusVisible, true, 'keyboard focus is visible on the queue button');
-      assert.notEqual(focus.outlineWidth, '0px', 'the focused queue button keeps a visible focus indicator');
+      assert.equal(focus.testId, 'pupzy-tile-flagged');
+      assert.equal(focus.focusVisible, true, 'keyboard focus is visible on the tile');
+      assert.notEqual(focus.outlineWidth, '0px', 'the focused tile keeps a visible focus indicator');
 
-      await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }), page.keyboard.press('Enter')]);
-      assert.match(page.url(), /filters\.moderation_status=FLAGGED/);
-      assert.deepEqual(await listRowIds(page), [fixture.flaggedPostId]);
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => new URL(location.href).searchParams.get('kind') === 'flagged');
+      await page.waitForFunction(() => document.querySelectorAll('[data-testid="pupzy-case"]').length === 1);
+      assert.match((await inboxCases(page))[0].title, /Flagged browser case/);
 
       assert.deepEqual(errors, []);
     } finally {

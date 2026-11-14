@@ -1,6 +1,13 @@
+import { listOnlyProperty } from '../review/list-summaries.js';
 import { virtualFilterOptions } from '../queue-filters.js';
 import { ENUMS } from '../enums.js';
-import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
+import {
+  attachReferenceLink,
+  attachShortUuid,
+  enumProperty,
+  noDeleteActions,
+  stripPopulatedPasswordHashes,
+} from './resource-helpers.js';
 import { searchVetClinicAddress } from './vet-clinics.geocoder.js';
 import {
   VET_CLINIC_COLUMNS,
@@ -84,7 +91,10 @@ export function buildVetClinicsResource(db, poolOrComponents = {}, componentsOrC
     ...virtualFilterOptions('vet_clinics'),
     id: { isTitle: false, isDisabled: true },
     name_english: { isTitle: true },
-    name_arabic: {},
+    name_arabic: { components: { list: components.ClinicList } },
+    is_active: { components: { list: components.ClinicList } },
+    phone_number: { components: { list: components.ClinicList } },
+    clinic_address: listOnlyProperty(components.ClinicList, 'string'),
     is_24_hours: { type: 'boolean' },
     facebook_url: {},
     source_key: { isDisabled: true, isVisible: { list: false, show: true, edit: false, filter: false } },
@@ -138,6 +148,7 @@ export function buildVetClinicsResource(db, poolOrComponents = {}, componentsOrC
   };
 
   attachShortUuid(properties, ['id'], components, ['show']);
+  attachReferenceLink(properties, ['city_id'], components, ['list', 'show']);
 
   return {
     resource: db.table('vet_clinics'),
@@ -262,16 +273,7 @@ export function buildVetClinicsResource(db, poolOrComponents = {}, componentsOrC
           },
         },
       },
-      listProperties: [
-        'name_english',
-        'name_arabic',
-        'city_id',
-        'phone_number',
-        'address_english',
-        'address_arabic',
-        'source',
-        'is_active',
-      ],
+      listProperties: ['name_english', 'name_arabic', 'city_id', 'is_active', 'phone_number', 'clinic_address'],
       showProperties: [
         'id',
         'name_english',

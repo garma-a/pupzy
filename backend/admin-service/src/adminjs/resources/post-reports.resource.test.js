@@ -121,7 +121,7 @@ describe('Report review status column', () => {
   it('is a read-only Status at the top of the show page and in the list for all three report resources', async () => {
     const { buildCommentReportsResource } = await import('./comment-reports.resource.js');
     const { buildAccountReportsResource } = await import('./account-reports.resource.js');
-    const components = { ReportStatus: 'ReportStatusMock' };
+    const components = { StatusBadge: 'StatusBadgeMock' };
     for (const build of [buildPostReportsResource, buildCommentReportsResource, buildAccountReportsResource]) {
       const resource = build(db, components);
       assert.equal(resource.options.showProperties[0], 'review_status');
@@ -129,8 +129,8 @@ describe('Report review status column', () => {
       const property = resource.options.properties.review_status;
       assert.equal(property.isSortable, false);
       assert.equal(property.isDisabled, true);
-      assert.equal(property.components.list, 'ReportStatusMock');
-      assert.equal(property.components.show, 'ReportStatusMock');
+      assert.equal(property.components.list, 'StatusBadgeMock');
+      assert.equal(property.components.show, 'StatusBadgeMock');
       assert.equal(resource.options.filterProperties.includes('review_status'), false);
     }
   });

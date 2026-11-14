@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { Badge, Box, H4, Text } from '@adminjs/design-system';
+import { Box, H4, Text } from '@adminjs/design-system';
 
+import { StatusBadge } from './status-badge-component.jsx';
 import { MediaThumb, useMediaLightbox } from './media-lightbox.jsx';
 import { RecordLink } from './record-link.jsx';
 
@@ -38,13 +39,13 @@ function Meta({ label, children }) {
   );
 }
 
-function ReportItem({ report, isCurrent }) {
+export function ReportItem({ report, isCurrent, resourceId = 'comment_reports' }) {
   return (
     <li className="pupzy-report-row" data-testid="pupzy-comment-report" style={{ listStyle: 'none' }}>
       <div className="pupzy-discussion-meta">
         <Text fontWeight="bold">{report.reasonLabel}</Text>
-        <Badge variant={report.isOpen ? 'warning' : 'default'}>{report.statusLabel}</Badge>
-        {isCurrent ? <Badge variant="info">This report</Badge> : null}
+        <StatusBadge value={report.statusState}>{report.statusLabel}</StatusBadge>
+        {isCurrent ? <StatusBadge value="CLOSED" label="This report"></StatusBadge> : null}
       </div>
       {report.details ? (
         <Text mt="xs" dir="auto">
@@ -80,7 +81,7 @@ function ReportItem({ report, isCurrent }) {
         </span>
         {isCurrent ? null : (
           <RecordLink
-            resourceId="comment_reports"
+            resourceId={resourceId}
             recordId={report.id}
             title="Open report"
             testId="pupzy-comment-report-link"
@@ -96,7 +97,7 @@ function ReportItem({ report, isCurrent }) {
  * hidden ones too, marked), where it sits, and every Comment Report raised
  * against it. Used on the Comment page and above the Comment Report fields.
  */
-export default function CommentEvidence({ record }) {
+export default function CommentEvidence({ record, showReports = true, linkToComment = false }) {
   const evidence = useMemo(() => parse(record?.params?.comment_evidence), [record]);
   const { openMedia, dialog } = useMediaLightbox();
   if (!evidence) return null;
@@ -105,14 +106,22 @@ export default function CommentEvidence({ record }) {
   return (
     <Box variant="white" mb="xl" data-testid="pupzy-comment-evidence" aria-label="Comment under review">
       <div className="pupzy-discussion-meta" style={{ marginBottom: 12 }}>
-        <H4 mb="0">{evidence.isReply ? 'Reply' : 'Comment'}</H4>
-        <Badge variant={evidence.status === 'ACTIVE' ? 'success' : 'warning'} data-testid="pupzy-comment-status">
+        <H4 mb="0">
+          {linkToComment ? (
+            <RecordLink resourceId="comments" recordId={evidence.id} title={evidence.isReply ? 'Reply' : 'Comment'} />
+          ) : evidence.isReply ? (
+            'Reply'
+          ) : (
+            'Comment'
+          )}
+        </H4>
+        <StatusBadge value={evidence.status} data-testid="pupzy-comment-status">
           {evidence.imagesHidden
             ? 'Images hidden from users'
             : evidence.hidden
               ? 'Hidden from users'
               : evidence.statusLabel}
-        </Badge>
+        </StatusBadge>
       </div>
 
       <div style={{ display: 'grid', gap: 6, marginBottom: 12 }}>
@@ -171,27 +180,31 @@ export default function CommentEvidence({ record }) {
                 onOpen={(trigger) => openMedia(media, index, trigger)}
               />
               {item.hiddenFromUsers ? (
-                <Badge variant="warning" data-testid="pupzy-image-hidden-badge">
+                <StatusBadge value="HIDDEN" data-testid="pupzy-image-hidden-badge">
                   Hidden from users
-                </Badge>
+                </StatusBadge>
               ) : null}
             </div>
           ))}
         </div>
       ) : null}
 
-      <H4 mb="sm" fontSize="sm">
-        Reports on this comment {reports.length ? `(${reports.length})` : ''}
-      </H4>
-      {reports.length ? (
-        <ul className="pupzy-report-list" style={{ padding: 0, margin: 0 }}>
-          {reports.map((report) => (
-            <ReportItem key={report.id} report={report} isCurrent={report.id === evidence.currentReportId} />
-          ))}
-        </ul>
-      ) : (
-        <Text color="grey60">No reports on this comment.</Text>
-      )}
+      {showReports ? (
+        <>
+          <H4 mb="sm" fontSize="sm">
+            Reports on this comment {reports.length ? `(${reports.length})` : ''}
+          </H4>
+          {reports.length ? (
+            <ul className="pupzy-report-list" style={{ padding: 0, margin: 0 }}>
+              {reports.map((report) => (
+                <ReportItem key={report.id} report={report} isCurrent={report.id === evidence.currentReportId} />
+              ))}
+            </ul>
+          ) : (
+            <Text color="grey60">No reports on this comment.</Text>
+          )}
+        </>
+      ) : null}
       {dialog}
     </Box>
   );

@@ -200,7 +200,7 @@ describe('AdminJS Redis-free dashboard and cache invalidation HTTP behavior', ()
     const dashboard = await getDashboard();
     assert.ok(dashboard.stats);
     assert.ok(dashboard.stats.computedAt);
-    assert.ok(Array.isArray(dashboard.needsReview));
+    assert.ok(Array.isArray(dashboard.inbox.items));
   });
 
   it('reuses cached stats within 120 seconds and recomputes after TTL expiry', async () => {
@@ -430,21 +430,21 @@ describe('AdminJS Redis-free dashboard and cache invalidation HTTP behavior', ()
       status: 'ACTIVE',
     });
 
-    // Verify it appears in needsReview
+    // Verify it appears in the Inbox as a pending-review case
     let dash = await getDashboard();
-    assert.ok(dash.needsReview.some((p) => p.id === postId));
+    assert.ok(dash.inbox.items.some((item) => item.kind === 'pending' && item.targetId === postId));
 
     // Approve the post
     const actionRes = await postAction(`/admin/api/resources/posts/records/${postId}/approvePost`);
     assert.equal(actionRes.status, 200);
     assert.equal(actionRes.data?.notice?.type, 'success');
 
-    // Next dashboard request immediately excludes the approved post from needsReview
+    // Next dashboard request immediately excludes the approved post from the Inbox
     dash = await getDashboard();
     assert.equal(
-      dash.needsReview.some((p) => p.id === postId),
+      dash.inbox.items.some((item) => item.targetId === postId),
       false,
-      'approved post must be immediately excluded from review queue',
+      'approved post must be immediately excluded from the Inbox',
     );
   });
 
@@ -522,6 +522,34 @@ describe('AdminJS Redis-free dashboard and cache invalidation HTTP behavior', ()
     assert.ok(freshBuilt.cache.cached, 'populates cache lazily after first request');
 
     await freshBuilt.sqlAdapterPool.destroy();
+  });
+
+  it('shares queue counts between Posts and Inbox and refreshes after a mutation or explicit refresh', async () => {
+    const queueCount = (data) => data.queues.find((q) => q.id === 'rescue').count;
+    const postsCount = async () => {
+      const response = await fetch(`${baseUrl}/admin/api/resources/posts/actions/list`, {
+        headers: { cookie: superCookie },
+      });
+      assert.equal(response.status, 200);
+      return (await response.json()).postQueues.find((q) => q.id === 'rescue').count;
+    };
+    const initial = queueCount(await getDashboard({ fresh: 'true' }));
+    const id = await insertPost(database.pool, {
+      ...principals,
+      postType: 'RESCUE',
+      title: 'Queue cache check',
+      moderationStatus: 'CLEAN',
+    });
+    assert.equal(await postsCount(), initial, 'a direct database write does not bypass the short TTL');
+    assert.equal(queueCount(await getDashboard()), initial);
+    assert.equal(queueCount(await getDashboard({ fresh: 'true' })), initial + 1);
+    assert.equal(await postsCount(), initial + 1, 'Posts reuses the Inbox refresh');
+    const removed = await postAction(`/admin/api/resources/posts/records/${id}/removePost`, {
+      reason: 'Queue cache check',
+    });
+    assert.equal(removed.data.notice.type, 'success');
+    assert.equal(await postsCount(), initial, 'existing moderation invalidation clears queue counts');
+    assert.equal(queueCount(await getDashboard()), initial);
   });
 
   it('rate-limits expensive dashboard requests and resource mutations', async () => {

@@ -3,7 +3,7 @@ import { ApiClient } from 'adminjs';
 
 import AnnouncementCard from './announcement-card.jsx';
 import { RecordLink } from './record-link.jsx';
-import { StateTag } from './record-status-component.jsx';
+import { StatusBadge } from './status-badge-component.jsx';
 
 const api = new ApiClient();
 const POLL_MS = 5000;
@@ -84,7 +84,7 @@ export default function AnnouncementShow({ record: initialRecord, resource }) {
       <header className="pupzy-announcement-header pupzy-announcement-show-header">
         <h2>{params.title_en}</h2>
         <span data-testid="announcement-status">
-          <StateTag value={params.status} />
+          <StatusBadge value={params.status} />
         </span>
       </header>
 
