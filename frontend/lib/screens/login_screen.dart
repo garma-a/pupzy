@@ -10,6 +10,7 @@ import '../localization/lang_provider.dart';
 import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/password_policy.dart';
 import '../widgets/language_toggle.dart';
 import 'app_shell.dart';
 import 'complete_profile_screen.dart';
@@ -67,8 +68,10 @@ class _LoginScreenState extends State<LoginScreen> {
     switch (e.code) {
       case 'email-already-in-use':
         return t(context, 'An account already exists for this email.', 'يوجد حساب مسجل بهذا البريد الإلكتروني بالفعل.');
+      // Rejected by the Firebase password policy (see password_policy.dart).
       case 'weak-password':
-        return t(context, 'Password must be at least 6 characters.', 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.');
+      case 'password-does-not-meet-requirements':
+        return passwordPolicySummary(context);
       case 'invalid-email':
         return t(context, 'Please enter a valid email address.', 'يرجى إدخال بريد إلكتروني صالح.');
       case 'user-not-found':
@@ -610,13 +613,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     tooltip: _obscurePassword ? t(context, 'Show password', 'إظهار كلمة المرور') : t(context, 'Hide password', 'إخفاء كلمة المرور'),
                   ),
                 ),
+                // A new password must meet the Firebase policy; signing in
+                // keeps accepting passwords set before it.
                 validator: (v) {
+                  if (_isSignUp) return validateNewPassword(context, v);
                   if (v == null || v.isEmpty) return t(context, 'Password is required', 'كلمة المرور مطلوبة');
                   if (v.length < 6) return t(context, 'At least 6 characters', '6 أحرف على الأقل');
                   return null;
                 },
               ),
               if (_isSignUp) ...[
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(start: AppSpacing.sm, top: AppSpacing.sm),
+                  child: PasswordRulesChecklist(controller: _passwordController),
+                ),
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: _confirmPasswordController,
