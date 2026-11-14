@@ -74,12 +74,12 @@ describe('AdminJS Posts Resource Configuration & City/Governorate Contracts', ()
   });
 
   it('wires ShortUuid component to id, creator_id, and moderated_by_admin_id', () => {
-    const customComponents = { ShortUuid: 'CustomShortUuid' };
+    const customComponents = { ShortUuid: 'CustomShortUuid', ReferenceLink: 'CustomReferenceLink' };
     const res = buildPostsResource(db, pool, customComponents);
     assert.equal(res.options.properties.id.components.list, 'CustomShortUuid');
     assert.equal(res.options.properties.id.components.show, 'CustomShortUuid');
-    assert.equal(res.options.properties.creator_id.components.show, 'CustomShortUuid');
-    assert.equal(res.options.properties.moderated_by_admin_id.components.show, 'CustomShortUuid');
+    assert.equal(res.options.properties.creator_id.components.show, 'CustomReferenceLink');
+    assert.equal(res.options.properties.moderated_by_admin_id.components.show, 'CustomReferenceLink');
   });
 
   it('strips populated password hashes from list and show after hooks', () => {

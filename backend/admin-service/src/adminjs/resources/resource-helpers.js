@@ -46,6 +46,37 @@ export function attachShortUuid(properties, fieldNames, components, locations = 
   }
 }
 
+/**
+ * Declares the read-only "Status" column of a report resource (see
+ * `reportStatusProperties`). Not sortable or filterable: it has no column.
+ */
+export function reportStatusProperty(components) {
+  return {
+    isSortable: false,
+    isDisabled: true,
+    isVisible: { list: true, show: true, edit: false, filter: false },
+    ...(components?.ReportStatus
+      ? { components: { list: components.ReportStatus, show: components.ReportStatus } }
+      : {}),
+  };
+}
+
+/**
+ * Gives foreign-key columns the `ReferenceLink` component: the referenced
+ * record's readable name, linked to its page. `ShortUuid` stays for a record's
+ * own `id`.
+ */
+export function attachReferenceLink(properties, fieldNames, components, locations = ['list', 'show']) {
+  if (!components?.ReferenceLink) return;
+  for (const field of fieldNames) {
+    const existing = properties[field] || {};
+    const newComponents = { ...(existing.components || {}) };
+    if (locations.includes('list')) newComponents.list = components.ReferenceLink;
+    if (locations.includes('show')) newComponents.show = components.ReferenceLink;
+    properties[field] = { ...existing, components: newComponents };
+  }
+}
+
 export function buildReadOnlyResource(db, table, navigation, properties = {}, extra = {}) {
   const { actions = {}, ...otherOptions } = extra;
 
@@ -103,4 +134,69 @@ export function attachCacheInvalidation(resourceDef, cache) {
       actions,
     },
   };
+}
+
+/**
+ * Columns of a referenced record that a list or show response may carry.
+ * AdminJS populates a whole row, which for a User includes `phone_number` and
+ * `last_known_location`; a reference only ever needs a name, an email and a
+ * picture. Anything not listed is removed. Other tables only lose
+ * `password_hash`.
+ */
+const POPULATED_ALLOW_LISTS = Object.freeze({
+  users: [
+    'id',
+    'email',
+    'full_name',
+    'full_name_arabic',
+    'profile_picture_url',
+    'is_verified',
+    'is_banned',
+    'home_city_id',
+  ],
+  admin_users: ['id', 'email', 'full_name', 'role', 'is_active'],
+});
+
+function sanitizeRecordPopulated(record, referenceByPath) {
+  for (const [path, populatedRecord] of Object.entries(record?.populated ?? {})) {
+    if (!populatedRecord?.params) continue;
+    const resourceId = populatedRecord.resourceId ?? referenceByPath.get(path);
+    const allowed = POPULATED_ALLOW_LISTS[resourceId];
+    if (allowed) {
+      for (const column of Object.keys(populatedRecord.params)) {
+        if (!allowed.includes(column)) delete populatedRecord.params[column];
+      }
+    } else {
+      delete populatedRecord.params.password_hash;
+    }
+    sanitizeRecordPopulated(populatedRecord, new Map());
+  }
+}
+
+/** `after` hook: strips private columns from every `record.populated.*` entry. */
+export function sanitizePopulatedRecords(response, _request, context) {
+  const referenceByPath = new Map();
+  for (const property of context?.resource?.properties?.() ?? []) {
+    const reference = property.reference?.();
+    if (reference) referenceByPath.set(property.name(), reference);
+  }
+  for (const record of response?.records ?? (response?.record ? [response.record] : [])) {
+    sanitizeRecordPopulated(record, referenceByPath);
+  }
+  return response;
+}
+
+const POPULATING_ACTIONS = ['list', 'show', 'search', 'edit', 'new'];
+
+/** Applies `sanitizePopulatedRecords` last to every action that returns populated records. */
+export function attachPopulatedSanitizer(resourceDef) {
+  const options = { ...(resourceDef.options ?? {}) };
+  const actions = { ...(options.actions ?? {}) };
+  for (const actionName of POPULATING_ACTIONS) {
+    const existing = actions[actionName];
+    if (existing?.isAccessible === false) continue;
+    const after = existing?.after ? [existing.after].flat() : [];
+    actions[actionName] = { ...existing, after: [...after, sanitizePopulatedRecords] };
+  }
+  return { ...resourceDef, options: { ...options, actions } };
 }

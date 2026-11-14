@@ -27,6 +27,7 @@ export const ENUMS = {
   accountReportSourceType: ['POST', 'COMMENT', 'CONTACT_REQUEST', 'ADOPTION_APPLICATION'],
   accountReportReviewOutcome: ['NO_ACTION', 'ACTION_TAKEN'],
   postReportReviewOutcome: ['NO_ACTION', 'ACTION_TAKEN'],
+  commentReportReviewOutcome: ['NO_ACTION', 'ACTION_TAKEN'],
   notificationType: [
     'NEW_UPVOTE',
     'POST_SAVED',
@@ -66,6 +67,9 @@ export const ENUMS = {
     'COMMENT_REMOVED',
     'POST_REPORT_REVIEWED_NO_ACTION',
     'ACCOUNT_REPORT_REVIEWED_NO_ACTION',
+    'USER_PROFILE_PHOTO_REMOVED',
+    'COMMENT_HIDDEN',
+    'COMMENT_IMAGES_HIDDEN',
   ],
   moderationTargetType: ['POST', 'USER', 'COMMENT'],
   commentStatus: ['ACTIVE', 'IMAGE_HIDDEN', 'HIDDEN', 'DELETED', 'REMOVED'],

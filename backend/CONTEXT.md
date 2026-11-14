@@ -82,6 +82,14 @@ _Avoid_: Comment flag, Post Report
 A moderation complaint submitted about another Pupzy Account's conduct rather than about one specific contribution.
 _Avoid_: User report, account flag, Post Report
 
+**Report Closure**:
+An administrator's recorded end to a Post Report, Comment Report, or Pupzy Account Report, with an outcome of "no action" or "action taken". Removing, hiding, or banning the reported target closes every open report on it as "action taken"; approving a Post closes its reports as "no action". A closed report is never reopened, even if its content is later restored.
+_Avoid_: Resolved report, dismissed report, Post Resolution
+
+**Flagged Post**:
+A Post an administrator has marked for closer review without removing it. Flagging keeps the Post's open reports open so the case stays in the moderation queue.
+_Avoid_: Reported Post, Post flag (for a user complaint)
+
 **Block**:
 A reversible, directional safety relationship initiated and owned by one Pupzy Account that creates mutual visibility and interaction isolation between it and another Pupzy Account. Only the initiating Pupzy Account can remove the Block.
 _Avoid_: Ban, suspension, mute, one-way hide

@@ -17,6 +17,7 @@ const db = { table: (name) => ({ name }) };
 const pool = {};
 const components = {
   ShortUuid: 'ShortUuidMock',
+  ReferenceLink: 'ReferenceLinkMock',
   ModerationAction: 'ModerationActionMock',
 };
 
@@ -84,7 +85,7 @@ describe('Moderation and Activity Tables Curation & Layout Rules (Task 10)', () 
       assert.ok(!postsRes.options.listProperties.includes('description'), 'description must not be in listProperties');
       assert.ok(!postsRes.options.listProperties.includes('coordinates'), 'coordinates must not be in listProperties');
       assert.equal(postsRes.options.properties.id.components.list, 'ShortUuidMock');
-      assert.equal(postsRes.options.properties.creator_id.components.show, 'ShortUuidMock');
+      assert.equal(postsRes.options.properties.creator_id.components.show, 'ReferenceLinkMock');
     });
 
     it('users resource declares concise scan-oriented columns and ShortUuid', () => {
@@ -99,13 +100,14 @@ describe('Moderation and Activity Tables Curation & Layout Rules (Task 10)', () 
         'created_at',
       ]);
       assert.equal(usersRes.options.properties.id.components.list, 'ShortUuidMock');
-      assert.equal(usersRes.options.properties.banned_by_admin_id.components.show, 'ShortUuidMock');
+      assert.equal(usersRes.options.properties.banned_by_admin_id.components.show, 'ReferenceLinkMock');
     });
 
     it('post_reports resource exposes moderation context without long details in list', () => {
       const reportsRes = buildPostReportsResource(db, components);
       assert.deepEqual(reportsRes.options.listProperties, [
         'id',
+        'review_status',
         'post_id',
         'reporter_id',
         'reason',
@@ -115,8 +117,8 @@ describe('Moderation and Activity Tables Curation & Layout Rules (Task 10)', () 
       assert.ok(!reportsRes.options.listProperties.includes('details'));
       assert.ok(reportsRes.options.showProperties.includes('details'));
       assert.equal(reportsRes.options.properties.id.components.list, 'ShortUuidMock');
-      assert.equal(reportsRes.options.properties.post_id.components.list, 'ShortUuidMock');
-      assert.equal(reportsRes.options.properties.reporter_id.components.list, 'ShortUuidMock');
+      assert.equal(reportsRes.options.properties.post_id.components.list, 'ReferenceLinkMock');
+      assert.equal(reportsRes.options.properties.reporter_id.components.list, 'ReferenceLinkMock');
     });
   });
 
@@ -134,8 +136,8 @@ describe('Moderation and Activity Tables Curation & Layout Rules (Task 10)', () 
       assert.ok(!contactRes.options.listProperties.includes('message'));
       assert.ok(contactRes.options.showProperties.includes('message'));
       assert.equal(contactRes.options.properties.id.components.list, 'ShortUuidMock');
-      assert.equal(contactRes.options.properties.post_id.components.list, 'ShortUuidMock');
-      assert.equal(contactRes.options.properties.requester_id.components.list, 'ShortUuidMock');
+      assert.equal(contactRes.options.properties.post_id.components.list, 'ReferenceLinkMock');
+      assert.equal(contactRes.options.properties.requester_id.components.list, 'ReferenceLinkMock');
     });
 
     it('adoption_applications resource uses concise columns and ShortUuid', () => {
@@ -151,8 +153,8 @@ describe('Moderation and Activity Tables Curation & Layout Rules (Task 10)', () 
       assert.ok(!adoptRes.options.listProperties.includes('why_adopt'));
       assert.ok(adoptRes.options.showProperties.includes('why_adopt'));
       assert.equal(adoptRes.options.properties.id.components.list, 'ShortUuidMock');
-      assert.equal(adoptRes.options.properties.target_post_id.components.list, 'ShortUuidMock');
-      assert.equal(adoptRes.options.properties.applicant_id.components.list, 'ShortUuidMock');
+      assert.equal(adoptRes.options.properties.target_post_id.components.list, 'ReferenceLinkMock');
+      assert.equal(adoptRes.options.properties.applicant_id.components.list, 'ReferenceLinkMock');
     });
 
     it('notifications resource uses intentional columns and ShortUuid', () => {
@@ -168,7 +170,7 @@ describe('Moderation and Activity Tables Curation & Layout Rules (Task 10)', () 
       assert.ok(!notifRes.options.listProperties.includes('body'));
       assert.ok(notifRes.options.showProperties.includes('body'));
       assert.equal(notifRes.options.properties.id.components.list, 'ShortUuidMock');
-      assert.equal(notifRes.options.properties.recipient_id.components.list, 'ShortUuidMock');
+      assert.equal(notifRes.options.properties.recipient_id.components.list, 'ReferenceLinkMock');
     });
   });
 

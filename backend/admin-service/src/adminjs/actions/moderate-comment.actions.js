@@ -5,6 +5,7 @@ import {
   readModerationReason,
   runModerationAction,
 } from './helpers.js';
+import { commentMediaPurgeUrls } from '../comment-media-url.js';
 import { isAnyAdmin } from '../rbac.js';
 
 function getRecordProperty(record, property) {
@@ -16,43 +17,19 @@ function getRecordProperty(record, property) {
   return record.params?.[property];
 }
 
-/**
- * Resolves CDN purge URLs according to configured delivery policy.
- * - Primary default: https://cdn.pupzy.net
- * - Fallback / override: COMMENT_MEDIA_CDN_BASE (or R2_PUBLIC_URL)
- * - Domain transitions: COMMENT_MEDIA_DOMAIN_TRANSITION=true / COMMENT_MEDIA_PREVIOUS_CDN_BASE
- */
-export function getCommentMediaPurgeUrls(storageKey) {
-  const primaryBase = 'https://cdn.pupzy.net';
-  const configuredBase = process.env.COMMENT_MEDIA_CDN_BASE || process.env.R2_PUBLIC_URL || primaryBase;
-  const cleanKey = storageKey.replace(/^\/+/, '');
-  const cleanConfigured = configuredBase.replace(/\/+$/, '');
-  const cleanPrimary = primaryBase.replace(/\/+$/, '');
+/** Resolves CDN purge URLs according to configured delivery policy (see `comment-media-url.js`). */
+export const getCommentMediaPurgeUrls = commentMediaPurgeUrls;
 
-  const urls = new Set();
-  urls.add(`${cleanConfigured}/${cleanKey}`);
-
-  const transitionEnv = process.env.COMMENT_MEDIA_DOMAIN_TRANSITION;
-  const isTransition =
-    transitionEnv === 'true' || transitionEnv === '1' || Boolean(process.env.COMMENT_MEDIA_PREVIOUS_CDN_BASE);
-
-  if (isTransition) {
-    urls.add(`${cleanPrimary}/${cleanKey}`);
-    const prev = process.env.COMMENT_MEDIA_PREVIOUS_CDN_BASE;
-    if (prev) {
-      urls.add(`${prev.replace(/\/+$/, '')}/${cleanKey}`);
-    }
-  }
-
-  return Array.from(urls);
-}
+/** Visible comments (not already hidden, removed or deleted) can be hidden by an administrator. */
+export const canHideComment = (status) => status === 'ACTIVE' || status === 'IMAGE_HIDDEN';
+/** Any comment that is not already permanently removed can be removed. */
+export const canRemoveComment = (status) => status !== 'REMOVED';
 
 function buildCommentAction(pool, component, definition, cache) {
   return {
     actionType: 'record',
     icon: definition.icon,
-    guard: definition.guard,
-    component: definition.requiresForm ? component : false,
+    component,
     isAccessible: isAnyAdmin,
     isVisible: definition.isVisible,
     handler: async (request, _response, context) => {
@@ -95,7 +72,6 @@ export function buildCommentActions(pool, component, cache) {
       {
         actionType: 'COMMENT_RESTORED',
         icon: 'Check',
-        guard: 'Mark this comment clean and restore visibility?',
         successMessage: 'Comment restored.',
         isVisible: (context) => {
           const record = context?.record;
@@ -134,59 +110,80 @@ export function buildCommentActions(pool, component, cache) {
             }
           }
           await client.query(`UPDATE comments SET status = 'ACTIVE', updated_at = now() WHERE id = $1`, [row.id]);
-          const closedCommentReportIds = await closeOpenCommentReports(client, row.id);
+          // Restoring is the opposite of acting on the Comment, so it leaves its reports alone: the hide or
+          // removal before it already closed them, and a closed report is never reopened.
+        },
+      },
+      cache,
+    ),
+    hideComment: buildCommentAction(
+      pool,
+      component,
+      {
+        actionType: 'COMMENT_HIDDEN',
+        icon: 'EyeOff',
+        reasonRequired: true,
+        successMessage: 'Comment hidden.',
+        isVisible: (context) => canHideComment(getRecordProperty(context?.record, 'status')),
+        validate: (row) => (canHideComment(row.status) ? null : 'Only visible comments can be hidden.'),
+        // Same effects as the API's automatic hiding (CommentsRepository.reportComment).
+        mutate: async (client, row, adminId) => {
+          await client.query(`UPDATE comments SET status = 'HIDDEN', updated_at = now() WHERE id = $1`, [row.id]);
+          await client.query(`DELETE FROM post_pins WHERE comment_id = $1`, [row.id]);
+          if (row.parent_id) {
+            const { rows: parentRows } = await client.query(`SELECT status FROM comments WHERE id = $1`, [
+              row.parent_id,
+            ]);
+            if (parentRows[0] && parentRows[0].status !== 'REMOVED') {
+              await client.query(
+                `UPDATE comments SET reply_count = GREATEST(0, reply_count - 1), updated_at = now() WHERE id = $1`,
+                [row.parent_id],
+              );
+              await client.query(
+                `UPDATE posts SET comment_count = GREATEST(0, comment_count - 1), updated_at = now() WHERE id = $1`,
+                [row.post_id],
+              );
+            }
+          } else {
+            await client.query(
+              `UPDATE posts SET comment_count = GREATEST(0, comment_count - 1), updated_at = now() WHERE id = $1`,
+              [row.post_id],
+            );
+          }
+          const closedCommentReportIds = await closeOpenCommentReports(client, row.id, adminId);
           return { closedCommentReportIds };
         },
       },
       cache,
     ),
-    inspectMedia: {
-      actionType: 'record',
-      icon: 'Image',
-      isAccessible: isAnyAdmin,
-      isVisible: (context) => {
-        const record = context?.record;
-        if (!record) return false;
-        const status = getRecordProperty(record, 'status');
-        return status === 'IMAGE_HIDDEN' || status === 'HIDDEN' || status === 'ACTIVE';
+    hideCommentImages: buildCommentAction(
+      pool,
+      component,
+      {
+        actionType: 'COMMENT_IMAGES_HIDDEN',
+        icon: 'Image',
+        reasonRequired: true,
+        successMessage: 'Comment images hidden.',
+        isVisible: (context) => getRecordProperty(context?.record, 'status') === 'ACTIVE',
+        validate: async (row, client) => {
+          if (row.status !== 'ACTIVE') return 'Only active comments can have their images hidden.';
+          const { rows } = await client.query(`SELECT 1 FROM comment_media WHERE comment_id = $1 LIMIT 1`, [row.id]);
+          return rows.length === 0 ? 'This comment has no images.' : null;
+        },
+        mutate: async (client, row, adminId) => {
+          await client.query(`UPDATE comments SET status = 'IMAGE_HIDDEN', updated_at = now() WHERE id = $1`, [row.id]);
+          const closedCommentReportIds = await closeOpenCommentReports(client, row.id, adminId);
+          return { closedCommentReportIds };
+        },
       },
-      handler: async (request, _response, context) => {
-        const { record, currentAdmin } = context;
-        const commentId = record.id();
-        const { rows: media } = await pool.query(
-          `SELECT id, storage_key, width, height, file_size_bytes, display_order, file_content_type, created_at
-           FROM comment_media
-           WHERE comment_id = $1
-           ORDER BY display_order ASC`,
-          [commentId],
-        );
-        const { rows: reports } = await pool.query(
-          `SELECT id, reporter_id, reason, details, reviewed_at, created_at
-           FROM comment_reports
-           WHERE comment_id = $1
-           ORDER BY created_at DESC`,
-          [commentId],
-        );
-
-        if (record.params) {
-          record.params.comment_media = JSON.stringify(media);
-          record.params.comment_reports = JSON.stringify(reports);
-        }
-
-        return {
-          record: record.toJSON(currentAdmin),
-          media,
-          reports,
-        };
-      },
-    },
+      cache,
+    ),
     removeComment: buildCommentAction(
       pool,
       component,
       {
         actionType: 'COMMENT_REMOVED',
         icon: 'Trash',
-        requiresForm: true,
         reasonRequired: true,
         successMessage: 'Comment permanently removed.',
         isVisible: (context) => {
@@ -273,7 +270,7 @@ export function buildCommentActions(pool, component, cache) {
           // Removal and restoration both close every currently open Comment
           // Report for this Comment or Reply in the same transaction as the
           // moderation action and its audit entry.
-          const closedCommentReportIds = await closeOpenCommentReports(client, row.id);
+          const closedCommentReportIds = await closeOpenCommentReports(client, row.id, adminId);
           return { closedCommentReportIds };
         },
       },

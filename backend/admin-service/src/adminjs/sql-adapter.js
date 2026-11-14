@@ -1,7 +1,7 @@
 import knexModule from 'knex';
 import { DatabaseMetadata, Property, Resource as SqlResource, ResourceMetadata } from '@adminjs/sql';
 import { ENUMS } from './enums.js';
-import { applyVirtualFilter, virtualFilterProperties } from './queue-filters.js';
+import { applyVirtualFilter, reportStatusProperties, virtualFilterProperties } from './queue-filters.js';
 
 /**
  * Enum-backed columns whose AdminJS filter is a value selector rather than a
@@ -91,8 +91,11 @@ function relationColumns(value) {
 export class QueueAwareSqlResource extends SqlResource {
   constructor(info) {
     const virtualProperties = virtualFilterProperties(info.tableName);
+    const displayProperties = reportStatusProperties(info.tableName);
     const resourceInfo =
-      virtualProperties.length > 0 ? { ...info, properties: [...info.properties, ...virtualProperties] } : info;
+      virtualProperties.length + displayProperties.length > 0
+        ? { ...info, properties: [...info.properties, ...virtualProperties, ...displayProperties] }
+        : info;
     super(resourceInfo);
     this.virtualFilterNames = new Set(virtualProperties.map((property) => property.name()));
   }

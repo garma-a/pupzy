@@ -227,15 +227,17 @@ export async function findLostReportType(client, postId) {
 /**
  * Atomically closes every open Post Report for a moderated Post and returns
  * the closed report ids so the caller can correlate them in the append-only
- * moderation audit metadata. Must run inside the action's own transaction.
+ * moderation audit metadata. `outcome` is `ACTION_TAKEN` (the default, for
+ * removal) or `NO_ACTION` (approving a Post: the reports were unfounded).
+ * Must run inside the action's own transaction.
  */
-export async function closeOpenPostReports(client, postId, adminUserId) {
+export async function closeOpenPostReports(client, postId, adminUserId, outcome = 'ACTION_TAKEN') {
   const { rows } = await client.query(
     `UPDATE post_reports
-     SET reviewed_at = now(), reviewed_by_admin_id = $2, review_outcome = 'ACTION_TAKEN'
+     SET reviewed_at = now(), reviewed_by_admin_id = $2, review_outcome = $3
      WHERE post_id = $1 AND reviewed_at IS NULL
      RETURNING id`,
-    [postId, adminUserId],
+    [postId, adminUserId, outcome],
   );
   return rows.map((row) => row.id);
 }
@@ -256,16 +258,37 @@ export async function closeOpenAccountReports(client, reportedUserId, adminUserI
 }
 
 /**
- * Atomically closes every open Comment Report for a Comment or Reply.
- * Comment Reports keep their existing reviewed_at closure marker only.
+ * Atomically closes every open Comment Report for a Comment or Reply as
+ * "action taken", recording the reviewing administrator, and returns the closed
+ * ids for the append-only audit metadata. Must run inside the action's own
+ * transaction.
  */
-export async function closeOpenCommentReports(client, commentId) {
+export async function closeOpenCommentReports(client, commentId, adminUserId) {
   const { rows } = await client.query(
     `UPDATE comment_reports
-     SET reviewed_at = now()
+     SET reviewed_at = now(), reviewed_by_admin_id = $2, review_outcome = 'ACTION_TAKEN'
      WHERE comment_id = $1 AND reviewed_at IS NULL
      RETURNING id`,
-    [commentId],
+    [commentId, adminUserId],
+  );
+  return rows.map((row) => row.id);
+}
+
+/**
+ * Closes every open Comment Report on the Comments of the given Posts as
+ * "action taken". A Removed Post exposes no discussion (CONTEXT.md; the API
+ * answers "not found" for its Comments), so reports about those Comments have
+ * nothing left to act on. The Comments themselves are not changed.
+ */
+export async function closeOpenCommentReportsForPosts(client, postIds, adminUserId) {
+  if (postIds.length === 0) return [];
+  const { rows } = await client.query(
+    `UPDATE comment_reports
+     SET reviewed_at = now(), reviewed_by_admin_id = $2, review_outcome = 'ACTION_TAKEN'
+     WHERE reviewed_at IS NULL
+       AND comment_id IN (SELECT id FROM comments WHERE post_id = ANY($1::uuid[]))
+     RETURNING id`,
+    [postIds, adminUserId],
   );
   return rows.map((row) => row.id);
 }

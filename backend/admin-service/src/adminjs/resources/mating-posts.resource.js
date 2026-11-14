@@ -1,6 +1,6 @@
 import { ENUMS } from '../enums.js';
 import {
-  attachShortUuid,
+  attachReferenceLink,
   buildReadOnlyResource,
   enumProperty,
   stripPopulatedPasswordHashes,
@@ -23,7 +23,7 @@ export function buildMatingPostsResource(db, components = {}) {
     mating_conditions: {},
   };
 
-  attachShortUuid(properties, ['post_id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['post_id'], components, ['list', 'show']);
 
   return buildReadOnlyResource(db, 'mating_posts', { name: 'Post Details', icon: 'Layers' }, properties, {
     actions: {

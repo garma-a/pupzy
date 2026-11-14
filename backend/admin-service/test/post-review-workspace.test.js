@@ -394,7 +394,7 @@ describe('Post review workspace HTTP boundary', () => {
     assert.equal(payload.reports.postReports[0].reasonLabel, 'Inappropriate content');
     assert.equal(payload.reports.postReports[1].id, reviewedPostReportId);
     assert.equal(payload.reports.postReports[1].isOpen, false);
-    assert.equal(payload.reports.postReports[1].statusLabel, 'Reviewed');
+    assert.equal(payload.reports.postReports[1].statusLabel, 'Closed: no action');
     assert.equal(payload.reports.postReports[1].reviewOutcomeLabel, 'No action');
     assert.equal(payload.reports.commentReports.length, 1);
     assert.equal(payload.reports.commentReports[0].commentId, comments[0]);
@@ -425,6 +425,31 @@ describe('Post review workspace HTTP boundary', () => {
       false,
       'the pagination API action stays hidden from the action bar',
     );
+  });
+
+  it('names an Arabic-name-only owner, commenter and reporter instead of calling them a deleted account', async () => {
+    const insertNamed = async (label, fullName, arabicName, email) =>
+      (
+        await database.pool.query(
+          `INSERT INTO users (firebase_user_id, email, full_name, full_name_arabic)
+           VALUES ($1, $2, $3, $4) RETURNING id`,
+          [`ref-name-${label}`, email, fullName, arabicName],
+        )
+      ).rows[0].id;
+    const ownerId = await insertNamed('owner', null, 'مالك البلاغ', 'owner-ar@example.com');
+    const commenterId = await insertNamed('commenter', '', null, 'commenter-email@example.com');
+    const reporterId = await insertNamed('reporter', null, 'هنا إبراهيم', 'reporter-ar@example.com');
+    const postId = await insertLostPost({ ownerId, title: 'Arabic name workspace' });
+    await insertComment({ postId, authorId: commenterId, text: 'Email-only commenter' });
+    await database.pool.query(`INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM')`, [
+      postId,
+      reporterId,
+    ]);
+
+    const { payload } = await fetchWorkspace(postId);
+    assert.equal(payload.post.owner.name, 'مالك البلاغ');
+    assert.equal(payload.discussion.items[0].authorName, 'commenter-email@example.com');
+    assert.equal(payload.reports.postReports[0].reporterName, 'هنا إبراهيم');
   });
 
   it('serves additional discussion pages to authenticated administrators and clamps invalid requests', async () => {

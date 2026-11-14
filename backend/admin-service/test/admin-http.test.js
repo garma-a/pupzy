@@ -16,6 +16,7 @@ import {
 } from '../src/adminjs/resources/vet-clinics.resource.js';
 import { ValidationError } from 'adminjs';
 import { buildAuthenticate } from '../src/auth/authenticate.js';
+import { referenceTitle } from '../src/adminjs/reference-title.js';
 import { buildCsrfProtection } from '../src/middleware/csrf.js';
 import { requireSameOrigin } from '../src/middleware/same-origin.js';
 import { TestDatabaseHelper, insertPost, seedPrincipals } from './test-database.helper.js';
@@ -2433,7 +2434,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
     // Approved fields were updated
     assert.equal(userRow.full_name, 'Sanctioned Updated User');
     assert.equal(userRow.full_name_arabic, 'اسم معتمد محدث');
-    assert.equal(userRow.profile_picture_url, 'https://example.com/avatar.jpg');
+    assert.equal(userRow.profile_picture_url, null, 'a photo URL typed into the edit form is ignored');
     assert.equal(userRow.language_preference, 'en');
     assert.equal(userRow.notifications_enabled, false);
     assert.equal(userRow.home_city_id, sidiGaberId);
@@ -3627,5 +3628,961 @@ describe('AdminJS HTTP security and resource behavior', () => {
       false,
       'a reviewed Post Report must no longer offer the no-action review action',
     );
+  });
+  describe('confirm-only moderation actions submit as POST, never GET', () => {
+    const frontendBody = { reason: '', alsoRemovePosts: false };
+    const apiHeaders = () => ({
+      cookie: `${superCookie}; ${superCsrf.cookie}`,
+      origin: baseUrl,
+      'x-xsrf-token': superCsrf.token,
+      'content-type': 'application/json',
+    });
+
+    async function insertBannedUser(suffix) {
+      const { rows } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name, is_banned, banned_by_admin_id, banned_at, ban_reason)
+         VALUES ($1, $2, 'Confirm Banned', true, $3, now(), 'spam') RETURNING id`,
+        [`confirm-only-${suffix}`, `confirm-only-${suffix}@example.com`, principals.adminId],
+      );
+      return rows[0].id;
+    }
+
+    async function insertHiddenComment(postId) {
+      const { rows } = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status, reply_count)
+         VALUES ($1, $2, 'Hidden for confirm-only test', 'HIDDEN', 0) RETURNING id`,
+        [postId, principals.userId],
+      );
+      return rows[0].id;
+    }
+
+    const cases = [
+      {
+        name: 'approvePost',
+        resource: 'posts',
+        setup: async () =>
+          insertPost(database.pool, {
+            userId: principals.userId,
+            cityId: principals.cityId,
+            title: 'Confirm-only approve',
+            moderationStatus: 'FLAGGED',
+          }),
+        read: async (id) =>
+          (await database.pool.query(`SELECT moderation_status AS state FROM posts WHERE id = $1`, [id])).rows[0].state,
+        before: 'FLAGGED',
+        after: 'CLEAN',
+        audit: 'POST_APPROVED',
+      },
+      {
+        name: 'restorePost',
+        resource: 'posts',
+        setup: async () =>
+          insertPost(database.pool, {
+            userId: principals.userId,
+            cityId: principals.cityId,
+            title: 'Confirm-only restore',
+            status: 'REMOVED',
+            moderationStatus: 'FLAGGED',
+          }),
+        read: async (id) =>
+          (await database.pool.query(`SELECT status AS state FROM posts WHERE id = $1`, [id])).rows[0].state,
+        before: 'REMOVED',
+        after: 'ACTIVE',
+        audit: 'POST_RESTORED',
+      },
+      {
+        name: 'unbanUser',
+        resource: 'users',
+        setup: async () => insertBannedUser('unban'),
+        read: async (id) =>
+          (await database.pool.query(`SELECT is_banned::text AS state FROM users WHERE id = $1`, [id])).rows[0].state,
+        before: 'true',
+        after: 'false',
+        audit: 'USER_UNBANNED',
+      },
+      {
+        name: 'restoreComment',
+        resource: 'comments',
+        setup: async () =>
+          insertHiddenComment(
+            await insertPost(database.pool, {
+              userId: principals.userId,
+              cityId: principals.cityId,
+              title: 'Confirm-only comment post',
+              moderationStatus: 'CLEAN',
+            }),
+          ),
+        read: async (id) =>
+          (await database.pool.query(`SELECT status AS state FROM comments WHERE id = $1`, [id])).rows[0].state,
+        before: 'HIDDEN',
+        after: 'ACTIVE',
+        audit: 'COMMENT_RESTORED',
+      },
+    ];
+
+    for (const testCase of cases) {
+      it(`${testCase.name} uses the form component, ignores GET and applies on POST`, async () => {
+        const id = await testCase.setup();
+        const recordUrl = `${baseUrl}/admin/api/resources/${testCase.resource}/records/${id}`;
+
+        // Without a form component AdminJS opens a guard modal and calls the API
+        // with no `data`, which ApiClient turns into a GET. The action must
+        // therefore declare the form component and no guard.
+        const show = await (await fetch(`${recordUrl}/show`, { headers: { cookie: superCookie } })).json();
+        const descriptor = show.record.recordActions.find((action) => action.name === testCase.name);
+        assert.ok(descriptor, `${testCase.name} is offered on the record`);
+        assert.equal(descriptor.component, 'ModerationAction', 'confirm-only action submits through the form');
+        assert.ok(!descriptor.guard, 'no guard modal that would send a GET');
+
+        const getResponse = await fetch(`${recordUrl}/${testCase.name}`, { headers: { cookie: superCookie } });
+        assert.equal(getResponse.status, 200);
+        assert.equal(await testCase.read(id), testCase.before, 'GET must not change state');
+        const getAudit = await database.pool.query(
+          `SELECT count(*)::int AS n FROM moderation_actions WHERE target_id = $1`,
+          [id],
+        );
+        assert.equal(getAudit.rows[0].n, 0, 'GET must not write an audit row');
+
+        const postResponse = await fetch(`${recordUrl}/${testCase.name}`, {
+          method: 'POST',
+          headers: apiHeaders(),
+          body: JSON.stringify(frontendBody),
+        });
+        assert.equal(postResponse.status, 200);
+        assert.equal((await postResponse.json()).notice?.type, 'success');
+        assert.equal(await testCase.read(id), testCase.after);
+        const postAudit = await database.pool.query(
+          `SELECT action_type, reason FROM moderation_actions WHERE target_id = $1`,
+          [id],
+        );
+        assert.deepEqual(
+          postAudit.rows.map((row) => row.action_type),
+          [testCase.audit],
+        );
+        assert.equal(postAudit.rows[0].reason, null, 'the reason stays optional');
+      });
+    }
+  });
+  describe('report review status and user edit return', () => {
+    const jsonHeaders = () => ({
+      cookie: `${superCookie}; ${superCsrf.cookie}`,
+      origin: baseUrl,
+      'x-xsrf-token': superCsrf.token,
+      'content-type': 'application/json',
+    });
+
+    it('serves the review fields the Status column derives from, including the reviewing admin', async () => {
+      const postId = await insertPost(database.pool, {
+        userId: principals.userId,
+        cityId: principals.cityId,
+        title: 'Report status post',
+        moderationStatus: 'FLAGGED',
+      });
+      const { rows } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason, details)
+         VALUES ($1, $2, 'SPAM', 'status check') RETURNING id`,
+        [postId, principals.userId],
+      );
+      const reportId = rows[0].id;
+
+      const listProps = async () => {
+        const list = await (
+          await fetch(`${baseUrl}/admin/api/resources/post_reports/actions/list`, { headers: { cookie: superCookie } })
+        ).json();
+        return list.records.find((record) => record.id === reportId).params;
+      };
+      const open = await listProps();
+      assert.equal(open.reviewed_at, null);
+
+      const reviewed = await fetch(
+        `${baseUrl}/admin/api/resources/post_reports/records/${reportId}/reviewWithNoAction`,
+        {
+          method: 'POST',
+          headers: jsonHeaders(),
+          body: JSON.stringify({ reason: '' }),
+        },
+      );
+      assert.equal((await reviewed.json()).notice.type, 'success');
+
+      const closed = await listProps();
+      assert.ok(closed.reviewed_at);
+      assert.equal(closed.review_outcome, 'NO_ACTION');
+
+      const show = await (
+        await fetch(`${baseUrl}/admin/api/resources/post_reports/records/${reportId}/show`, {
+          headers: { cookie: superCookie },
+        })
+      ).json();
+      assert.equal(show.record.populated.reviewed_by_admin_id.params.full_name, 'Test Admin');
+    });
+
+    it('sends a saved user edit to the user page, not the list', async () => {
+      const edited = await fetch(`${baseUrl}/admin/api/resources/users/records/${principals.userId}/edit`, {
+        method: 'POST',
+        headers: jsonHeaders(),
+        body: JSON.stringify({ full_name: 'Edited Through Http' }),
+      });
+      const body = await edited.json();
+      assert.equal(body.notice.type, 'success');
+      assert.equal(body.redirectUrl, `/admin/resources/users/records/${principals.userId}/show`);
+      const stored = await database.pool.query(`SELECT full_name FROM users WHERE id = $1`, [principals.userId]);
+      assert.equal(stored.rows[0].full_name, 'Edited Through Http');
+    });
+  });
+  describe('references carry what the ReferenceLink needs', () => {
+    const apiGet = async (path) =>
+      (await fetch(`${baseUrl}/admin/api/resources/${path}`, { headers: { cookie: superCookie } })).json();
+
+    it('returns the post, comment and reporter behind report ids, including an Arabic-name-only user', async () => {
+      const { rows: users } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name, full_name_arabic)
+         VALUES ('ref-arabic-only', 'ref-arabic@example.com', NULL, 'هنا إبراهيم') RETURNING id`,
+      );
+      const arabicId = users[0].id;
+      const postId = await insertPost(database.pool, {
+        userId: principals.userId,
+        cityId: principals.cityId,
+        title: 'Reference title post',
+        moderationStatus: 'FLAGGED',
+      });
+      const { rows: comments } = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status) VALUES ($1, $2, 'Seen near the bridge yesterday', 'ACTIVE') RETURNING id`,
+        [postId, arabicId],
+      );
+      const { rows: reports } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [postId, arabicId],
+      );
+      const { rows: commentReports } = await database.pool.query(
+        `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [comments[0].id, principals.userId],
+      );
+
+      const list = await apiGet('post_reports/actions/list');
+      const report = list.records.find((record) => record.id === reports[0].id);
+      assert.equal(report.populated.post_id.params.title, 'Reference title post');
+      assert.equal(referenceTitle('posts', report.populated.post_id.params, postId), 'Reference title post');
+      assert.equal(
+        referenceTitle('users', report.populated.reporter_id.params, arabicId),
+        'هنا إبراهيم',
+        'an Arabic-name-only user is named, never "Deleted account"',
+      );
+
+      const commentList = await apiGet('comment_reports/actions/list');
+      const commentReport = commentList.records.find((record) => record.id === commentReports[0].id);
+      assert.equal(
+        referenceTitle('comments', commentReport.populated.comment_id.params, comments[0].id),
+        'Seen near the bridge yesterday',
+      );
+
+      const shown = await apiGet(`post_reports/records/${reports[0].id}/show`);
+      assert.equal(shown.record.populated.post_id.params.title, 'Reference title post');
+    });
+
+    it('never leaks private user columns through populated references, in any list or show response', async () => {
+      await database.pool.query(
+        `UPDATE users SET phone_number = '+201000000000', last_known_location = ST_SetSRID(ST_MakePoint(31.2, 30.0), 4326)
+         WHERE id = $1`,
+        [principals.userId],
+      );
+      const postId = await insertPost(database.pool, {
+        userId: principals.userId,
+        cityId: principals.cityId,
+        title: 'Privacy check',
+        moderationStatus: 'FLAGGED',
+      });
+      const { rows } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason, reviewed_at, reviewed_by_admin_id, review_outcome)
+         VALUES ($1, $2, 'SPAM', now(), $3, 'NO_ACTION') RETURNING id`,
+        [postId, principals.userId, principals.adminId],
+      );
+      await database.pool.query(
+        `INSERT INTO moderation_actions (admin_user_id, action_type, target_type, target_id) VALUES ($1, 'USER_UNBANNED', 'USER', $2)`,
+        [principals.adminId, principals.userId],
+      );
+
+      const responses = [
+        await apiGet('post_reports/actions/list'),
+        await apiGet(`post_reports/records/${rows[0].id}/show`),
+        await apiGet('moderation_actions/actions/list'),
+        await apiGet('posts/actions/list'),
+      ];
+      for (const response of responses) {
+        const populated = JSON.stringify((response.records ?? [response.record]).map((record) => record.populated));
+        assert.doesNotMatch(populated, /phone_number|last_known_location|password_hash|firebase_user_id/);
+      }
+      const report = responses[1].record.populated;
+      assert.equal(report.reporter_id.params.email, 'user@example.com', 'a reference keeps what it needs');
+      assert.equal(report.reviewed_by_admin_id.params.full_name, 'Test Admin');
+    });
+
+    it('resolves Moderation Action targets by type with one query per type and flags rows that no longer exist', async () => {
+      const postIds = [];
+      for (const title of ['Audit one', 'Audit two', 'Audit three']) {
+        postIds.push(await insertPost(database.pool, { userId: principals.userId, cityId: principals.cityId, title }));
+      }
+      const { rows: comment } = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status) VALUES ($1, $2, 'Audit comment', 'ACTIVE') RETURNING id`,
+        [postIds[0], principals.userId],
+      );
+      const missingId = '00000000-0000-7000-8000-000000000abc';
+      const targets = [
+        ['POST_FLAGGED', 'POST', postIds[0]],
+        ['POST_FLAGGED', 'POST', postIds[1]],
+        ['POST_FLAGGED', 'POST', postIds[2]],
+        ['COMMENT_REMOVED', 'COMMENT', comment[0].id],
+        ['USER_UNBANNED', 'USER', principals.userId],
+        ['POST_FLAGGED', 'POST', missingId],
+      ];
+      for (const [actionType, targetType, targetId] of targets) {
+        await database.pool.query(
+          `INSERT INTO moderation_actions (admin_user_id, action_type, target_type, target_id) VALUES ($1, $2, $3, $4)`,
+          [principals.adminId, actionType, targetType, targetId],
+        );
+      }
+
+      const queries = [];
+      const originalQuery = database.pool.query;
+      database.pool.query = function (...args) {
+        queries.push(String(args[0]?.text ?? args[0]));
+        return originalQuery.apply(this, args);
+      };
+      let list;
+      try {
+        list = await apiGet('moderation_actions/actions/list');
+      } finally {
+        database.pool.query = originalQuery;
+      }
+
+      const lookups = (table) => queries.filter((sql) => new RegExp(`FROM ${table} WHERE id = ANY`).test(sql));
+      assert.equal(lookups('posts').length, 1, 'one posts query for every Post target on the page');
+      assert.equal(lookups('comments').length, 1);
+      assert.equal(lookups('users').length, 1);
+
+      const byTarget = (id) => list.records.find((record) => record.params.target_id === id).populated.target_id;
+      assert.equal(byTarget(postIds[1]).resourceId, 'posts');
+      assert.equal(byTarget(postIds[1]).params.title, 'Audit two');
+      assert.equal(byTarget(postIds[1]).missing, false);
+      assert.equal(byTarget(comment[0].id).params.text, 'Audit comment');
+      assert.equal(byTarget(principals.userId).resourceId, 'users');
+      assert.equal(byTarget(missingId).missing, true, 'a target that no longer exists is flagged');
+    });
+
+    it('resolves an Account Report source by its type', async () => {
+      const postId = await insertPost(database.pool, {
+        userId: principals.userId,
+        cityId: principals.cityId,
+        title: 'Source post',
+      });
+      const { rows: other } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name) VALUES ('ref-source-user', 'ref-source@example.com', 'Source User') RETURNING id`,
+      );
+      const { rows } = await database.pool.query(
+        `INSERT INTO account_reports (reporter_id, reported_user_id, reason, source_type, source_id)
+         VALUES ($1, $2, 'SPAM', 'POST', $3) RETURNING id`,
+        [other[0].id, principals.userId, postId],
+      );
+      const shown = await apiGet(`account_reports/records/${rows[0].id}/show`);
+      assert.equal(shown.record.populated.source_id.resourceId, 'posts');
+      assert.equal(shown.record.populated.source_id.params.title, 'Source post');
+      assert.equal(shown.record.populated.reported_user_id.params.email, 'user@example.com');
+    });
+  });
+  describe('comment evidence on the Comment and Comment Report pages', () => {
+    const apiGet = async (path) =>
+      (await fetch(`${baseUrl}/admin/api/resources/${path}`, { headers: { cookie: superCookie } })).json();
+
+    it('returns the full text, image URLs, author, Post and every report for a Comment and for its Comment Report', async () => {
+      const previousBase = process.env.COMMENT_MEDIA_CDN_BASE;
+      process.env.COMMENT_MEDIA_CDN_BASE = 'https://media.example.test/';
+      try {
+        const { rows: arabic } = await database.pool.query(
+          `INSERT INTO users (firebase_user_id, email, full_name_arabic) VALUES ('evidence-arabic', 'evidence-arabic@example.com', 'هنا إبراهيم') RETURNING id`,
+        );
+        const postId = await insertPost(database.pool, {
+          userId: principals.userId,
+          cityId: principals.cityId,
+          title: 'Evidence post',
+          postType: 'RESCUE',
+        });
+        const { rows: parent } = await database.pool.query(
+          `INSERT INTO comments (post_id, author_id, text, status) VALUES ($1, $2, 'Parent comment text', 'ACTIVE') RETURNING id`,
+          [postId, principals.userId],
+        );
+        const { rows: reply } = await database.pool.query(
+          `INSERT INTO comments (post_id, author_id, parent_id, text, status)
+           VALUES ($1, $2, $3, 'رد على التعليق مع صورتين', 'IMAGE_HIDDEN') RETURNING id`,
+          [postId, arabic[0].id, parent[0].id],
+        );
+        for (const [order, key] of [
+          [0, 'comments/evidence/one.webp'],
+          [1, '/comments/evidence/two.webp'],
+        ]) {
+          await database.pool.query(
+            `INSERT INTO comment_media (comment_id, storage_key, sha256, width, height, file_size_bytes, file_content_type, display_order)
+             VALUES ($1, $2, repeat('c', 64), 300, 100, 1000, 'image/webp', $3)`,
+            [reply[0].id, key, order],
+          );
+        }
+        const { rows: reports } = await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason, details)
+           VALUES ($1, $2, 'SPAM', 'first report') RETURNING id`,
+          [reply[0].id, principals.userId],
+        );
+        await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason, reviewed_at) VALUES ($1, $2, 'OTHER', now())`,
+          [reply[0].id, arabic[0].id],
+        );
+
+        const queries = [];
+        const originalQuery = database.pool.query;
+        database.pool.query = function (...args) {
+          queries.push(String(args[0]?.text ?? args[0]));
+          return originalQuery.apply(this, args);
+        };
+        let shown;
+        let reportShown;
+        try {
+          shown = await apiGet(`comments/records/${reply[0].id}/show`);
+          reportShown = await apiGet(`comment_reports/records/${reports[0].id}/show`);
+        } finally {
+          database.pool.query = originalQuery;
+        }
+        assert.equal(queries.filter((sql) => sql.includes('FROM comment_media')).length, 2, 'one media query per page');
+
+        for (const response of [shown, reportShown]) {
+          const evidence = JSON.parse(response.record.params.comment_evidence);
+          assert.equal(evidence.text, 'رد على التعليق مع صورتين');
+          assert.deepEqual(
+            evidence.media.map((item) => item.url),
+            [
+              'https://media.example.test/comments/evidence/one.webp',
+              'https://media.example.test/comments/evidence/two.webp',
+            ],
+          );
+          assert.equal(evidence.media[0].hiddenFromUsers, true);
+          assert.equal(evidence.imagesHidden, true);
+          assert.equal(evidence.author.name, 'هنا إبراهيم');
+          assert.equal(evidence.post.title, 'Evidence post');
+          assert.equal(evidence.parent.excerpt, 'Parent comment text');
+          assert.equal(evidence.reports.length, 2);
+          assert.equal(evidence.reports.filter((report) => report.isOpen).length, 1);
+          assert.ok(!JSON.stringify(evidence).includes('storage_key'));
+        }
+        assert.equal(JSON.parse(shown.record.params.comment_evidence).currentReportId, null);
+        assert.equal(JSON.parse(reportShown.record.params.comment_evidence).currentReportId, reports[0].id);
+        assert.equal(
+          shown.record.recordActions.some((action) => action.name === 'inspectMedia'),
+          false,
+          'the dead Inspect Media action is gone',
+        );
+      } finally {
+        if (previousBase === undefined) delete process.env.COMMENT_MEDIA_CDN_BASE;
+        else process.env.COMMENT_MEDIA_CDN_BASE = previousBase;
+      }
+    });
+  });
+  describe('Remove Profile Photo', () => {
+    const headers = () => ({
+      cookie: `${superCookie}; ${superCsrf.cookie}`,
+      origin: baseUrl,
+      'x-xsrf-token': superCsrf.token,
+      'content-type': 'application/json',
+    });
+    const insertPhotoUser = async (
+      label,
+      { key = null, url = 'https://cdn.example.test/avatar.png', changedAt = null } = {},
+    ) =>
+      (
+        await database.pool.query(
+          `INSERT INTO users (firebase_user_id, email, full_name, profile_picture_url, profile_photo_storage_key, profile_photo_changed_at)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+          [`photo-${label}`, `photo-${label}@example.com`, `Photo ${label}`, url, key, changedAt],
+        )
+      ).rows[0].id;
+    const state = async (id) =>
+      (
+        await database.pool.query(
+          `SELECT profile_picture_url, profile_photo_storage_key, profile_photo_changed_at FROM users WHERE id = $1`,
+          [id],
+        )
+      ).rows[0];
+
+    it('clears the photo, sets the change marker, queues one deletion and audits it, only on POST', async () => {
+      const id = await insertPhotoUser('owned', { key: 'profiles/photo-owned.png' });
+      const url = `${baseUrl}/admin/api/resources/users/records/${id}`;
+
+      const show = await (await fetch(`${url}/show`, { headers: { cookie: superCookie } })).json();
+      const descriptor = show.record.recordActions.find((action) => action.name === 'removeProfilePhoto');
+      assert.ok(descriptor, 'a user with a photo is offered the action');
+      assert.equal(descriptor.component, 'ModerationAction');
+
+      const getResponse = await fetch(`${url}/removeProfilePhoto`, { headers: { cookie: superCookie } });
+      assert.equal(getResponse.status, 200);
+      assert.equal((await state(id)).profile_photo_storage_key, 'profiles/photo-owned.png', 'GET changes nothing');
+      assert.equal((await database.pool.query(`SELECT count(*)::int AS n FROM media_deletion_work`)).rows[0].n, 0);
+
+      const noReason = await fetch(`${url}/removeProfilePhoto`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ reason: '  ' }),
+      });
+      assert.equal((await noReason.json()).notice.type, 'error', 'a reason is required');
+      assert.equal((await state(id)).profile_photo_storage_key, 'profiles/photo-owned.png');
+
+      const response = await fetch(`${url}/removeProfilePhoto`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ reason: 'Inappropriate photo', alsoRemovePosts: false }),
+      });
+      assert.equal((await response.json()).notice.type, 'success');
+
+      const after = await state(id);
+      assert.equal(after.profile_picture_url, null);
+      assert.equal(after.profile_photo_storage_key, null);
+      assert.ok(after.profile_photo_changed_at, 'the change marker keeps the sign-in provider picture away');
+      const work = await database.pool.query(
+        `SELECT storage_key, cdn_url, status, attempts FROM media_deletion_work WHERE storage_key = 'profiles/photo-owned.png'`,
+      );
+      assert.deepEqual(work.rows, [
+        { storage_key: 'profiles/photo-owned.png', cdn_url: '', status: 'PENDING', attempts: 0 },
+      ]);
+      const audit = await database.pool.query(
+        `SELECT action_type, target_type, reason, admin_user_id FROM moderation_actions WHERE target_id = $1`,
+        [id],
+      );
+      assert.deepEqual(audit.rows, [
+        {
+          action_type: 'USER_PROFILE_PHOTO_REMOVED',
+          target_type: 'USER',
+          reason: 'Inappropriate photo',
+          admin_user_id: principals.adminId,
+        },
+      ]);
+
+      // Removing again is refused and queues nothing more.
+      const again = await fetch(`${url}/removeProfilePhoto`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ reason: 'Again' }),
+      });
+      assert.equal((await again.json()).notice.type, 'error');
+      assert.equal(
+        (
+          await database.pool.query(
+            `SELECT count(*)::int AS n FROM media_deletion_work WHERE storage_key = 'profiles/photo-owned.png'`,
+          )
+        ).rows[0].n,
+        1,
+      );
+    });
+
+    it('treats a provider-supplied picture like the app: cleared and marked, with nothing to delete', async () => {
+      const id = await insertPhotoUser('provider', { key: null, url: 'https://lh3.example.test/provider.png' });
+      const before = (await database.pool.query(`SELECT count(*)::int AS n FROM media_deletion_work`)).rows[0].n;
+      const response = await fetch(`${baseUrl}/admin/api/resources/users/records/${id}/removeProfilePhoto`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ reason: 'Not appropriate' }),
+      });
+      assert.equal((await response.json()).notice.type, 'success');
+      const after = await state(id);
+      assert.equal(after.profile_picture_url, null);
+      assert.ok(after.profile_photo_changed_at);
+      assert.equal((await database.pool.query(`SELECT count(*)::int AS n FROM media_deletion_work`)).rows[0].n, before);
+
+      // The app's login sync only applies the provider picture while the marker is unset,
+      // so it can no longer come back (UsersRepository.linkFirebaseUserId).
+      const relinked = await database.pool.query(
+        `UPDATE users
+         SET profile_picture_url = CASE WHEN profile_photo_changed_at IS NULL THEN 'https://lh3.example.test/provider.png' ELSE profile_picture_url END
+         WHERE id = $1 RETURNING profile_picture_url`,
+        [id],
+      );
+      assert.equal(relinked.rows[0].profile_picture_url, null);
+    });
+
+    it('is not offered to a user without a photo and cannot be forced', async () => {
+      const id = await insertPhotoUser('none', { url: null });
+      const show = await (
+        await fetch(`${baseUrl}/admin/api/resources/users/records/${id}/show`, { headers: { cookie: superCookie } })
+      ).json();
+      assert.equal(
+        show.record.recordActions.some((action) => action.name === 'removeProfilePhoto'),
+        false,
+      );
+      const response = await fetch(`${baseUrl}/admin/api/resources/users/records/${id}/removeProfilePhoto`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ reason: 'Try anyway' }),
+      });
+      assert.equal((await response.json()).notice.type, 'error');
+      assert.equal(
+        (await database.pool.query(`SELECT count(*)::int AS n FROM moderation_actions WHERE target_id = $1`, [id]))
+          .rows[0].n,
+        0,
+      );
+    });
+
+    it('lets a plain ADMIN remove a photo, and ignores a photo URL sent through the edit form', async () => {
+      const id = await insertPhotoUser('admin', { key: 'profiles/photo-admin.png' });
+      const edit = await fetch(`${baseUrl}/admin/api/resources/users/records/${id}/edit`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ full_name: 'Edited', profile_picture_url: 'https://evil.example/x.png' }),
+      });
+      assert.equal((await edit.json()).notice.type, 'success');
+      assert.equal(
+        (await state(id)).profile_picture_url,
+        'https://cdn.example.test/avatar.png',
+        'the edit left the photo alone',
+      );
+
+      const staffHeaders = {
+        cookie: `${staffCookie}; ${staffCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': staffCsrf.token,
+        'content-type': 'application/json',
+      };
+      const response = await fetch(`${baseUrl}/admin/api/resources/users/records/${id}/removeProfilePhoto`, {
+        method: 'POST',
+        headers: staffHeaders,
+        body: JSON.stringify({ reason: 'Staff removal' }),
+      });
+      assert.equal((await response.json()).notice.type, 'success');
+      assert.equal((await state(id)).profile_picture_url, null);
+    });
+  });
+  describe("closing a target's open reports whenever it is actioned", () => {
+    const headers = () => ({
+      cookie: `${superCookie}; ${superCsrf.cookie}`,
+      origin: baseUrl,
+      'x-xsrf-token': superCsrf.token,
+      'content-type': 'application/json',
+    });
+    const act = async (resource, id, action, payload = { reason: 'Policy violation' }) => {
+      const response = await fetch(`${baseUrl}/admin/api/resources/${resource}/records/${id}/${action}`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify(payload),
+      });
+      return (await response.json()).notice;
+    };
+    const newUser = async (label, { banned = false } = {}) =>
+      (
+        await database.pool.query(
+          `INSERT INTO users (firebase_user_id, email, full_name, is_banned, banned_at, banned_by_admin_id)
+           VALUES ($1, $2, $3, $4, CASE WHEN $4 THEN now() END, CASE WHEN $4 THEN $5::uuid END) RETURNING id`,
+          [`close-${label}`, `close-${label}@example.com`, `Close ${label}`, banned, principals.adminId],
+        )
+      ).rows[0].id;
+    const newPost = (userId, title) =>
+      insertPost(database.pool, { userId, cityId: principals.cityId, title, moderationStatus: 'CLEAN' });
+    const newComment = async (postId, authorId, text = 'A comment', parentId = null) =>
+      (
+        await database.pool.query(
+          `INSERT INTO comments (post_id, author_id, parent_id, text, status) VALUES ($1, $2, $3, $4, 'ACTIVE') RETURNING id`,
+          [postId, authorId, parentId, text],
+        )
+      ).rows[0].id;
+    const reportPost = async (postId, reporterId) =>
+      (
+        await database.pool.query(
+          `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [postId, reporterId],
+        )
+      ).rows[0].id;
+    const reportComment = async (commentId, reporterId) =>
+      (
+        await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [commentId, reporterId],
+        )
+      ).rows[0].id;
+    const closed = async (table, id) =>
+      (
+        await database.pool.query(
+          `SELECT reviewed_at IS NOT NULL AS closed, review_outcome, reviewed_by_admin_id FROM ${table} WHERE id = $1`,
+          [id],
+        )
+      ).rows[0];
+    const audit = async (targetId, type) =>
+      (
+        await database.pool.query(`SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = $2`, [
+          targetId,
+          type,
+        ])
+      ).rows.map((row) => row.metadata);
+    const expectClosedByAction = async (table, id) =>
+      assert.deepEqual(await closed(table, id), {
+        closed: true,
+        review_outcome: 'ACTION_TAKEN',
+        reviewed_by_admin_id: principals.adminId,
+      });
+
+    it('removing a Post closes its Post Reports and the Comment Reports on its discussion, and restoring reopens nothing', async () => {
+      const owner = await newUser('remove-owner');
+      const reporter = await newUser('remove-reporter');
+      const postId = await newPost(owner, 'Post to remove');
+      const otherPostId = await newPost(owner, 'Other post stays');
+      const commentId = await newComment(postId, owner);
+      const otherCommentId = await newComment(otherPostId, owner);
+      const postReport = await reportPost(postId, reporter);
+      const commentReport = await reportComment(commentId, reporter);
+      const otherCommentReport = await reportComment(otherCommentId, reporter);
+
+      assert.equal((await act('posts', postId, 'removePost')).type, 'success');
+
+      await expectClosedByAction('post_reports', postReport);
+      await expectClosedByAction('comment_reports', commentReport);
+      assert.equal((await closed('comment_reports', otherCommentReport)).closed, false, 'another Post is untouched');
+      assert.equal(
+        (await database.pool.query(`SELECT status FROM comments WHERE id = $1`, [commentId])).rows[0].status,
+        'ACTIVE',
+        'the comment itself is not changed',
+      );
+      const [metadata] = await audit(postId, 'POST_REMOVED');
+      assert.deepEqual(metadata.closedPostReportIds, [postReport]);
+      assert.deepEqual(metadata.closedCommentReportIds, [commentReport]);
+
+      assert.equal((await act('posts', postId, 'restorePost', {})).type, 'success');
+      await expectClosedByAction('post_reports', postReport);
+      await expectClosedByAction('comment_reports', commentReport);
+    });
+
+    it('approving a Post closes its Post Reports as no action; flagging keeps them open; restoring does not touch them', async () => {
+      const owner = await newUser('approve-owner');
+      const reporter = await newUser('approve-reporter');
+      const approved = await newPost(owner, 'Post to approve');
+      await database.pool.query(`UPDATE posts SET moderation_status = 'FLAGGED' WHERE id = $1`, [approved]);
+      const approvedReport = await reportPost(approved, reporter);
+      const approvedCommentReport = await reportComment(await newComment(approved, owner), reporter);
+
+      assert.equal((await act('posts', approved, 'approvePost', {})).type, 'success');
+      assert.deepEqual(await closed('post_reports', approvedReport), {
+        closed: true,
+        review_outcome: 'NO_ACTION',
+        reviewed_by_admin_id: principals.adminId,
+      });
+      assert.equal(
+        (await closed('comment_reports', approvedCommentReport)).closed,
+        false,
+        "approving does not touch the Post's Comment Reports",
+      );
+      assert.deepEqual((await audit(approved, 'POST_APPROVED'))[0].closedPostReportIds, [approvedReport]);
+
+      const flagged = await newPost(owner, 'Post to flag');
+      const flaggedReport = await reportPost(flagged, reporter);
+      assert.equal((await act('posts', flagged, 'flagPost', { reason: 'Looks staged' })).type, 'success');
+      assert.equal((await closed('post_reports', flaggedReport)).closed, false, 'flagging keeps the case in the queue');
+      assert.equal((await audit(flagged, 'POST_FLAGGED'))[0], null);
+
+      const removed = await newPost(owner, 'Removed with a stale report');
+      await database.pool.query(`UPDATE posts SET status = 'REMOVED' WHERE id = $1`, [removed]);
+      const staleReport = await reportPost(removed, reporter);
+      assert.equal((await act('posts', removed, 'restorePost', {})).type, 'success');
+      assert.equal((await closed('post_reports', staleReport)).closed, false, 'restoring closes nothing');
+      assert.equal((await audit(removed, 'POST_RESTORED'))[0], null);
+    });
+
+    it('hiding, image-hiding and removing a Comment each close its open reports as action taken', async () => {
+      const author = await newUser('comment-author');
+      const reporter = await newUser('comment-reporter');
+      const postId = await newPost(author, 'Comment actions post');
+      await database.pool.query(`UPDATE posts SET comment_count = 3 WHERE id = $1`, [postId]);
+
+      const hiddenId = await newComment(postId, author, 'To hide');
+      const hiddenReport = await reportComment(hiddenId, reporter);
+      assert.equal((await act('comments', hiddenId, 'hideComment')).type, 'success');
+      await expectClosedByAction('comment_reports', hiddenReport);
+      assert.deepEqual((await audit(hiddenId, 'COMMENT_HIDDEN'))[0].closedCommentReportIds, [hiddenReport]);
+      const hidden = (await database.pool.query(`SELECT status FROM comments WHERE id = $1`, [hiddenId])).rows[0];
+      assert.equal(hidden.status, 'HIDDEN');
+      assert.equal(
+        (await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId])).rows[0].comment_count,
+        2,
+        'hiding takes the Comment out of the count like the app does',
+      );
+      assert.equal((await act('comments', hiddenId, 'restoreComment', {})).type, 'success');
+      await expectClosedByAction('comment_reports', hiddenReport);
+      assert.equal((await audit(hiddenId, 'COMMENT_RESTORED'))[0], null, 'restoring closes nothing');
+      const lateReport = await reportComment(hiddenId, await newUser('comment-late-reporter'));
+      assert.equal((await closed('comment_reports', lateReport)).closed, false);
+
+      const imageId = await newComment(postId, author, 'With images');
+      await database.pool.query(
+        `INSERT INTO comment_media (comment_id, storage_key, sha256, width, height, file_size_bytes, file_content_type, display_order)
+         VALUES ($1, 'comments/close/one.webp', repeat('d', 64), 10, 10, 100, 'image/webp', 0)`,
+        [imageId],
+      );
+      const imageReport = await reportComment(imageId, reporter);
+      assert.equal((await act('comments', imageId, 'hideCommentImages')).type, 'success');
+      assert.equal(
+        (await database.pool.query(`SELECT status FROM comments WHERE id = $1`, [imageId])).rows[0].status,
+        'IMAGE_HIDDEN',
+      );
+      await expectClosedByAction('comment_reports', imageReport);
+      assert.deepEqual((await audit(imageId, 'COMMENT_IMAGES_HIDDEN'))[0].closedCommentReportIds, [imageReport]);
+
+      const removedId = await newComment(postId, author, 'To remove');
+      const removedReport = await reportComment(removedId, reporter);
+      assert.equal((await act('comments', removedId, 'removeComment')).type, 'success');
+      await expectClosedByAction('comment_reports', removedReport);
+      assert.deepEqual((await audit(removedId, 'COMMENT_REMOVED'))[0].closedCommentReportIds, [removedReport]);
+
+      const textOnly = await newComment(postId, author, 'No images');
+      assert.equal((await act('comments', textOnly, 'hideCommentImages')).type, 'error', 'needs images');
+    });
+
+    it("banning closes Account Reports; with the post cascade it also closes the removed Posts' reports, not reports on content left visible", async () => {
+      const target = await newUser('ban-target');
+      const reporter = await newUser('ban-reporter');
+      const postId = await newPost(target, 'Ban target post');
+      const otherAuthor = await newUser('ban-other');
+      const discussionComment = await newComment(postId, otherAuthor, 'On the target post');
+      const ownComment = await newComment(await newPost(otherAuthor, 'Elsewhere'), target, 'Target comment elsewhere');
+      const postReport = await reportPost(postId, reporter);
+      const discussionReport = await reportComment(discussionComment, reporter);
+      const ownCommentReport = await reportComment(ownComment, reporter);
+      const accountReport = (
+        await database.pool.query(
+          `INSERT INTO account_reports (reporter_id, reported_user_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [reporter, target],
+        )
+      ).rows[0].id;
+
+      assert.equal((await act('users', target, 'banUser', { reason: 'Spam', alsoRemovePosts: true })).type, 'success');
+
+      await expectClosedByAction('account_reports', accountReport);
+      await expectClosedByAction('post_reports', postReport);
+      await expectClosedByAction('comment_reports', discussionReport);
+      assert.equal(
+        (await closed('comment_reports', ownCommentReport)).closed,
+        false,
+        "the ban leaves the user's own Comments visible, so their reports stay open",
+      );
+      const [metadata] = await audit(target, 'USER_BANNED');
+      assert.deepEqual(metadata.closedAccountReportIds, [accountReport]);
+      assert.deepEqual(metadata.closedPostReportIds, [postReport]);
+      assert.deepEqual(metadata.closedCommentReportIds, [discussionReport]);
+
+      assert.equal((await act('users', target, 'unbanUser', {})).type, 'success');
+      await expectClosedByAction('account_reports', accountReport);
+    });
+
+    it('a ban without the post cascade closes only Account Reports', async () => {
+      const target = await newUser('ban-plain');
+      const reporter = await newUser('ban-plain-reporter');
+      const postId = await newPost(target, 'Stays active');
+      const postReport = await reportPost(postId, reporter);
+      const accountReport = (
+        await database.pool.query(
+          `INSERT INTO account_reports (reporter_id, reported_user_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [reporter, target],
+        )
+      ).rows[0].id;
+      assert.equal((await act('users', target, 'banUser', { reason: 'Spam', alsoRemovePosts: false })).type, 'success');
+      await expectClosedByAction('account_reports', accountReport);
+      assert.equal((await closed('post_reports', postReport)).closed, false);
+      assert.equal((await audit(target, 'USER_BANNED'))[0].closedPostReportIds, undefined);
+    });
+
+    it('Review with No Action on a Comment Report records the outcome and reviewer through the API', async () => {
+      const author = await newUser('noaction-author');
+      const reporter = await newUser('noaction-reporter');
+      const commentId = await newComment(await newPost(author, 'No action post'), author);
+      const report = await reportComment(commentId, reporter);
+      assert.equal((await act('comment_reports', report, 'reviewWithNoAction', { reason: '' })).type, 'success');
+      assert.deepEqual(await closed('comment_reports', report), {
+        closed: true,
+        review_outcome: 'NO_ACTION',
+        reviewed_by_admin_id: principals.adminId,
+      });
+    });
+  });
+  describe('report pages offer the actions on the reported content', () => {
+    const apiGet = async (path) =>
+      (await fetch(`${baseUrl}/admin/api/resources/${path}`, { headers: { cookie: superCookie } })).json();
+    const actionNames = async (resource, id) =>
+      (await apiGet(`${resource}/records/${id}/show`)).record.recordActions.map((action) => action.name);
+
+    it('lists Remove Post and Ban Author on a Post Report, hides them as the target changes, and only redirects', async () => {
+      const { rows: users } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name) VALUES ('rt-author', 'rt-author@example.com', 'RT Author') RETURNING id`,
+      );
+      const postId = await insertPost(database.pool, {
+        userId: users[0].id,
+        cityId: principals.cityId,
+        title: 'Report target post',
+        moderationStatus: 'CLEAN',
+      });
+      const { rows } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [postId, principals.userId],
+      );
+      const reportId = rows[0].id;
+
+      const names = await actionNames('post_reports', reportId);
+      assert.ok(names.includes('reviewWithNoAction'));
+      assert.ok(names.includes('removePost'));
+      assert.ok(names.includes('banAuthor'));
+
+      const show = await apiGet(`post_reports/records/${reportId}/show`);
+      const remove = show.record.recordActions.find((action) => action.name === 'removePost');
+      assert.equal(remove.component, false, 'a plain button, not a form of its own');
+
+      const response = await apiGet(`post_reports/records/${reportId}/removePost`);
+      assert.equal(
+        response.redirectUrl,
+        `/admin/resources/posts/records/${postId}/removePost?returnTo=${encodeURIComponent(`/admin/resources/post_reports/records/${reportId}/show`)}`,
+      );
+      assert.equal(
+        (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0].status,
+        'ACTIVE',
+        'the button itself removes nothing',
+      );
+
+      await database.pool.query(`UPDATE posts SET status = 'REMOVED' WHERE id = $1`, [postId]);
+      await database.pool.query(`UPDATE users SET is_banned = true, banned_at = now() WHERE id = $1`, [users[0].id]);
+      const after = await actionNames('post_reports', reportId);
+      assert.equal(after.includes('removePost'), false, 'already removed');
+      assert.equal(after.includes('banAuthor'), false, 'already banned');
+    });
+
+    it('lists Hide Comment, Remove Comment and Ban Author on a Comment Report and Ban User on an Account Report', async () => {
+      const { rows: users } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name) VALUES ('rt-comment-author', 'rt-comment@example.com', 'RT Commenter') RETURNING id`,
+      );
+      const postId = await insertPost(database.pool, {
+        userId: principals.userId,
+        cityId: principals.cityId,
+        title: 'Comment report target',
+        moderationStatus: 'CLEAN',
+      });
+      const { rows: comment } = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status) VALUES ($1, $2, 'Reported text', 'ACTIVE') RETURNING id`,
+        [postId, users[0].id],
+      );
+      const { rows: commentReport } = await database.pool.query(
+        `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [comment[0].id, principals.userId],
+      );
+      const names = await actionNames('comment_reports', commentReport[0].id);
+      for (const expected of ['reviewWithNoAction', 'hideComment', 'removeComment', 'banAuthor']) {
+        assert.ok(names.includes(expected), expected);
+      }
+      await database.pool.query(`UPDATE comments SET status = 'HIDDEN' WHERE id = $1`, [comment[0].id]);
+      const hidden = await actionNames('comment_reports', commentReport[0].id);
+      assert.equal(hidden.includes('hideComment'), false);
+      assert.ok(hidden.includes('removeComment'));
+
+      const { rows: accountReport } = await database.pool.query(
+        `INSERT INTO account_reports (reporter_id, reported_user_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [principals.userId, users[0].id],
+      );
+      assert.ok((await actionNames('account_reports', accountReport[0].id)).includes('banUser'));
+      await database.pool.query(`UPDATE users SET is_banned = true, banned_at = now() WHERE id = $1`, [users[0].id]);
+      assert.equal((await actionNames('account_reports', accountReport[0].id)).includes('banUser'), false);
+    });
   });
 });

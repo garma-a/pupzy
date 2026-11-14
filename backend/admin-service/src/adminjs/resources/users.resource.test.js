@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { ValidationError } from 'adminjs';
 
-import { ALLOWED_USER_EDIT_FIELDS, PROTECTED_USER_FIELDS, buildUsersResource } from './users.resource.js';
+import {
+  ALLOWED_USER_EDIT_FIELDS,
+  PROTECTED_USER_FIELDS,
+  buildUsersResource,
+  stripPrivateFieldsAndShowUser,
+} from './users.resource.js';
 
 const db = { table: (name) => ({ name }) };
 const pool = {};
@@ -49,19 +54,23 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
     assert.deepEqual(resource.options.editProperties, [
       'full_name',
       'full_name_arabic',
-      'profile_picture_url',
       'home_city_id',
       'language_preference',
       'notifications_enabled',
     ]);
+    assert.equal(
+      resource.options.editProperties.includes('profile_picture_url'),
+      false,
+      'a photo is removed with its action, never by typing a URL',
+    );
   });
 
   it('wires ShortUuid component to id and banned_by_admin_id', () => {
-    const customComponents = { ShortUuid: 'CustomShortUuid' };
+    const customComponents = { ShortUuid: 'CustomShortUuid', ReferenceLink: 'CustomReferenceLink' };
     const res = buildUsersResource(db, pool, customComponents);
     assert.equal(res.options.properties.id.components.list, 'CustomShortUuid');
     assert.equal(res.options.properties.id.components.show, 'CustomShortUuid');
-    assert.equal(res.options.properties.banned_by_admin_id.components.show, 'CustomShortUuid');
+    assert.equal(res.options.properties.banned_by_admin_id.components.show, 'CustomReferenceLink');
   });
 
   it('marks service-owned, auth, trust, counter, and ban audit properties as isDisabled', () => {
@@ -125,9 +134,11 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
       // Intentionally editable profile fields
       full_name: 'Sanctioned Name',
       full_name_arabic: 'الاسم المعتمد',
-      profile_picture_url: 'https://example.com/avatar.jpg',
       language_preference: 'en',
       notifications_enabled: false,
+
+      // A photo URL typed into the form is ignored
+      profile_picture_url: 'https://example.com/avatar.jpg',
 
       // Malicious/tampered auth & identity fields
       id: 'hacked-uuid',
@@ -191,7 +202,6 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
     assert.deepEqual(result.payload, {
       full_name: 'Sanctioned Name',
       full_name_arabic: 'الاسم المعتمد',
-      profile_picture_url: 'https://example.com/avatar.jpg',
       language_preference: 'en',
       notifications_enabled: false,
     });
@@ -339,5 +349,56 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
     };
     const result2 = await editHook(req2);
     assert.equal(result2.payload.home_city_id, null);
+  });
+});
+
+describe('User edit return target', () => {
+  it('sends a successful edit to the user page instead of the list', () => {
+    const resource = buildUsersResource(db, pool, components);
+    assert.equal(resource.options.actions.edit.after, stripPrivateFieldsAndShowUser);
+    const context = {
+      h: {
+        recordActionUrl: ({ resourceId, recordId, actionName }) =>
+          `/admin/resources/${resourceId}/records/${recordId}/${actionName}`,
+      },
+    };
+    const response = stripPrivateFieldsAndShowUser(
+      { redirectUrl: '/admin/resources/users', record: { params: { phone_number: '1' } } },
+      { params: { recordId: 'user-1' } },
+      context,
+    );
+    assert.equal(response.redirectUrl, '/admin/resources/users/records/user-1/show');
+    assert.equal(response.record.params.phone_number, undefined);
+  });
+
+  it('keeps the user on the form when the save failed (no redirect)', () => {
+    const response = stripPrivateFieldsAndShowUser(
+      { record: { params: {} } },
+      { params: { recordId: 'user-1' } },
+      { h: {} },
+    );
+    assert.equal(response.redirectUrl, undefined);
+  });
+});
+
+describe('User profile photo columns and action', () => {
+  const withPhoto = buildUsersResource(db, pool, { ...components, ProfilePhoto: 'ProfilePhotoMock' });
+
+  it('shows the photo as the first list column and first show row, not as URL text', () => {
+    assert.equal(withPhoto.options.listProperties[0], 'profile_photo');
+    assert.equal(withPhoto.options.showProperties[0], 'profile_photo');
+    assert.equal(withPhoto.options.showProperties.includes('profile_picture_url'), false);
+    assert.equal(withPhoto.options.properties.profile_photo.components.list, 'ProfilePhotoMock');
+    assert.equal(withPhoto.options.properties.profile_photo.components.show, 'ProfilePhotoMock');
+    assert.equal(withPhoto.options.properties.profile_picture_url.isDisabled, true);
+  });
+
+  it('offers Remove Profile Photo only while the user has a photo', () => {
+    const action = withPhoto.options.actions.removeProfilePhoto;
+    assert.equal(action.component, 'ModerationAction');
+    assert.equal(action.isVisible({ record: { params: { profile_picture_url: 'https://x/a.png' } } }), true);
+    assert.equal(action.isVisible({ record: { params: { profile_picture_url: null } } }), false);
+    assert.equal(action.isVisible({ record: { params: { profile_picture_url: '  ' } } }), false);
+    assert.equal(action.isVisible({}), false);
   });
 });

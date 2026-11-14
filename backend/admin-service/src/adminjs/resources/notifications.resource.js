@@ -1,5 +1,6 @@
 import { ENUMS } from '../enums.js';
 import {
+  attachReferenceLink,
   attachShortUuid,
   buildReadOnlyResource,
   enumProperty,
@@ -15,10 +16,14 @@ export function buildNotificationsResource(db, components = {}) {
     created_at: { isDisabled: true },
   };
 
-  attachShortUuid(properties, ['id', 'recipient_id'], components, ['list', 'show']);
-  attachShortUuid(properties, ['related_post_id', 'related_contact_request_id', 'related_application_id'], components, [
-    'show',
-  ]);
+  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['recipient_id'], components, ['list', 'show']);
+  attachReferenceLink(
+    properties,
+    ['related_post_id', 'related_contact_request_id', 'related_application_id'],
+    components,
+    ['show'],
+  );
 
   return buildReadOnlyResource(db, 'notifications', { name: 'User Activity', icon: 'Users' }, properties, {
     sort: { sortBy: 'created_at', direction: 'desc' },

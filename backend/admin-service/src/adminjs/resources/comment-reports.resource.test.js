@@ -11,6 +11,7 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
     const resource = buildCommentReportsResource(db);
     assert.deepEqual(resource.options.listProperties, [
       'id',
+      'review_status',
       'comment_id',
       'reporter_id',
       'reason',
@@ -27,25 +28,29 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
   it('preserves full report details on record show view', () => {
     const resource = buildCommentReportsResource(db);
     assert.deepEqual(resource.options.showProperties, [
+      'review_status',
       'id',
       'comment_id',
       'reporter_id',
       'reason',
       'details',
       'reviewed_at',
+      'reviewed_by_admin_id',
+      'review_outcome',
       'created_at',
     ]);
   });
 
   it('attaches ShortUuid custom component to ID and relation fields when provided', () => {
-    const components = { ShortUuid: 'CustomShortUuidComponent' };
+    const components = { ShortUuid: 'CustomShortUuidComponent', ReferenceLink: 'CustomReferenceLinkComponent' };
     const resource = buildCommentReportsResource(db, components);
     assert.equal(resource.options.properties.id.components.list, 'CustomShortUuidComponent');
     assert.equal(resource.options.properties.id.components.show, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.comment_id.components.list, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.comment_id.components.show, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.reporter_id.components.list, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.reporter_id.components.show, 'CustomShortUuidComponent');
+    assert.equal(resource.options.properties.comment_id.components.list, 'CustomReferenceLinkComponent');
+    assert.equal(resource.options.properties.comment_id.components.show, 'CustomReferenceLinkComponent');
+    assert.equal(resource.options.properties.reporter_id.components.list, 'CustomReferenceLinkComponent');
+    assert.equal(resource.options.properties.reporter_id.components.show, 'CustomReferenceLinkComponent');
+    assert.equal(resource.options.properties.reviewed_by_admin_id.components.show, 'CustomReferenceLinkComponent');
   });
 
   it('enforces read-only actions (disables new, edit, delete, bulkDelete)', () => {
@@ -58,7 +63,7 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
 
   it('strips populated password hashes from list and show after hooks', () => {
     const resource = buildCommentReportsResource(db);
-    const showAfter = resource.options.actions.show.after;
+    const [showAfter] = [resource.options.actions.show.after].flat();
     const response = {
       record: {
         params: { id: 'report-1' },
@@ -86,5 +91,13 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
     const resource = buildCommentReportsResource(db);
     const available = resource.options.properties.reason.availableValues.map((v) => v.value);
     assert.deepEqual(available, ENUMS.reportReason);
+  });
+});
+
+describe('Comment Report evidence', () => {
+  it('shows the reported Comment above the report fields', () => {
+    const resource = buildCommentReportsResource(db, { CommentEvidence: 'EvidenceMock' });
+    assert.equal(resource.options.showProperties[0], 'comment_evidence');
+    assert.equal(resource.options.properties.comment_evidence.components.show, 'EvidenceMock');
   });
 });

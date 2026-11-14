@@ -1,4 +1,15 @@
 import { isAnyAdmin } from '../rbac.js';
+import { resolveCommentMediaUrl } from '../comment-media-url.js';
+import { reportReviewStatus } from '../report-status.js';
+
+/**
+ * Display name of the joined `users` row `u`: English name, else Arabic name,
+ * else email, else a short id. NULL only when the user row is missing, which is
+ * the only case the workspace may call "Deleted account".
+ */
+export const USER_NAME_SQL = `CASE WHEN u.id IS NULL THEN NULL ELSE COALESCE(
+  NULLIF(btrim(u.full_name), ''), NULLIF(btrim(u.full_name_arabic), ''), u.email, 'User ' || left(u.id::text, 8)
+) END`;
 
 export const POST_REVIEW_WORKSPACE_PARAM = 'post_review_workspace';
 export const POST_REVIEW_DISCUSSION_PARAM = 'post_review_discussion';
@@ -53,8 +64,11 @@ const MODERATION_ACTION_LABELS = {
   POST_RESTORED: 'Post restored',
   USER_BANNED: 'User banned',
   USER_UNBANNED: 'User unbanned',
+  USER_PROFILE_PHOTO_REMOVED: 'Profile photo removed',
   COMMENT_RESTORED: 'Comment restored',
   COMMENT_REMOVED: 'Comment removed',
+  COMMENT_HIDDEN: 'Comment hidden',
+  COMMENT_IMAGES_HIDDEN: 'Comment images hidden',
   POST_REPORT_REVIEWED_NO_ACTION: 'Post Report reviewed — no action',
   ACCOUNT_REPORT_REVIEWED_NO_ACTION: 'Pupzy Account Report reviewed — no action',
 };
@@ -127,17 +141,7 @@ export function normalizeDiscussionPage(value) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 }
 
-/**
- * Derives the read-only public URL of Comment media from its immutable storage
- * key, matching the backend's delivery policy.
- */
-export function resolveCommentMediaUrl(storageKey, env = process.env) {
-  if (typeof storageKey !== 'string') return null;
-  const cleanKey = storageKey.replace(/^\/+/, '');
-  if (!cleanKey) return null;
-  const base = (env?.COMMENT_MEDIA_CDN_BASE || env?.R2_PUBLIC_URL || 'https://cdn.pupzy.net').replace(/\/+$/, '');
-  return `${base}/${cleanKey}`;
-}
+export { resolveCommentMediaUrl };
 
 export function formatPostAge(createdAt, now = Date.now()) {
   const created = new Date(createdAt).getTime();
@@ -208,7 +212,7 @@ export async function loadDiscussion(pool, postId, options = {}) {
 
   const { rows: topLevelRows } = await pool.query(
     `SELECT c.id, c.parent_id, c.text, c.status, c.reply_count, c.boost_count, c.created_at,
-            u.full_name AS author_name, u.email AS author_email
+            ${USER_NAME_SQL} AS author_name, u.email AS author_email
      FROM comments c
      LEFT JOIN users u ON u.id = c.author_id
      WHERE c.post_id = $1 AND c.parent_id IS NULL
@@ -222,7 +226,7 @@ export async function loadDiscussion(pool, postId, options = {}) {
   if (parentIds.length > 0) {
     const { rows } = await pool.query(
       `SELECT c.id, c.parent_id, c.text, c.status, c.reply_count, c.boost_count, c.created_at,
-              u.full_name AS author_name, u.email AS author_email
+              ${USER_NAME_SQL} AS author_name, u.email AS author_email
        FROM comments c
        LEFT JOIN users u ON u.id = c.author_id
        WHERE c.parent_id = ANY($1::uuid[])
@@ -283,10 +287,11 @@ export async function loadDiscussion(pool, postId, options = {}) {
  */
 export async function loadReports(pool, postId) {
   const { rows: postReportRows } = await pool.query(
-    `SELECT r.id, r.post_id, r.reporter_id, u.full_name AS reporter_name, r.reason, r.details,
-            r.reviewed_at, r.reviewed_by_admin_id, r.review_outcome, r.created_at
+    `SELECT r.id, r.post_id, r.reporter_id, ${USER_NAME_SQL} AS reporter_name, r.reason, r.details,
+            r.reviewed_at, r.reviewed_by_admin_id, a.full_name AS reviewed_by_name, r.review_outcome, r.created_at
      FROM post_reports r
      LEFT JOIN users u ON u.id = r.reporter_id
+     LEFT JOIN admin_users a ON a.id = r.reviewed_by_admin_id
      WHERE r.post_id = $1
      ORDER BY (r.reviewed_at IS NOT NULL), r.created_at DESC
      LIMIT $2`,
@@ -295,31 +300,36 @@ export async function loadReports(pool, postId) {
 
   const { rows: commentReportRows } = await pool.query(
     `SELECT r.id, r.comment_id, c.text AS comment_text, c.status AS comment_status,
-            r.reporter_id, u.full_name AS reporter_name, r.reason, r.details,
-            r.reviewed_at, r.created_at
+            r.reporter_id, ${USER_NAME_SQL} AS reporter_name, r.reason, r.details,
+            r.reviewed_at, r.review_outcome, a.full_name AS reviewed_by_name, r.created_at
      FROM comment_reports r
      JOIN comments c ON c.id = r.comment_id
      LEFT JOIN users u ON u.id = r.reporter_id
+     LEFT JOIN admin_users a ON a.id = r.reviewed_by_admin_id
      WHERE c.post_id = $1
      ORDER BY (r.reviewed_at IS NOT NULL), r.created_at DESC
      LIMIT $2`,
     [postId, POST_REVIEW_REPORTS_LIMIT],
   );
 
-  const shape = (row) => ({
-    id: row.id,
-    reason: row.reason,
-    reasonLabel: reportReasonLabel(row.reason),
-    details: row.details ?? null,
-    reporterId: row.reporter_id,
-    reporterName: row.reporter_name ?? 'Deleted account',
-    reviewedAt: row.reviewed_at,
-    reviewOutcome: row.review_outcome ?? null,
-    reviewOutcomeLabel: row.review_outcome ? reviewOutcomeLabel(row.review_outcome) : null,
-    isOpen: !row.reviewed_at,
-    statusLabel: row.reviewed_at ? 'Reviewed' : 'Open',
-    createdAt: row.created_at,
-  });
+  const shape = (row) => {
+    const status = reportReviewStatus({ reviewedAt: row.reviewed_at, reviewOutcome: row.review_outcome });
+    return {
+      id: row.id,
+      reason: row.reason,
+      reasonLabel: reportReasonLabel(row.reason),
+      details: row.details ?? null,
+      reporterId: row.reporter_id,
+      reporterName: row.reporter_name ?? 'Deleted account',
+      reviewedAt: row.reviewed_at,
+      reviewOutcome: row.review_outcome ?? null,
+      reviewOutcomeLabel: row.review_outcome ? reviewOutcomeLabel(row.review_outcome) : null,
+      reviewedByName: row.reviewed_by_name ?? null,
+      isOpen: status.isOpen,
+      statusLabel: status.label,
+      createdAt: row.created_at,
+    };
+  };
 
   return {
     postReports: postReportRows.map((row) => ({
@@ -378,7 +388,7 @@ export async function loadPostReview(pool, postId, options = {}) {
     `SELECT p.id, p.title, p.description, p.post_type, p.status, p.moderation_status, p.moderation_reason,
             p.urgency, p.area_name, p.created_at, p.creator_id, p.city_id,
             c.name_english AS city_name, c.name_arabic AS city_name_arabic, c.governorate AS city_governorate,
-            u.full_name AS owner_name, u.email AS owner_email
+            ${USER_NAME_SQL} AS owner_name, u.email AS owner_email
      FROM posts p
      LEFT JOIN cities c ON c.id = p.city_id
      LEFT JOIN users u ON u.id = p.creator_id

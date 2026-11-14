@@ -1,4 +1,4 @@
-import { attachShortUuid, buildReadOnlyResource, stripPopulatedPasswordHashes } from './resource-helpers.js';
+import { attachReferenceLink, buildReadOnlyResource, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
 export function buildPostUpvotesResource(db, components = {}) {
   const properties = {
@@ -7,7 +7,7 @@ export function buildPostUpvotesResource(db, components = {}) {
     created_at: { isDisabled: true },
   };
 
-  attachShortUuid(properties, ['post_id', 'user_id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['post_id', 'user_id'], components, ['list', 'show']);
 
   return buildReadOnlyResource(
     db,

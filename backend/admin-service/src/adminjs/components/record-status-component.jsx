@@ -1,5 +1,7 @@
 import React from 'react';
 
+import ShowField from './show-field.jsx';
+
 const LABELS = {
   PENDING_AUTO_REVIEW: 'Pending review',
   IMAGE_HIDDEN: 'Image hidden',
@@ -11,7 +13,7 @@ const ATTENTION = new Set(['PENDING', 'PENDING_AUTO_REVIEW', 'OPEN', 'URGENT']);
 const DANGER = new Set(['FLAGGED', 'BANNED', 'CRITICAL']);
 
 export function StateTag({ value, label: explicitLabel }) {
-  if (value == null || value === '') return <span>—</span>;
+  if (value == null || value === '') return <span style={{ color: '#B8A499' }}>—</span>;
   const raw = String(value);
   const words = raw.replaceAll('_', ' ').toLowerCase();
   const label = explicitLabel ?? LABELS[raw] ?? words.charAt(0).toUpperCase() + words.slice(1);
@@ -23,6 +25,7 @@ export function StateTag({ value, label: explicitLabel }) {
   );
 }
 
-export default function RecordStatus({ property, record }) {
-  return <StateTag value={record?.params?.[property.path]} />;
+export default function RecordStatus({ property, record, where }) {
+  const tag = <StateTag value={record?.params?.[property.path]} />;
+  return where === 'show' ? <ShowField property={property}>{tag}</ShowField> : tag;
 }

@@ -6,6 +6,8 @@ import {
   filteredListBackLink,
   recallListSearch,
   rememberListSearch,
+  reportReviewHref,
+  safeReturnPath,
 } from './list-return.js';
 
 function createStorage() {
@@ -71,5 +73,42 @@ describe('Admin list return state', () => {
       filteredListBackLink('?filters.status=EXPIRED', '/custom').href,
       '/custom/resources/posts?filters.status=EXPIRED',
     );
+  });
+});
+
+describe('report review return target', () => {
+  const workspace = '/admin/resources/posts/records/0194-abc/show?refresh=true';
+
+  it('links an open report straight to its review form and carries the workspace as the return target', () => {
+    const href = reportReviewHref('post_reports', 'report-1', workspace);
+    assert.equal(
+      href,
+      `/admin/resources/post_reports/records/report-1/reviewWithNoAction?returnTo=${encodeURIComponent(workspace)}`,
+    );
+    assert.equal(safeReturnPath(new URL(href, 'http://x').searchParams.get('returnTo')), workspace);
+    assert.equal(
+      reportReviewHref('post_reports', 'report-1', ''),
+      '/admin/resources/post_reports/records/report-1/reviewWithNoAction',
+    );
+  });
+
+  it('only returns to record pages inside this admin', () => {
+    assert.equal(
+      safeReturnPath('/admin/resources/rescue_posts/records/abc-1/show'),
+      '/admin/resources/rescue_posts/records/abc-1/show',
+    );
+    for (const unsafe of [
+      'https://evil.example/admin/resources/posts/records/1/show',
+      '//evil.example/admin/resources/posts/records/1/show',
+      '/admin/resources/posts/records/1/delete',
+      '/admin/../evil',
+      'javascript:alert(1)',
+      '/admin/resources/posts/records/1/show#x y',
+      '',
+      null,
+      undefined,
+    ]) {
+      assert.equal(safeReturnPath(unsafe), null, String(unsafe));
+    }
   });
 });

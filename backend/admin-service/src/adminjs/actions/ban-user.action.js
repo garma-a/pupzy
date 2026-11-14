@@ -1,6 +1,7 @@
 import {
   actionResponse,
   closeOpenAccountReports,
+  closeOpenCommentReportsForPosts,
   enqueuePushDeliveries,
   lockDiscussionPosts,
   readModerationReason,
@@ -42,11 +43,32 @@ async function updateBanAudit(client, actionId, metadata) {
 }
 
 /**
- * Closes every open Post Report for Posts removed by the ban cascade and
- * accumulates the closed ids into the ban audit metadata. Runs inside the
- * batch transaction that removes the Posts, so a report and its Post cannot
- * diverge. The cascade row is locked for the whole batch, which serializes
- * the read-modify-write of the metadata array.
+ * Appends closed report ids to one metadata array of the ban audit row. The
+ * cascade row is locked for the whole batch, which serializes the
+ * read-modify-write of the array.
+ */
+async function appendClosedReportIds(client, actionId, key, ids) {
+  if (ids.length === 0) return;
+  await client.query(
+    `UPDATE moderation_actions
+     SET metadata = jsonb_set(
+       COALESCE(metadata, '{}'::jsonb),
+       ARRAY[$3::text],
+       COALESCE(metadata->$3::text, '[]'::jsonb) || $2::jsonb,
+       true
+     )
+     WHERE id = $1`,
+    [actionId, JSON.stringify(ids), key],
+  );
+}
+
+/**
+ * Closes every open Post Report, and every open Comment Report on those
+ * Posts' Comments (a Removed Post exposes no discussion), for Posts removed by
+ * the ban cascade, and accumulates the closed ids into the ban audit metadata.
+ * Runs inside the batch transaction that removes the Posts, so a report and its
+ * Post cannot diverge. Reports on the banned User's own Comments are left
+ * alone: the ban does not hide or remove them.
  */
 async function closeCascadedPostReports(client, actionId, postIds) {
   if (postIds.length === 0) return;
@@ -63,19 +85,17 @@ async function closeCascadedPostReports(client, actionId, postIds) {
      RETURNING id`,
     [postIds, adminUserId],
   );
-  const closedPostReportIds = closedRows.map((row) => row.id);
-  if (closedPostReportIds.length === 0) return;
-
-  await client.query(
-    `UPDATE moderation_actions
-     SET metadata = jsonb_set(
-       COALESCE(metadata, '{}'::jsonb),
-       '{closedPostReportIds}',
-       COALESCE(metadata->'closedPostReportIds', '[]'::jsonb) || $2::jsonb,
-       true
-     )
-     WHERE id = $1`,
-    [actionId, JSON.stringify(closedPostReportIds)],
+  await appendClosedReportIds(
+    client,
+    actionId,
+    'closedPostReportIds',
+    closedRows.map((row) => row.id),
+  );
+  await appendClosedReportIds(
+    client,
+    actionId,
+    'closedCommentReportIds',
+    await closeOpenCommentReportsForPosts(client, postIds, adminUserId),
   );
 }
 
@@ -293,20 +313,24 @@ export function buildBanUserAction(pool, component, cache) {
   };
 }
 
-export function buildUnbanUserAction(pool, cache) {
+export function buildUnbanUserAction(pool, component, cache) {
   return {
     actionType: 'record',
     icon: 'Check',
-    guard: 'Are you sure you want to unban this user?',
     isAccessible: isAnyAdmin,
     isVisible: (context) => {
       if (!context?.record) return false;
       return isUserBanned(context.record);
     },
-    component: false,
+    component,
     handler: async (request, _response, context) => {
       const { record, currentAdmin } = context;
       if (request.method !== 'post') return { record: record.toJSON(currentAdmin) };
+
+      const reasonResult = readModerationReason(request.payload?.reason);
+      if (reasonResult.error) {
+        return actionResponse(record, currentAdmin, { ok: false, error: reasonResult.error }, '');
+      }
 
       const result = await runModerationAction(pool, {
         table: 'users',
@@ -314,6 +338,7 @@ export function buildUnbanUserAction(pool, cache) {
         adminUserId: currentAdmin.id,
         actionType: 'USER_UNBANNED',
         targetType: 'USER',
+        reason: reasonResult.reason || undefined,
         onSuccess: () => cache?.invalidate(),
         validate: (row) => (!row.is_banned ? 'This user is not banned.' : null),
         mutate: async (client, row) => {

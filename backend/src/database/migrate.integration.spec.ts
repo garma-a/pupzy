@@ -194,6 +194,27 @@ describe('Database Migration Runner Integration', () => {
       ORDER BY enumsortorder
     `);
     expect(moderationActionEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_RESOLVED');
+    expect(moderationActionEnumRes.rows.map((row) => row.enumlabel)).toContain('USER_PROFILE_PHOTO_REMOVED');
+    expect(moderationActionEnumRes.rows.map((row) => row.enumlabel)).toEqual(
+      expect.arrayContaining(['COMMENT_HIDDEN', 'COMMENT_IMAGES_HIDDEN']),
+    );
+
+    // Comment Reports record an outcome and reviewer like the other report types
+    // (migration 0070), reusing the existing outcome enum; both columns are nullable.
+    const commentReportColumnsRes = await pool.query<{
+      column_name: string;
+      udt_name: string;
+      is_nullable: string;
+    }>(`
+      SELECT column_name, udt_name, is_nullable
+      FROM information_schema.columns
+      WHERE table_name = 'comment_reports' AND column_name IN ('review_outcome', 'reviewed_by_admin_id')
+      ORDER BY column_name
+    `);
+    expect(commentReportColumnsRes.rows).toEqual([
+      { column_name: 'review_outcome', udt_name: 'post_report_review_outcome', is_nullable: 'YES' },
+      { column_name: 'reviewed_by_admin_id', udt_name: 'uuid', is_nullable: 'YES' },
+    ]);
 
     const notificationTypeEnumRes = await pool.query<{ enumlabel: string }>(`
       SELECT enumlabel

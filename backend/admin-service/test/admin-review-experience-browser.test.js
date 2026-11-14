@@ -845,6 +845,777 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
     }
   });
 
+  it('approves a flagged Post from its record page, keeps the success notice and shows the new status', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      const requests = [];
+      page.on('request', (request) => {
+        if (request.url().includes('/approvePost')) requests.push(request.method());
+      });
+      await loginAsAdmin(page, baseUrl);
+      await openWorkspace(page, fixture.flaggedId);
+      await page.click('[data-testid="action-approvePost"]');
+      await page.waitForSelector('[data-testid="moderation-action-submit"]', { timeout: 60000 });
+
+      assert.equal(await page.$eval('h3', (node) => node.innerText), 'Approve Post');
+      assert.match(
+        await page.$eval('#moderation-action-consequence', (node) => node.innerText),
+        /clean/i,
+        'the form states the consequence in a sentence',
+      );
+      assert.equal(
+        await page.$eval('[data-testid="moderation-action-submit"]', (node) => node.innerText),
+        'Approve Post',
+      );
+      await waitForEnabledSubmit(page);
+      console.log(`[fix1 evidence] approve form ${await recordEvidence(page, 'fix1-approve-form')}`);
+      await page.click('[data-testid="moderation-action-submit"]');
+
+      await page.waitForSelector('[data-testid="pupzy-review-workspace"]', { timeout: 60000 });
+      await page.waitForFunction(() => document.body.innerText.includes('Post approved.'), { timeout: 30000 });
+      assert.match(page.url(), new RegExp(`/admin/resources/posts/records/${fixture.flaggedId}/show`));
+      // The action page loads the record with a read-only GET; the approval itself is one POST.
+      assert.equal(
+        requests.filter((method) => method === 'POST').length,
+        1,
+        'the approval is submitted once, as a POST',
+      );
+
+      const { rows } = await database.pool.query(
+        `SELECT moderation_status, moderation_reason FROM posts WHERE id = $1`,
+        [fixture.flaggedId],
+      );
+      assert.equal(rows[0].moderation_status, 'CLEAN');
+      assert.equal(rows[0].moderation_reason, null);
+      const audit = await database.pool.query(
+        `SELECT action_type FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_APPROVED'`,
+        [fixture.flaggedId],
+      );
+      assert.equal(audit.rows.length, 1);
+
+      const text = await page.$eval('body', (node) => node.innerText);
+      assert.match(text, /clean/i, 'the record page shows the new moderation status');
+      assert.equal(await page.$('[data-testid="action-approvePost"]'), null, 'a clean Post no longer offers Approve');
+      console.log(`[fix1 evidence] approved record ${await recordEvidence(page, 'fix1-approved-record')}`);
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('reviews a report from the workspace in the same tab and returns to a workspace that shows it closed', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      const reporterId = await insertUser('workspace-reporter');
+      const { rows } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason, details)
+         VALUES ($1, $2, 'SPAM', 'Workspace review journey') RETURNING id`,
+        [fixture.flaggedId, reporterId],
+      );
+      const reportId = rows[0].id;
+      const workspaceUrl = `${baseUrl}/admin/resources/posts/records/${fixture.flaggedId}/show`;
+
+      await loginAsAdmin(page, baseUrl);
+      await openWorkspace(page, fixture.flaggedId);
+      const before = await page.$eval('[data-testid="pupzy-reports"]', (node) => node.innerText);
+      assert.match(before, /Open/);
+      const link = await page.$('[data-testid="pupzy-report-review-link"]');
+      assert.ok(link, 'an open report offers the review link');
+      assert.equal(await link.evaluate((node) => node.getAttribute('target')), null, 'it opens in the same tab');
+      console.log(`[fix2 evidence] workspace before ${await recordEvidence(page, 'fix2-workspace-before-review')}`);
+
+      await link.click();
+      await page.waitForSelector('[data-testid="moderation-action-submit"]', { timeout: 60000 });
+      assert.match(page.url(), /reviewWithNoAction\?returnTo=/);
+      await waitForEnabledSubmit(page);
+      await page.click('[data-testid="moderation-action-submit"]');
+
+      await page.waitForSelector('[data-testid="pupzy-review-workspace"]', { timeout: 60000 });
+      await page.waitForFunction(() => document.body.innerText.includes('reviewed with no action'), {
+        timeout: 30000,
+      });
+      assert.equal(page.url().split('?')[0], workspaceUrl, 'the moderator is back on the workspace');
+
+      const { rows: stored } = await database.pool.query(
+        `SELECT reviewed_at, review_outcome FROM post_reports WHERE id = $1`,
+        [reportId],
+      );
+      assert.ok(stored[0].reviewed_at);
+      assert.equal(stored[0].review_outcome, 'NO_ACTION');
+
+      await page.waitForFunction(
+        () => document.querySelector('[data-testid="pupzy-report-status"]')?.innerText === 'Closed: no action',
+        { timeout: 30000 },
+      );
+      assert.equal(
+        await page.$('[data-testid="pupzy-report-review-link"]'),
+        null,
+        'a closed report has no review link',
+      );
+      const closedNote = await page.$eval('[data-testid="pupzy-report-closed-note"]', (node) => node.innerText);
+      assert.match(closedNote, /Closed on .* by Staff Admin/);
+      console.log(`[fix2 evidence] workspace after ${await recordEvidence(page, 'fix2-workspace-after-review')}`);
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('shows a Status column on the report lists and a Status at the top of a closed report', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      const reporterId = await insertUser('status-reporter');
+      const reportedId = await insertUser('status-reported');
+      const commentId = await insertComment({
+        postId: fixture.flaggedId,
+        authorId: fixture.commenterId,
+        text: 'Comment with a closed report',
+        createdAt: new Date(Date.now() - 3_600_000),
+      });
+      const { rows: closedPost } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason, reviewed_at, reviewed_by_admin_id, review_outcome)
+         VALUES ($1, $2, 'SPAM', now(), $3, 'NO_ACTION') RETURNING id`,
+        [fixture.flaggedId, reporterId, principals.adminId],
+      );
+      await database.pool.query(`INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SCAM')`, [
+        fixture.flaggedId,
+        reportedId,
+      ]);
+      await database.pool.query(
+        `INSERT INTO comment_reports (comment_id, reporter_id, reason, reviewed_at) VALUES ($1, $2, 'SPAM', now())`,
+        [commentId, reporterId],
+      );
+      await database.pool.query(
+        `INSERT INTO account_reports (reporter_id, reported_user_id, reason, reviewed_at, reviewed_by_admin_id, review_outcome)
+         VALUES ($1, $2, 'SPAM', now(), $3, 'ACTION_TAKEN')`,
+        [reporterId, reportedId, principals.adminId],
+      );
+
+      await loginAsAdmin(page, baseUrl);
+      const rowTexts = async (resourceId) => {
+        await page.goto(`${baseUrl}/admin/resources/${resourceId}`, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('table tbody tr', { timeout: 60000 });
+        const header = await page.$$eval('table thead td', (nodes) => nodes.map((node) => node.innerText.trim()));
+        assert.ok(header.includes('Status'), `${resourceId} list has a Status column, got ${JSON.stringify(header)}`);
+        return page.$$eval('table tbody tr', (nodes) => nodes.map((node) => node.innerText));
+      };
+
+      const postRows = await rowTexts('post_reports');
+      assert.ok(postRows.some((text) => text.includes('Closed: no action')));
+      assert.ok(postRows.some((text) => /\bOpen\b/.test(text)));
+      console.log(`[fix2 evidence] post report list ${await recordEvidence(page, 'fix2-post-reports-list')}`);
+      const commentRows = await rowTexts('comment_reports');
+      assert.ok(commentRows.some((text) => /\bClosed\b/.test(text) && !text.includes('Closed:')));
+      const accountRows = await rowTexts('account_reports');
+      assert.ok(accountRows.some((text) => text.includes('Closed: action taken')));
+
+      await page.goto(`${baseUrl}/admin/resources/post_reports/records/${closedPost[0].id}/show`, {
+        waitUntil: 'networkidle0',
+      });
+      await page.waitForSelector('[data-testid="pupzy-report-status"]', { timeout: 60000 });
+      const status = await page.$eval('[data-testid="pupzy-report-status"]', (node) => node.innerText);
+      assert.match(status, /^Closed: no action/);
+      assert.match(status, /Closed on .* by Test Admin/);
+      console.log(`[fix2 evidence] closed report ${await recordEvidence(page, 'fix2-closed-report-show')}`);
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('links every reference to its record by a readable name, from reports and the audit log', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      const { rows: arabic } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name_arabic)
+         VALUES ('bwg-ref-arabic', 'ref-arabic@example.com', 'هنا إبراهيم') RETURNING id`,
+      );
+      const reporterId = arabic[0].id;
+      const commentId = await insertComment({
+        postId: fixture.flaggedId,
+        authorId: fixture.commenterId,
+        text: 'A comment that someone reported for review',
+        createdAt: new Date(Date.now() - 3_600_000),
+      });
+      const { rows: postReport } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [fixture.flaggedId, reporterId],
+      );
+      const { rows: commentReport } = await database.pool.query(
+        `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [commentId, reporterId],
+      );
+      await database.pool.query(
+        `INSERT INTO moderation_actions (admin_user_id, action_type, target_type, target_id)
+         VALUES ($1, 'POST_FLAGGED', 'POST', $2)`,
+        [principals.adminId, fixture.flaggedId],
+      );
+
+      const waitForPath = (fragment) =>
+        page.waitForFunction((text) => window.location.pathname.includes(text), { timeout: 30000 }, fragment);
+      const openShow = async (resourceId, recordId) => {
+        await page.goto(`${baseUrl}/admin/resources/${resourceId}/records/${recordId}/show`, {
+          waitUntil: 'networkidle0',
+        });
+        await page.waitForSelector('[data-testid="pupzy-reference-link"]', { timeout: 60000 });
+      };
+      const clickReference = async (resourceId) => {
+        await page.click(`[data-testid="pupzy-reference-link"][data-reference-resource="${resourceId}"]`);
+      };
+
+      await loginAsAdmin(page, baseUrl);
+
+      // List: readable names, no raw UUIDs for references, and a link click opens the target, not the row.
+      await page.goto(`${baseUrl}/admin/resources/post_reports`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector('[data-testid="pupzy-reference-link"]', { timeout: 60000 });
+      const listText = await page.$eval('table tbody', (node) => node.innerText);
+      assert.match(listText, /Flagged case awaiting review/);
+      assert.match(listText, /هنا إبراهيم/);
+      const rowCount = await page.$$eval('table tbody tr', (rows) => rows.length);
+      assert.equal(
+        (listText.match(/[0-9a-f]{8}…[0-9a-f]{4}/g) ?? []).length,
+        rowCount,
+        "only each row's own id is a short UUID; references show names",
+      );
+      console.log(`[fix3 evidence] post reports list ${await recordEvidence(page, 'fix3-post-reports-list')}`);
+      await clickReference('posts');
+      await waitForPath(`/resources/posts/records/${fixture.flaggedId}/show`);
+      assert.ok(!page.url().includes('post_reports'), 'the link opened the Post, not the report row');
+
+      // Post Report: Post, back, then the reporter.
+      await openShow('post_reports', postReport[0].id);
+      const showText = await page.$eval('body', (node) => node.innerText);
+      assert.match(showText, /Reported by/);
+      assert.doesNotMatch(showText, /reporter_id|post_id/, 'reference labels are plain words');
+      console.log(`[fix3 evidence] post report show ${await recordEvidence(page, 'fix3-post-report-show')}`);
+      await clickReference('posts');
+      await waitForPath(`/resources/posts/records/${fixture.flaggedId}/show`);
+      await page.goBack({ waitUntil: 'networkidle0' });
+      await page.waitForSelector('[data-testid="pupzy-reference-link"][data-reference-resource="users"]');
+      await clickReference('users');
+      await waitForPath(`/resources/users/records/${reporterId}/show`);
+
+      // Comment Report: the Comment, then its author.
+      await openShow('comment_reports', commentReport[0].id);
+      const commentLink = await page.$eval(
+        '[data-testid="pupzy-reference-link"][data-reference-resource="comments"]',
+        (node) => node.innerText,
+      );
+      assert.match(commentLink, /A comment that someone reported/);
+      await clickReference('comments');
+      await waitForPath(`/resources/comments/records/${commentId}/show`);
+      await page.waitForSelector('[data-testid="pupzy-reference-link"][data-reference-resource="users"]');
+      await clickReference('users');
+      await waitForPath(`/resources/users/records/${fixture.commenterId}/show`);
+
+      // Moderation Actions: a target cell opens the Post.
+      await page.goto(`${baseUrl}/admin/resources/moderation_actions`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector('[data-testid="pupzy-reference-link"][data-reference-resource="posts"]', {
+        timeout: 60000,
+      });
+      console.log(
+        `[fix3 evidence] moderation actions list ${await recordEvidence(page, 'fix3-moderation-actions-list')}`,
+      );
+      await clickReference('posts');
+      await waitForPath(`/resources/posts/records/${fixture.flaggedId}/show`);
+      assert.ok(!page.url().includes('moderation_actions'));
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('labels every field on the report pages and reads an empty value as a dash', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      const reporterId = await insertUser('label-reporter');
+      const reportedId = await insertUser('label-reported');
+      const commentId = await insertComment({
+        postId: fixture.flaggedId,
+        authorId: fixture.commenterId,
+        text: 'Comment for the label check',
+        createdAt: new Date(Date.now() - 3_600_000),
+      });
+      const { rows: post } = await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [fixture.flaggedId, reporterId],
+      );
+      const { rows: comment } = await database.pool.query(
+        `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+        [commentId, reporterId],
+      );
+      const { rows: account } = await database.pool.query(
+        `INSERT INTO account_reports (reporter_id, reported_user_id, reason, reviewed_at, reviewed_by_admin_id, review_outcome)
+         VALUES ($1, $2, 'SPAM', now(), $3, 'ACTION_TAKEN') RETURNING id`,
+        [reporterId, reportedId, principals.adminId],
+      );
+
+      await loginAsAdmin(page, baseUrl);
+      const pages = [
+        ['post_reports', post[0].id],
+        ['comment_reports', comment[0].id],
+        ['account_reports', account[0].id],
+        ['users', reporterId],
+        ['comments', commentId],
+      ];
+      for (const [resourceId, recordId] of pages) {
+        await page.goto(`${baseUrl}/admin/resources/${resourceId}/records/${recordId}/show`, {
+          waitUntil: 'networkidle0',
+        });
+        await page.waitForSelector('main label, [data-css*="show"] label, label', { timeout: 60000 });
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        const rows = await page.evaluate(() => {
+          const first = [...document.querySelectorAll('label')].find((node) => !node.closest('[data-css^="sidebar"]'));
+          const container = first.parentElement.parentElement.parentElement;
+          return [...container.children].map((row) => ({
+            label: row.querySelector('label')?.innerText.trim() ?? null,
+            hasEvidence: Boolean(row.querySelector('[data-testid="pupzy-comment-evidence"]')),
+            text: row.innerText.trim(),
+          }));
+        });
+        assert.ok(rows.length > 3, `${resourceId} show page has fields`);
+        for (const row of rows) {
+          // The Comment evidence block carries its own "Comment" heading.
+          if (row.hasEvidence) continue;
+          assert.ok(row.label, `${resourceId}: a value has no label: ${JSON.stringify(row.text.slice(0, 60))}`);
+        }
+        if (resourceId !== 'users') {
+          const labels = rows.map((row) => row.label);
+          assert.ok(labels.includes('ID'), `${resourceId} labels its own id`);
+          assert.ok(!labels.some((label) => /_id$/.test(label)), `${resourceId} labels read as plain words`);
+        }
+        if (resourceId === 'post_reports') {
+          const reviewedAt = rows.find((row) => row.label === 'Reviewed At');
+          assert.match(reviewedAt.text, /—/, 'an empty value is a dash, not a blank gap');
+          console.log(`[fix4 evidence] report show ${await recordEvidence(page, 'fix4-report-show-labelled')}`);
+        }
+      }
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  describe('comment evidence', () => {
+    async function seedEvidenceComment({ text, status = 'ACTIVE', images = 2, parentId = null }) {
+      const { rows } = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, parent_id, text, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, now() - interval '2 hours') RETURNING id`,
+        [fixture.flaggedId, fixture.commenterId, parentId, text, status],
+      );
+      for (let index = 0; index < images; index += 1) {
+        await insertCommentMedia(rows[0].id, `comments/evidence/${rows[0].id}-${index}-photo-wide.svg`);
+      }
+      return rows[0].id;
+    }
+
+    const waitForImages = (page, count) =>
+      page.waitForFunction(
+        (expected) =>
+          [...document.querySelectorAll('[data-testid="pupzy-comment-images"] img')].filter(
+            (image) => image.complete && image.naturalWidth > 0,
+          ).length === expected,
+        { timeout: 30000 },
+        count,
+      );
+
+    it('shows a rescue Comment with its images and opens them in a keyboard-driven lightbox', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        const commentId = await seedEvidenceComment({ text: 'Rescue evidence with two photos' });
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(`${baseUrl}/admin/resources/comments/records/${commentId}/show`, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="pupzy-comment-evidence"]', { timeout: 60000 });
+        await waitForImages(page, 2);
+        assert.equal(
+          await page.$$eval('[data-testid="pupzy-comment-images"] [data-testid="pupzy-media-thumb"]', (n) => n.length),
+          2,
+        );
+        assert.match(
+          await page.$eval('[data-testid="pupzy-comment-text"]', (n) => n.innerText),
+          /Rescue evidence with two photos/,
+        );
+        assert.equal(
+          await page.$('[data-testid="pupzy-image-hidden-badge"]'),
+          null,
+          'an active Comment shows no hidden marker',
+        );
+        assert.equal(
+          await page.$('[data-testid="action-inspectMedia"]'),
+          null,
+          'there is no dead Inspect Media button',
+        );
+        console.log(`[fix4 evidence] comment show ${await recordEvidence(page, 'fix4-comment-show')}`);
+
+        await page.click('[data-testid="pupzy-media-thumb"]');
+        await page.waitForSelector('[data-testid="pupzy-image-dialog"]');
+        const dialogText = () => page.$eval('[data-testid="pupzy-image-dialog"]', (n) => n.innerText);
+        assert.match(await dialogText(), /1 of 2/);
+        console.log(`[fix4 evidence] lightbox ${await recordEvidence(page, 'fix4-lightbox')}`);
+        await page.keyboard.press('ArrowRight');
+        await page.waitForFunction(() =>
+          document.querySelector('[data-testid="pupzy-image-dialog"]')?.innerText.includes('2 of 2'),
+        );
+        await page.keyboard.press('ArrowLeft');
+        await page.waitForFunction(() =>
+          document.querySelector('[data-testid="pupzy-image-dialog"]')?.innerText.includes('1 of 2'),
+        );
+        await page.keyboard.press('Escape');
+        await page.waitForFunction(() => !document.querySelector('[data-testid="pupzy-image-dialog"]'));
+        assert.equal(
+          await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+          'pupzy-media-thumb',
+          'closing returns focus to the thumbnail',
+        );
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+
+    it('shows the reported Comment, its images and every report on the Comment Report page', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        const commentId = await seedEvidenceComment({ text: 'Evidence for the report page', status: 'IMAGE_HIDDEN' });
+        const first = await insertUser('evidence-first');
+        const second = await insertUser('evidence-second');
+        const { rows } = await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason, details) VALUES ($1, $2, 'SPAM', 'first details') RETURNING id`,
+          [commentId, first],
+        );
+        await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason, details, reviewed_at) VALUES ($1, $2, 'OTHER', 'second details', now())`,
+          [commentId, second],
+        );
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(`${baseUrl}/admin/resources/comment_reports/records/${rows[0].id}/show`, {
+          waitUntil: 'networkidle0',
+        });
+        await page.waitForSelector('[data-testid="pupzy-comment-evidence"]', { timeout: 60000 });
+        await waitForImages(page, 2);
+        const text = await page.$eval('[data-testid="pupzy-comment-evidence"]', (n) => n.innerText);
+        assert.match(text, /Evidence for the report page/);
+        assert.match(text, /Images hidden from users/);
+        assert.doesNotMatch(text, /Image hidden/, 'one badge, not two saying the same thing');
+        assert.match(
+          await page.$eval('[data-testid="pupzy-comment-report-reporter"]', (node) => node.parentElement.innerText),
+          /Reported by[\s\S]+·\s+\d{1,2} \w{3} \d{4}, \d{2}:\d{2}/,
+          'the reporter and date read as one line',
+        );
+        assert.equal(await page.$$eval('[data-testid="pupzy-image-hidden-badge"]', (n) => n.length), 2);
+        assert.match(text, /Reports on this comment \(2\)/);
+        assert.match(text, /first details/);
+        assert.match(text, /second details/);
+        assert.match(text, /This report/);
+        assert.equal(await page.$$eval('[data-testid="pupzy-comment-report"]', (n) => n.length), 2);
+        assert.equal(
+          await page.$$eval('[data-testid="pupzy-comment-report-link"]', (n) => n.length),
+          1,
+          'only the other report links away',
+        );
+        const evidenceTop = await page.$eval(
+          '[data-testid="pupzy-comment-evidence"]',
+          (n) => n.getBoundingClientRect().top,
+        );
+        const statusTop = await page.$eval('[data-testid="pupzy-report-status"]', (n) => n.getBoundingClientRect().top);
+        assert.ok(evidenceTop < statusTop, 'the evidence sits above the report fields');
+        console.log(`[fix4 evidence] comment report show ${await recordEvidence(page, 'fix4-comment-report-show')}`);
+
+        await page.click('[data-testid="pupzy-comment-post"]');
+        await page.waitForFunction(
+          (id) => window.location.pathname.includes(`/resources/posts/records/${id}/show`),
+          {},
+          fixture.flaggedId,
+        );
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+
+    it('renders an Arabic Comment right to left and links a Reply to its parent', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        const parentId = await seedEvidenceComment({ text: 'Parent in English', images: 0 });
+        const replyId = await seedEvidenceComment({ text: 'رأيت هذا الكلب بالقرب من الجسر أمس', images: 1, parentId });
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(`${baseUrl}/admin/resources/comments/records/${replyId}/show`, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="pupzy-comment-text"]', { timeout: 60000 });
+        assert.equal(
+          await page.$eval('[data-testid="pupzy-comment-text"]', (n) => getComputedStyle(n).direction),
+          'rtl',
+        );
+        assert.equal(await page.$eval('[data-testid="pupzy-comment-parent"]', (n) => n.innerText), 'Parent in English');
+        await page.click('[data-testid="pupzy-comment-parent"]');
+        await page.waitForFunction(
+          (id) => window.location.pathname.includes(`/resources/comments/records/${id}/show`),
+          {},
+          parentId,
+        );
+        await page.waitForSelector('[data-testid="pupzy-comment-text"]');
+        assert.equal(
+          await page.$eval('[data-testid="pupzy-comment-text"]', (n) => getComputedStyle(n).direction),
+          'ltr',
+        );
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+  });
+
+  describe('profile photos', () => {
+    async function insertPhotoUser(label, { withPhoto = true } = {}) {
+      const { rows } = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name, profile_picture_url, profile_photo_storage_key)
+         VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+        [
+          `bwg-photo-${label}`,
+          `photo-${label}@example.com`,
+          `Photo ${label}`,
+          withPhoto ? `${baseUrl}/admin/test-media/avatars-photo-wide.svg` : null,
+          withPhoto ? `profiles/${label}-photo-wide.svg` : null,
+        ],
+      );
+      return rows[0].id;
+    }
+
+    it('shows a large enlargeable avatar on the user page and removes the photo the way the app does', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        const userId = await insertPhotoUser('remove');
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(`${baseUrl}/admin/resources/users/records/${userId}/show`, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="pupzy-profile-photo-open"]', { timeout: 60000 });
+        const labelText = await page.$eval('body', (node) => node.innerText);
+        assert.match(labelText, /Profile photo/);
+        assert.doesNotMatch(labelText, /avatars-photo-wide\.svg/, 'the photo is not printed as URL text');
+        const size = await page.$eval(
+          '[data-testid="pupzy-profile-photo-open"] [data-testid="pupzy-avatar"]',
+          (node) => {
+            const box = node.getBoundingClientRect();
+            return { width: Math.round(box.width), radius: getComputedStyle(node).borderRadius };
+          },
+        );
+        assert.equal(size.width, 96);
+        assert.match(size.radius, /50%|48px/);
+        await page.waitForFunction(
+          () => document.querySelector('[data-testid="pupzy-profile-photo-open"] img')?.naturalWidth > 0,
+          { timeout: 30000 },
+        );
+        console.log(`[fix5 evidence] user with photo ${await recordEvidence(page, 'fix5-user-show-before')}`);
+
+        await page.click('[data-testid="pupzy-profile-photo-open"]');
+        await page.waitForSelector('[data-testid="pupzy-image-dialog"]');
+        await page.keyboard.press('Escape');
+        await page.waitForFunction(() => !document.querySelector('[data-testid="pupzy-image-dialog"]'));
+
+        await page.click('[data-testid="action-removeProfilePhoto"]');
+        await page.waitForSelector('#moderation-reason', { timeout: 60000 });
+        assert.equal(await page.$eval('h3', (node) => node.innerText), 'Remove Profile Photo');
+        assert.equal(
+          await page.$eval('[data-testid="moderation-action-submit"]', (node) => node.disabled),
+          true,
+          'a reason is required',
+        );
+        await page.type('#moderation-reason', 'Photo breaks the community rules');
+        await waitForEnabledSubmit(page);
+        await page.click('[data-testid="moderation-action-submit"]');
+        await page.waitForSelector('[data-testid="pupzy-profile-photo-none"]', { timeout: 60000 });
+        await page.waitForFunction(() => document.body.innerText.includes('Profile photo removed.'), {
+          timeout: 30000,
+        });
+        assert.match(
+          await page.$eval('[data-testid="pupzy-profile-photo-none"]', (node) => node.innerText),
+          /PR/,
+          'initials replace the photo',
+        );
+        assert.equal(
+          await page.$('[data-testid="action-removeProfilePhoto"]'),
+          null,
+          'the action goes away with the photo',
+        );
+        console.log(`[fix5 evidence] user after removal ${await recordEvidence(page, 'fix5-user-show-after')}`);
+
+        const { rows } = await database.pool.query(
+          `SELECT profile_picture_url, profile_photo_storage_key, profile_photo_changed_at FROM users WHERE id = $1`,
+          [userId],
+        );
+        assert.equal(rows[0].profile_picture_url, null);
+        assert.equal(rows[0].profile_photo_storage_key, null);
+        assert.ok(rows[0].profile_photo_changed_at);
+        const work = await database.pool.query(
+          `SELECT storage_key, status FROM media_deletion_work WHERE storage_key = 'profiles/remove-photo-wide.svg'`,
+        );
+        assert.deepEqual(work.rows, [{ storage_key: 'profiles/remove-photo-wide.svg', status: 'PENDING' }]);
+        const audit = await database.pool.query(
+          `SELECT action_type, reason FROM moderation_actions WHERE target_id = $1`,
+          [userId],
+        );
+        assert.deepEqual(audit.rows, [
+          { action_type: 'USER_PROFILE_PHOTO_REMOVED', reason: 'Photo breaks the community rules' },
+        ]);
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+
+    it('puts a small avatar first in the users list and falls back to initials without a photo', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        await insertPhotoUser('with');
+        await insertPhotoUser('without', { withPhoto: false });
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(`${baseUrl}/admin/resources/users`, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="pupzy-avatar"]', { timeout: 60000 });
+        const headers = await page.$$eval('table thead td', (nodes) => nodes.map((node) => node.innerText.trim()));
+        assert.equal(headers[1], 'Profile photo', 'the avatar is the first data column');
+        const rows = await page.$$eval('table tbody tr', (nodes) =>
+          nodes.map((row) => ({
+            text: row.innerText,
+            hasImage: Boolean(row.querySelector('[data-testid="pupzy-avatar"] img')),
+            size: Math.round(row.querySelector('[data-testid="pupzy-avatar"]').getBoundingClientRect().width),
+          })),
+        );
+        const withPhoto = rows.find((row) => row.text.includes('photo-with@example.com'));
+        const without = rows.find((row) => row.text.includes('photo-without@example.com'));
+        assert.equal(withPhoto.hasImage, true);
+        assert.equal(withPhoto.size, 32);
+        assert.equal(without.hasImage, false);
+        assert.match(without.text, /PW/, 'initials of "Photo without"');
+        console.log(`[fix5 evidence] users list ${await recordEvidence(page, 'fix5-users-list')}`);
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+  });
+
+  describe('acting on the reported content from a report page', () => {
+    const closedStatus = (page) =>
+      page.waitForFunction(
+        () =>
+          /Closed: action taken/.test(document.querySelector('[data-testid="pupzy-report-status"]')?.innerText ?? ''),
+        { timeout: 30000 },
+      );
+
+    it('hides a reported Comment from its Comment Report and lands back on the report closed as action taken', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        const reporterId = await insertUser('act-comment-reporter');
+        const commentId = await insertComment({
+          postId: fixture.flaggedId,
+          authorId: fixture.commenterId,
+          text: 'A comment a moderator will hide',
+          createdAt: new Date(Date.now() - 3_600_000),
+        });
+        const { rows } = await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [commentId, reporterId],
+        );
+        const reportUrl = `${baseUrl}/admin/resources/comment_reports/records/${rows[0].id}/show`;
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(reportUrl, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="action-hideComment"]', { timeout: 60000 });
+        assert.ok(await page.$('[data-testid="action-reviewWithNoAction"]'));
+        assert.ok(await page.$('[data-testid="action-removeComment"]'));
+        assert.ok(await page.$('[data-testid="action-banAuthor"]'));
+        console.log(
+          `[fix6 evidence] comment report before ${await recordEvidence(page, 'fix6-comment-report-before')}`,
+        );
+
+        await page.click('[data-testid="action-hideComment"]');
+        await page.waitForSelector('#moderation-reason', { timeout: 60000 });
+        assert.match(page.url(), new RegExp(`/resources/comments/records/${commentId}/hideComment\\?.*returnTo=`));
+        assert.equal(await page.$eval('h3', (node) => node.innerText), 'Hide Comment');
+        await page.type('#moderation-reason', 'Abusive language');
+        await waitForEnabledSubmit(page);
+        await page.click('[data-testid="moderation-action-submit"]');
+
+        await page.waitForSelector('[data-testid="pupzy-report-status"]', { timeout: 60000 });
+        await closedStatus(page);
+        assert.equal(page.url().split('?')[0], reportUrl, 'back on the report');
+        assert.match(
+          await page.$eval('[data-testid="pupzy-report-status"]', (node) => node.innerText),
+          /Closed: action taken[\s\S]*by Staff Admin/,
+        );
+        assert.equal(await page.$('[data-testid="action-hideComment"]'), null, 'nothing left to hide');
+        console.log(`[fix6 evidence] comment report after ${await recordEvidence(page, 'fix6-comment-report-after')}`);
+
+        const comment = await database.pool.query(`SELECT status FROM comments WHERE id = $1`, [commentId]);
+        assert.equal(comment.rows[0].status, 'HIDDEN');
+        const report = await database.pool.query(
+          `SELECT review_outcome, reviewed_by_admin_id IS NOT NULL AS reviewed FROM comment_reports WHERE id = $1`,
+          [rows[0].id],
+        );
+        assert.deepEqual(report.rows[0], { review_outcome: 'ACTION_TAKEN', reviewed: true });
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+
+    it('removes a reported Post from its Post Report and closes the reports on its comments too', async () => {
+      const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+      try {
+        const reporterId = await insertUser('act-post-reporter');
+        const otherReporterId = await insertUser('act-post-reporter-two');
+        const commentId = await insertComment({
+          postId: fixture.flaggedId,
+          authorId: fixture.commenterId,
+          text: 'A comment on the removed post',
+          createdAt: new Date(Date.now() - 3_600_000),
+        });
+        const { rows } = await database.pool.query(
+          `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [fixture.flaggedId, reporterId],
+        );
+        const { rows: commentReport } = await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason) VALUES ($1, $2, 'SPAM') RETURNING id`,
+          [commentId, otherReporterId],
+        );
+        const reportUrl = `${baseUrl}/admin/resources/post_reports/records/${rows[0].id}/show`;
+        await loginAsAdmin(page, baseUrl);
+        await page.goto(reportUrl, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="action-removePost"]', { timeout: 60000 });
+        assert.ok(await page.$('[data-testid="action-banAuthor"]'));
+
+        await page.click('[data-testid="action-removePost"]');
+        await page.waitForSelector('#moderation-reason', { timeout: 60000 });
+        assert.equal(await page.$eval('h3', (node) => node.innerText), 'Remove Post');
+        await page.type('#moderation-reason', 'Breaks the rules');
+        await waitForEnabledSubmit(page);
+        await page.click('[data-testid="moderation-action-submit"]');
+
+        await page.waitForSelector('[data-testid="pupzy-report-status"]', { timeout: 60000 });
+        await closedStatus(page);
+        assert.equal(page.url().split('?')[0], reportUrl);
+        assert.equal(await page.$('[data-testid="action-removePost"]'), null, 'the Post is already removed');
+        console.log(`[fix6 evidence] post report after ${await recordEvidence(page, 'fix6-post-report-after')}`);
+
+        const post = await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [fixture.flaggedId]);
+        assert.equal(post.rows[0].status, 'REMOVED');
+        const closedReports = await database.pool.query(
+          `SELECT review_outcome FROM post_reports WHERE id = $1 UNION ALL SELECT review_outcome FROM comment_reports WHERE id = $2`,
+          [rows[0].id, commentReport[0].id],
+        );
+        assert.deepEqual(
+          closedReports.rows.map((row) => row.review_outcome),
+          ['ACTION_TAKEN', 'ACTION_TAKEN'],
+        );
+        const audit = await database.pool.query(
+          `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_REMOVED'`,
+          [fixture.flaggedId],
+        );
+        assert.deepEqual(audit.rows[0].metadata.closedCommentReportIds, [commentReport[0].id]);
+        assert.deepEqual(errors, []);
+      } finally {
+        await page.close();
+      }
+    });
+  });
+
   it('shows the dashboard empty state when no review work remains', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {

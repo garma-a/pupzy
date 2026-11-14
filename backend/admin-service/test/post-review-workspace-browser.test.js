@@ -574,7 +574,7 @@ describe('Post review workspace real browser suite', { timeout: 120000 }, () => 
 
       const reportsText = await page.$eval('[data-testid="pupzy-reports"]', (element) => element.innerText);
       assert.match(reportsText, /Open/);
-      assert.match(reportsText, /Reviewed/);
+      assert.match(reportsText, /Closed: no action/);
       assert.match(reportsText, /Inappropriate content/);
       const reportHrefs = await page.$$eval('[data-testid="pupzy-report-review-link"]', (elements) =>
         elements.map((element) => element.getAttribute('href')),

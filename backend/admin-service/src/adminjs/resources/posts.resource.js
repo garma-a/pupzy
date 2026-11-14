@@ -9,7 +9,13 @@ import {
   buildPostReviewActions,
 } from '../review/post-review.js';
 import { virtualFilterOptions } from '../queue-filters.js';
-import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
+import {
+  attachReferenceLink,
+  attachShortUuid,
+  enumProperty,
+  noDeleteActions,
+  stripPopulatedPasswordHashes,
+} from './resource-helpers.js';
 
 export const PROTECTED_POST_FIELDS = [
   'id',
@@ -147,7 +153,7 @@ export function buildPostsResource(db, pool, components, cache) {
   };
 
   attachShortUuid(properties, ['id'], components, ['list', 'show']);
-  attachShortUuid(properties, ['creator_id', 'moderated_by_admin_id'], components, ['show']);
+  attachReferenceLink(properties, ['creator_id', 'moderated_by_admin_id'], components, ['show']);
 
   // The review workspace is a virtual read-only property rendered by a custom
   // component. Without the component (unit tests, reduced builds) the virtual

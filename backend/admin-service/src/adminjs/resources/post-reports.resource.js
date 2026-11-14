@@ -1,15 +1,19 @@
 import { buildPostReportReviewAction } from '../actions/review-report.actions.js';
+import { buildPostReportTargetActions, reportTargetState, withTargetState } from '../actions/report-target-actions.js';
 import { ENUMS } from '../enums.js';
 import { virtualFilterOptions } from '../queue-filters.js';
 import {
+  attachReferenceLink,
   attachShortUuid,
   buildReadOnlyResource,
   enumProperty,
+  reportStatusProperty,
   stripPopulatedPasswordHashes,
 } from './resource-helpers.js';
 
 export function buildPostReportsResource(db, components = {}, pool, cache) {
   const properties = {
+    review_status: reportStatusProperty(components),
     reason: enumProperty(ENUMS.reportReason),
     review_outcome: enumProperty(ENUMS.postReportReviewOutcome),
     details: { isDisabled: true },
@@ -18,12 +22,14 @@ export function buildPostReportsResource(db, components = {}, pool, cache) {
     ...virtualFilterOptions('post_reports'),
   };
 
-  attachShortUuid(properties, ['id', 'post_id', 'reporter_id', 'reviewed_by_admin_id'], components, ['list', 'show']);
+  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['post_id', 'reporter_id', 'reviewed_by_admin_id'], components, ['list', 'show']);
 
   return buildReadOnlyResource(db, 'post_reports', { name: 'Moderation', icon: 'Flag' }, properties, {
     sort: { sortBy: 'created_at', direction: 'desc' },
-    listProperties: ['id', 'post_id', 'reporter_id', 'reason', 'reviewed_at', 'created_at'],
+    listProperties: ['id', 'review_status', 'post_id', 'reporter_id', 'reason', 'reviewed_at', 'created_at'],
     showProperties: [
+      'review_status',
       'id',
       'post_id',
       'reporter_id',
@@ -45,8 +51,14 @@ export function buildPostReportsResource(db, components = {}, pool, cache) {
     ],
     actions: {
       list: { after: stripPopulatedPasswordHashes },
-      show: { after: stripPopulatedPasswordHashes },
-      reviewWithNoAction: buildPostReportReviewAction(pool, components?.ModerationAction, cache),
+      ...withTargetState(
+        {
+          show: { after: stripPopulatedPasswordHashes },
+          reviewWithNoAction: buildPostReportReviewAction(pool, components?.ModerationAction, cache),
+          ...buildPostReportTargetActions(),
+        },
+        reportTargetState(pool, 'post'),
+      ),
     },
   });
 }

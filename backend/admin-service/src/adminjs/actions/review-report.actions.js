@@ -119,11 +119,11 @@ export function buildAccountReportReviewAction(pool, component, cache) {
 }
 
 /**
- * Comment Reports keep their existing closure marker (`reviewed_at` only) and
- * never change the mobile API. Reviewing one with no action closes it and
- * appends an authoritative audit entry carrying the reviewer and the target
- * Comment, so a false or unsubstantiated Comment Report has an auditable
- * outcome without removing or restoring the Comment.
+ * Reviewing a Comment Report with no action closes it, records the outcome and
+ * the reviewing administrator (never read by the mobile API), and appends an
+ * authoritative audit entry carrying the reviewer and the target Comment, so a
+ * false or unsubstantiated Comment Report has an auditable outcome without
+ * removing or restoring the Comment.
  */
 export function buildCommentReportReviewAction(pool, component, cache) {
   return {
@@ -158,7 +158,12 @@ export function buildCommentReportReviewAction(pool, component, cache) {
           return { ok: false, error: 'Comment Report has already been reviewed.' };
         }
 
-        await client.query(`UPDATE comment_reports SET reviewed_at = now() WHERE id = $1`, [report.id]);
+        await client.query(
+          `UPDATE comment_reports
+           SET reviewed_at = now(), reviewed_by_admin_id = $2, review_outcome = 'NO_ACTION'
+           WHERE id = $1`,
+          [report.id, currentAdmin.id],
+        );
 
         const { rows: auditRows } = await client.query(
           `INSERT INTO moderation_actions

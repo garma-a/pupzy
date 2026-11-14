@@ -44,3 +44,29 @@ export function filteredListBackLink(search, rootPath = '/admin') {
     label: hasFilters ? 'Back to filtered list' : 'Back to Posts list',
   };
 }
+
+export function adminRootPath() {
+  return (typeof window !== 'undefined' && window.REDUX_STATE && window.REDUX_STATE.paths?.rootPath) || '/admin';
+}
+
+/**
+ * Accepts a `returnTo` only when it is a record page inside this admin
+ * (`<root>/resources/<resource>/records/<id>/show`, optional query). Anything
+ * else (another site, protocol-relative or script URLs) is ignored so a crafted
+ * link cannot send a moderator elsewhere after an action.
+ */
+export function safeReturnPath(value, rootPath = '/admin') {
+  if (typeof value !== 'string') return null;
+  const escapedRoot = rootPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`^${escapedRoot}/resources/[A-Za-z0-9_-]+/records/[A-Za-z0-9-]+/show(\\?[^#\\s]*)?$`);
+  return pattern.test(value) ? value : null;
+}
+
+/**
+ * Link to a report's review form that brings the moderator back to
+ * `returnTo` (the Post review workspace) once the review is saved.
+ */
+export function reportReviewHref(resourceId, reportId, returnTo, rootPath = '/admin') {
+  const base = `${rootPath}/resources/${encodeURIComponent(resourceId)}/records/${encodeURIComponent(reportId)}/reviewWithNoAction`;
+  return returnTo ? `${base}?returnTo=${encodeURIComponent(returnTo)}` : base;
+}

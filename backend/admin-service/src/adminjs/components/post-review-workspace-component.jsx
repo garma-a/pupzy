@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiClient } from 'adminjs';
-import { Badge, Box, Button, H3, H4, Icon, Link, Loader, MessageBox, Modal, Text } from '@adminjs/design-system';
+import { Badge, Box, Button, H3, H4, Link, Loader, MessageBox, Text } from '@adminjs/design-system';
 
-import { filteredListBackLink, recallListSearch } from './list-return.js';
+import { filteredListBackLink, recallListSearch, reportReviewHref } from './list-return.js';
+import { MediaThumb, useMediaLightbox } from './media-lightbox.jsx';
 import { StateTag } from './record-status-component.jsx';
 
 const api = new ApiClient();
@@ -24,11 +25,6 @@ const COMMENT_BADGE_VARIANTS = {
   REMOVED: 'danger',
 };
 
-const REPORT_BADGE_VARIANTS = {
-  Open: 'warning',
-  Reviewed: 'default',
-};
-
 function parseJson(value) {
   if (!value) return null;
   if (typeof value === 'object') return value;
@@ -43,152 +39,6 @@ function formatDateTime(value) {
   if (!value) return '—';
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
-}
-
-function imageLabel(item, index, total) {
-  const dimensions = item?.width && item?.height ? `, ${item.width} by ${item.height} pixels` : '';
-  return `Open photo ${index + 1} of ${total}${dimensions}`;
-}
-
-function MediaThumb({ item, index, total, description, onOpen }) {
-  const [failed, setFailed] = useState(false);
-  const unavailable = !item.url || failed;
-
-  return (
-    <button
-      type="button"
-      className="pupzy-media-thumb"
-      data-testid="pupzy-media-thumb"
-      data-unavailable={unavailable ? 'true' : 'false'}
-      aria-label={unavailable ? `Photo ${index + 1} of ${total} is unavailable` : imageLabel(item, index, total)}
-      onClick={(event) => onOpen(event.currentTarget)}
-    >
-      {unavailable ? (
-        <span className="pupzy-media-fallback" role="img" aria-label="Image unavailable">
-          <Icon icon="Image" />
-          <span>Image unavailable</span>
-        </span>
-      ) : (
-        <img src={item.url} alt={description} loading="lazy" onError={() => setFailed(true)} />
-      )}
-    </button>
-  );
-}
-
-function ImageDialog({ items, index, onClose, onNavigate }) {
-  const containerRef = useRef(null);
-  const closeButtonRef = useRef(null);
-  const [failed, setFailed] = useState(false);
-  const current = items[index];
-
-  useEffect(() => {
-    setFailed(false);
-  }, [index]);
-
-  useEffect(() => {
-    closeButtonRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-        return;
-      }
-      if (event.key === 'ArrowRight' && items.length > 1) {
-        event.preventDefault();
-        onNavigate(1);
-        return;
-      }
-      if (event.key === 'ArrowLeft' && items.length > 1) {
-        event.preventDefault();
-        onNavigate(-1);
-        return;
-      }
-      if (event.key === 'Tab') {
-        const root = containerRef.current;
-        if (!root) return;
-        const focusable = Array.from(
-          root.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),
-        ).filter((element) => !element.hasAttribute('disabled'));
-        if (focusable.length === 0) return;
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [items.length, onClose, onNavigate]);
-
-  const unavailable = !current?.url || failed;
-
-  return (
-    <Modal onOverlayClick={onClose} width={['94vw', 'min(94vw, 1080px)']}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Full image preview, image ${index + 1} of ${items.length}`}
-        className="pupzy-media-dialog"
-        data-testid="pupzy-image-dialog"
-        ref={containerRef}
-      >
-        <div className="pupzy-media-dialog-header">
-          <Text fontWeight="bold" aria-live="polite">
-            {index + 1} of {items.length}
-          </Text>
-          <Button
-            ref={closeButtonRef}
-            size="icon"
-            variant="light"
-            aria-label="Close image preview"
-            data-testid="pupzy-image-dialog-close"
-            onClick={onClose}
-          >
-            <Icon icon="X" />
-          </Button>
-        </div>
-
-        {unavailable ? (
-          <div className="pupzy-media-dialog-fallback" role="img" aria-label="Image unavailable">
-            <Icon icon="Image" />
-            <Text>This image is unavailable.</Text>
-          </div>
-        ) : (
-          <img
-            className="pupzy-media-dialog-content"
-            data-testid="pupzy-image-dialog-content"
-            src={current.url}
-            alt={`Full preview ${index + 1} of ${items.length}`}
-            onError={() => setFailed(true)}
-          />
-        )}
-
-        {items.length > 1 ? (
-          <div className="pupzy-media-dialog-nav">
-            <Button
-              variant="light"
-              aria-label="Previous image"
-              disabled={items.length < 2}
-              onClick={() => onNavigate(-1)}
-            >
-              Previous
-            </Button>
-            <Button variant="light" aria-label="Next image" disabled={items.length < 2} onClick={() => onNavigate(1)}>
-              Next
-            </Button>
-          </div>
-        ) : null}
-      </div>
-    </Modal>
-  );
 }
 
 function DiscussionItem({ item, onOpenMedia }) {
@@ -239,16 +89,14 @@ function DiscussionItem({ item, onOpenMedia }) {
 }
 
 function ReportRow({ report, reviewHref, context }) {
+  const closedOn = report.reviewedAt ? formatDateTime(report.reviewedAt) : null;
   return (
     <li className="pupzy-report-row">
       <div className="pupzy-discussion-meta">
         <Text fontWeight="bold">{report.reasonLabel}</Text>
-        <Badge variant={REPORT_BADGE_VARIANTS[report.statusLabel] ?? 'default'}>{report.statusLabel}</Badge>
-        {report.reviewOutcomeLabel ? (
-          <Text color="grey60" fontSize="sm">
-            {report.reviewOutcomeLabel}
-          </Text>
-        ) : null}
+        <Badge variant={report.isOpen ? 'warning' : 'default'} data-testid="pupzy-report-status">
+          {report.statusLabel}
+        </Badge>
       </div>
       {context ? (
         <Text color="grey60" fontSize="sm" mt="xs">
@@ -260,9 +108,16 @@ function ReportRow({ report, reviewHref, context }) {
         <Text color="grey60" fontSize="sm">
           Reported by {report.reporterName} on {formatDateTime(report.createdAt)}
         </Text>
-        <Link href={reviewHref} target="_blank" rel="noopener noreferrer" data-testid="pupzy-report-review-link">
-          Review this report
-        </Link>
+        {report.isOpen ? (
+          <Link href={reviewHref} data-testid="pupzy-report-review-link">
+            Review this report
+          </Link>
+        ) : (
+          <Text color="grey60" fontSize="sm" data-testid="pupzy-report-closed-note">
+            {closedOn ? `Closed on ${closedOn}` : 'Closed'}
+            {report.reviewedByName ? ` by ${report.reviewedByName}` : ''}
+          </Text>
+        )}
       </div>
     </li>
   );
@@ -281,33 +136,13 @@ export default function PostReviewWorkspace({ resource, record }) {
   const [discussion, setDiscussion] = useState(review?.discussion ?? null);
   const [loadingPage, setLoadingPage] = useState(false);
   const [pageError, setPageError] = useState('');
-  const [dialog, setDialog] = useState(null);
-  const triggerRef = useRef(null);
+  const { openMedia, dialog } = useMediaLightbox();
+  const returnTo = typeof window === 'undefined' ? '' : `${window.location.pathname}${window.location.search}`;
 
   useEffect(() => {
     setDiscussion(review?.discussion ?? null);
     setPageError('');
   }, [review]);
-
-  const openMedia = useCallback((items, index, trigger) => {
-    triggerRef.current = trigger ?? null;
-    setDialog({ items, index });
-  }, []);
-
-  const closeDialog = useCallback(() => {
-    setDialog(null);
-    const trigger = triggerRef.current;
-    triggerRef.current = null;
-    if (trigger) trigger.focus();
-  }, []);
-
-  const navigateDialog = useCallback((delta) => {
-    setDialog((current) => {
-      if (!current) return current;
-      const nextIndex = (current.index + delta + current.items.length) % current.items.length;
-      return { ...current, index: nextIndex };
-    });
-  }, []);
 
   const loadPage = useCallback(
     async (nextPage) => {
@@ -505,7 +340,7 @@ export default function PostReviewWorkspace({ resource, record }) {
               <ReportRow
                 key={report.id}
                 report={report}
-                reviewHref={adminResourceUrl(`post_reports/records/${encodeURIComponent(report.id)}/show`)}
+                reviewHref={reportReviewHref('post_reports', report.id, returnTo, adminRootPath())}
               />
             ))}
           </ul>
@@ -523,7 +358,7 @@ export default function PostReviewWorkspace({ resource, record }) {
                 key={report.id}
                 report={report}
                 context={`Comment state: ${report.commentStatusLabel ?? 'Unknown'}`}
-                reviewHref={adminResourceUrl(`comment_reports/records/${encodeURIComponent(report.id)}/show`)}
+                reviewHref={reportReviewHref('comment_reports', report.id, returnTo, adminRootPath())}
               />
             ))}
           </ul>
@@ -563,9 +398,7 @@ export default function PostReviewWorkspace({ resource, record }) {
         )}
       </section>
 
-      {dialog ? (
-        <ImageDialog items={dialog.items} index={dialog.index} onClose={closeDialog} onNavigate={navigateDialog} />
-      ) : null}
+      {dialog}
     </Box>
   );
 }

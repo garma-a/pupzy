@@ -6,6 +6,7 @@ import { Database } from '@adminjs/sql';
 import { DashboardStatsCache } from './dashboard/dashboard-cache.js';
 import { buildDashboardHandler } from './dashboard/dashboard-handler.js';
 import { pupzyTheme } from './theme.js';
+import { PROPERTY_LABELS } from './property-labels.js';
 import { buildAdminUsersResource } from './resources/admin-users.resource.js';
 import { buildAdoptionApplicationsResource } from './resources/adoption-applications.resource.js';
 import { buildAdoptionPostsResource } from './resources/adoption-posts.resource.js';
@@ -24,7 +25,7 @@ import { buildPostUpvotesResource } from './resources/post-upvotes.resource.js';
 import { buildPostsResource } from './resources/posts.resource.js';
 import { buildProductPostsResource } from './resources/product-posts.resource.js';
 import { buildRescuePostsResource } from './resources/rescue-posts.resource.js';
-import { attachCacheInvalidation } from './resources/resource-helpers.js';
+import { attachCacheInvalidation, attachPopulatedSanitizer } from './resources/resource-helpers.js';
 import { QueueAwareSqlResource, buildAdminSqlDatabase } from './sql-adapter.js';
 import { buildUsersResource } from './resources/users.resource.js';
 import { buildVetClinicsResource } from './resources/vet-clinics.resource.js';
@@ -72,6 +73,14 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
   const componentLoader = new ComponentLoader();
   componentLoader.override('Login', path.join(currentDirectory, 'components', 'login-component.jsx'));
   componentLoader.override(
+    'DefaultShowProperty',
+    path.join(currentDirectory, 'components', 'default-show-property-component.jsx'),
+  );
+  componentLoader.override(
+    'DefaultDatetimeShowProperty',
+    path.join(currentDirectory, 'components', 'default-datetime-show-component.jsx'),
+  );
+  componentLoader.override(
     'RecordsTable',
     path.join(currentDirectory, 'components', 'scrollable-records-table-component.jsx'),
   );
@@ -80,6 +89,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     ModerationAction: componentLoader.add(
       'ModerationAction',
       path.join(currentDirectory, 'components', 'moderation-action-component.jsx'),
+    ),
+    ReferenceLink: componentLoader.add(
+      'ReferenceLink',
+      path.join(currentDirectory, 'components', 'reference-link-component.jsx'),
     ),
     ShortUuid: componentLoader.add('ShortUuid', path.join(currentDirectory, 'components', 'short-uuid-component.jsx')),
     MappedLocationEdit: componentLoader.add(
@@ -97,6 +110,18 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     PostMediaPreview: componentLoader.add(
       'PostMediaPreview',
       path.join(currentDirectory, 'components', 'post-media-preview-component.jsx'),
+    ),
+    CommentEvidence: componentLoader.add(
+      'CommentEvidence',
+      path.join(currentDirectory, 'components', 'comment-evidence-component.jsx'),
+    ),
+    ProfilePhoto: componentLoader.add(
+      'ProfilePhoto',
+      path.join(currentDirectory, 'components', 'profile-photo-component.jsx'),
+    ),
+    ReportStatus: componentLoader.add(
+      'ReportStatus',
+      path.join(currentDirectory, 'components', 'report-status-component.jsx'),
     ),
     RecordStatus: componentLoader.add(
       'RecordStatus',
@@ -137,7 +162,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     buildCitiesResource(db, components),
     buildVetClinicsResource(db, pool, components, cache),
     buildAdminUsersResource(db, components),
-    buildModerationActionsResource(db, components),
+    buildModerationActionsResource(db, components, pool),
     buildVetClinicLocationAuditsResource(db, components),
   ];
 
@@ -150,7 +175,9 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
         components: { ...properties[name].components, list: components.RecordStatus, show: components.RecordStatus },
       };
     }
-    return attachCacheInvalidation({ ...resource, options: { ...resource.options, properties } }, cache);
+    return attachPopulatedSanitizer(
+      attachCacheInvalidation({ ...resource, options: { ...resource.options, properties } }, cache),
+    );
   });
 
   const dashboardHandler = buildDashboardHandler(pool, cache);
@@ -172,7 +199,15 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       translations: {
         en: {
           actions: { show: 'Details', list: 'Records' },
-          resources: { posts: { actions: { show: 'Review Post', list: 'Posts' } } },
+          properties: PROPERTY_LABELS,
+          resources: {
+            posts: { actions: { show: 'Review Post', list: 'Posts' } },
+            post_reports: { actions: { removePost: 'Remove Post', banAuthor: 'Ban Author' } },
+            comment_reports: {
+              actions: { hideComment: 'Hide Comment', removeComment: 'Remove Comment', banAuthor: 'Ban Author' },
+            },
+            account_reports: { actions: { banUser: 'Ban User' } },
+          },
           components: {
             Login: {
               welcomeHeader: 'Welcome to Pupzy',

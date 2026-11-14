@@ -36,12 +36,12 @@ describe('Notifications Resource Configuration', () => {
   });
 
   it('attaches ShortUuid custom component to ID fields when provided', () => {
-    const components = { ShortUuid: 'CustomShortUuidComponent' };
+    const components = { ShortUuid: 'CustomShortUuidComponent', ReferenceLink: 'CustomReferenceLinkComponent' };
     const resource = buildNotificationsResource(mockDb, components);
     assert.equal(resource.options.properties.id.components.list, 'CustomShortUuidComponent');
     assert.equal(resource.options.properties.id.components.show, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.recipient_id.components.list, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.related_post_id.components.show, 'CustomShortUuidComponent');
+    assert.equal(resource.options.properties.recipient_id.components.list, 'CustomReferenceLinkComponent');
+    assert.equal(resource.options.properties.related_post_id.components.show, 'CustomReferenceLinkComponent');
   });
 
   it('enforces read-only actions (disables new, edit, delete, bulkDelete)', () => {

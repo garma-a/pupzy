@@ -1,6 +1,6 @@
 import { ENUMS } from '../enums.js';
 import {
-  attachShortUuid,
+  attachReferenceLink,
   buildReadOnlyResource,
   enumProperty,
   stripPopulatedPasswordHashes,
@@ -18,7 +18,7 @@ export function buildRescuePostsResource(db, components = {}) {
     condition_summary: {},
   };
 
-  attachShortUuid(properties, ['post_id'], components, ['list', 'show']);
+  attachReferenceLink(properties, ['post_id'], components, ['list', 'show']);
 
   return buildReadOnlyResource(db, 'rescue_posts', { name: 'Post Details', icon: 'Layers' }, properties, {
     actions: {

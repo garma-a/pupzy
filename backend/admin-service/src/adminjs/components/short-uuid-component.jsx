@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import { Box, Button } from '@adminjs/design-system';
 import { formatShortUuid } from './short-uuid.js';
+import ShowField, { EmptyValue } from './show-field.jsx';
 
 export { formatShortUuid };
 
-export default function ShortUuid({ property, record, where }) {
+export default function ShortUuid(props) {
+  const body = <ShortUuidValue {...props} />;
+  return props.where === 'show' ? <ShowField property={props.property}>{body}</ShowField> : body;
+}
+
+function ShortUuidValue({ property, record, where }) {
   const value = record?.params?.[property?.path];
   const [copied, setCopied] = useState(false);
 
   if (value === undefined || value === null || value === '') {
-    return <span style={{ color: '#B8A499' }}>—</span>;
+    return <EmptyValue />;
   }
 
   const strValue = String(value);

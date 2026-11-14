@@ -51,14 +51,14 @@ describe('AdminJS Adoption Applications Resource Configuration', () => {
   });
 
   it('attaches ShortUuid custom component to ID and relation fields when provided', () => {
-    const components = { ShortUuid: 'CustomShortUuidComponent' };
+    const components = { ShortUuid: 'CustomShortUuidComponent', ReferenceLink: 'CustomReferenceLinkComponent' };
     const resource = buildAdoptionApplicationsResource(db, components);
     assert.equal(resource.options.properties.id.components.list, 'CustomShortUuidComponent');
     assert.equal(resource.options.properties.id.components.show, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.target_post_id.components.list, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.target_post_id.components.show, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.applicant_id.components.list, 'CustomShortUuidComponent');
-    assert.equal(resource.options.properties.applicant_id.components.show, 'CustomShortUuidComponent');
+    assert.equal(resource.options.properties.target_post_id.components.list, 'CustomReferenceLinkComponent');
+    assert.equal(resource.options.properties.target_post_id.components.show, 'CustomReferenceLinkComponent');
+    assert.equal(resource.options.properties.applicant_id.components.list, 'CustomReferenceLinkComponent');
+    assert.equal(resource.options.properties.applicant_id.components.show, 'CustomReferenceLinkComponent');
   });
 
   it('enforces read-only actions (disables new, edit, delete, bulkDelete)', () => {

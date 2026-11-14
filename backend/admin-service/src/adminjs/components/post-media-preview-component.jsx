@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 
-export default function PostMediaPreview({ property, record, where }) {
+import ShowField from './show-field.jsx';
+
+export default function PostMediaPreview(props) {
+  const body = <PostMediaPreviewValue {...props} />;
+  return props.where === 'show' ? <ShowField property={props.property}>{body}</ShowField> : body;
+}
+
+function PostMediaPreviewValue({ property, record, where }) {
   const rawUrl = record?.params?.[property?.path];
   const url = typeof rawUrl === 'string' && /^(https?:\/\/|\/(?!\/))/i.test(rawUrl) ? rawUrl : null;
   const postId = record?.params?.post_id;

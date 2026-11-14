@@ -14,6 +14,7 @@ import {
   buildPostReportReviewAction,
 } from '../src/adminjs/actions/review-report.actions.js';
 import { computeStats } from '../src/adminjs/dashboard/dashboard-cache.js';
+import { loadCommentEvidence } from '../src/adminjs/review/comment-evidence.js';
 import { TestDatabaseHelper, insertPost, seedPrincipals } from './test-database.helper.js';
 
 const database = new TestDatabaseHelper();
@@ -594,7 +595,7 @@ describe('moderation actions', () => {
   });
 
   it('rejects unbanning an already-unbanned user', async () => {
-    const response = await call(buildUnbanUserAction(database.pool), principals.userId);
+    const response = await call(buildUnbanUserAction(database.pool, 'ModerationAction'), principals.userId);
     assert.equal(response.notice.type, 'error');
     assert.match(response.notice.message, /not banned/i);
     const audit = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
@@ -929,9 +930,15 @@ describe('audited report outcomes', () => {
     const response = await call(action, reportId, { reason: 'Unsubstantiated after review' });
     assert.equal(response.notice.type, 'success');
 
-    const report = (await database.pool.query(`SELECT reviewed_at FROM comment_reports WHERE id = $1`, [reportId]))
-      .rows[0];
+    const report = (
+      await database.pool.query(
+        `SELECT reviewed_at, review_outcome, reviewed_by_admin_id FROM comment_reports WHERE id = $1`,
+        [reportId],
+      )
+    ).rows[0];
     assert.ok(report.reviewed_at);
+    assert.equal(report.review_outcome, 'NO_ACTION');
+    assert.equal(report.reviewed_by_admin_id, principals.adminId);
 
     const audits = (
       await database.pool.query(
@@ -1029,7 +1036,7 @@ describe('audited report outcomes', () => {
     assert.equal(post.status, 'REMOVED');
   });
 
-  it('closes open Post Reports on approval, flagging, and restoration', async () => {
+  it('closes open Post Reports as no action on approval, keeps them open on flagging, and leaves them alone on restoration', async () => {
     const actions = buildPostActions(database.pool, 'ModerationAction');
     const authorId = await insertUser('transition-author');
     const reporter = await insertUser('transition-reporter');
@@ -1044,7 +1051,7 @@ describe('audited report outcomes', () => {
     assert.equal((await call(actions.approvePost, approvedPost)).notice.type, 'success');
     let row = (await database.pool.query(`SELECT review_outcome FROM post_reports WHERE id = $1`, [approvedReport]))
       .rows[0];
-    assert.equal(row.review_outcome, 'ACTION_TAKEN');
+    assert.equal(row.review_outcome, 'NO_ACTION');
     let audit = (
       await database.pool.query(
         `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_APPROVED'`,
@@ -1061,16 +1068,20 @@ describe('audited report outcomes', () => {
     });
     const flaggedReport = await insertPostReport({ postId: flaggedPost, reporterId: reporter });
     assert.equal((await call(actions.flagPost, flaggedPost, { reason: 'Manual review' })).notice.type, 'success');
-    row = (await database.pool.query(`SELECT review_outcome FROM post_reports WHERE id = $1`, [flaggedReport])).rows[0];
-    assert.equal(row.review_outcome, 'ACTION_TAKEN');
+    row = (
+      await database.pool.query(`SELECT reviewed_at, review_outcome FROM post_reports WHERE id = $1`, [flaggedReport])
+    ).rows[0];
+    assert.equal(row.reviewed_at, null, 'flagging keeps the report open');
+    assert.equal(row.review_outcome, null);
     audit = (
       await database.pool.query(
         `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_FLAGGED'`,
         [flaggedPost],
       )
     ).rows[0];
-    assert.deepEqual(audit.metadata.closedPostReportIds, [flaggedReport]);
+    assert.equal(audit.metadata, null);
 
+    // A Removed Post cannot receive reports, so restoring has nothing to close.
     const removedPost = await insertPost(database.pool, {
       userId: authorId,
       cityId: principals.cityId,
@@ -1079,15 +1090,8 @@ describe('audited report outcomes', () => {
     });
     const removedReport = await insertPostReport({ postId: removedPost, reporterId: reporter });
     assert.equal((await call(actions.restorePost, removedPost)).notice.type, 'success');
-    row = (await database.pool.query(`SELECT review_outcome FROM post_reports WHERE id = $1`, [removedReport])).rows[0];
-    assert.equal(row.review_outcome, 'ACTION_TAKEN');
-    audit = (
-      await database.pool.query(
-        `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_RESTORED'`,
-        [removedPost],
-      )
-    ).rows[0];
-    assert.deepEqual(audit.metadata.closedPostReportIds, [removedReport]);
+    row = (await database.pool.query(`SELECT reviewed_at FROM post_reports WHERE id = $1`, [removedReport])).rows[0];
+    assert.equal(row.reviewed_at, null);
   });
 
   it('closes every open Comment Report when a Comment is removed', async () => {
@@ -1361,7 +1365,7 @@ describe('dashboard queries', () => {
   });
 
   describe('comment moderation actions', () => {
-    it('restores hidden comment, restores post comment count, marks reports reviewed, and writes audit row', async () => {
+    it('restores hidden comment, restores post comment count, leaves its reports alone, and writes audit row', async () => {
       const postId = await insertPost(database.pool, { ...principals, title: 'Comment post' });
       const commentRes = await database.pool.query(
         `INSERT INTO comments (post_id, author_id, text, status)
@@ -1371,11 +1375,23 @@ describe('dashboard queries', () => {
       );
       const commentId = commentRes.rows[0].id;
 
-      await database.pool.query(
-        `INSERT INTO comment_reports (comment_id, reporter_id, reason, details)
-         VALUES ($1, $2, 'SPAM', 'Spam details')`,
-        [commentId, principals.userId],
+      const otherReporter = await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name) VALUES ('restore-other', 'restore-other@example.com', 'Other') RETURNING id`,
       );
+      const openReport = (
+        await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason, details)
+           VALUES ($1, $2, 'SPAM', 'Spam details') RETURNING id`,
+          [commentId, principals.userId],
+        )
+      ).rows[0].id;
+      const closedReport = (
+        await database.pool.query(
+          `INSERT INTO comment_reports (comment_id, reporter_id, reason, reviewed_at, reviewed_by_admin_id, review_outcome)
+           VALUES ($1, $2, 'OTHER', now() - interval '1 hour', $3, 'ACTION_TAKEN') RETURNING id`,
+          [commentId, otherReporter.rows[0].id, principals.adminId],
+        )
+      ).rows[0].id;
 
       const actions = buildCommentActions(database.pool, 'ModerationAction');
       const response = await call(actions.restoreComment, commentId, {
@@ -1389,10 +1405,17 @@ describe('dashboard queries', () => {
       const post = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId]);
       assert.equal(post.rows[0].comment_count, 1);
 
-      const reports = await database.pool.query(`SELECT reviewed_at FROM comment_reports WHERE comment_id = $1`, [
-        commentId,
-      ]);
-      assert.notEqual(reports.rows[0].reviewed_at, null);
+      // Restoring closes nothing and reopens nothing.
+      const reports = await database.pool.query(
+        `SELECT id, reviewed_at IS NOT NULL AS closed, review_outcome, reviewed_by_admin_id FROM comment_reports WHERE comment_id = $1`,
+        [commentId],
+      );
+      const byId = Object.fromEntries(reports.rows.map((row) => [row.id, row]));
+      assert.equal(byId[openReport].closed, false, 'an open report stays open');
+      assert.equal(byId[openReport].review_outcome, null);
+      assert.equal(byId[closedReport].closed, true, 'a closed report stays closed');
+      assert.equal(byId[closedReport].review_outcome, 'ACTION_TAKEN');
+      assert.equal(byId[closedReport].reviewed_by_admin_id, principals.adminId);
 
       const audit = await database.pool.query(
         `SELECT action_type, reason, target_type, metadata FROM moderation_actions WHERE target_id = $1`,
@@ -1401,7 +1424,7 @@ describe('dashboard queries', () => {
       assert.equal(audit.rows[0].action_type, 'COMMENT_RESTORED');
       assert.equal(audit.rows[0].target_type, 'COMMENT');
       assert.equal(audit.rows[0].reason, 'Restoring compliant comment');
-      assert.equal(audit.rows[0].metadata.closedCommentReportIds.length, 1);
+      assert.equal(audit.rows[0].metadata, null, 'nothing was closed, so nothing is listed');
     });
 
     it('rejects restoration of active, deleted, or removed comment', async () => {
@@ -1422,7 +1445,7 @@ describe('dashboard queries', () => {
       assert.match(response.notice?.message, /Only hidden comments can be restored/);
     });
 
-    it('inspectMedia returns ordered media and reports for hidden comments', async () => {
+    it('comment evidence returns ordered media and reports for hidden comments', async () => {
       const postId = await insertPost(database.pool, { ...principals, title: 'Inspect media post' });
       const commentRes = await database.pool.query(
         `INSERT INTO comments (post_id, author_id, text, status)
@@ -1445,22 +1468,18 @@ describe('dashboard queries', () => {
         [commentId, principals.userId],
       );
 
-      const actions = buildCommentActions(database.pool, 'ModerationAction');
-      const result = await actions.inspectMedia.handler(
-        { method: 'get' },
-        null,
-        context(commentId, principals.adminId),
+      const evidence = (await loadCommentEvidence(database.pool, [commentId], {})).get(commentId);
+
+      assert.equal(evidence.media.length, 2);
+      assert.deepEqual(
+        evidence.media.map((item) => item.url),
+        ['https://cdn.pupzy.net/comments/c1/img1.webp', 'https://cdn.pupzy.net/comments/c1/img2.webp'],
       );
+      assert.equal(evidence.imagesHidden, true);
 
-      assert.equal(result.media.length, 2);
-      assert.equal(result.media[0].display_order, 0);
-      assert.equal(result.media[0].storage_key, 'comments/c1/img1.webp');
-      assert.equal(result.media[1].display_order, 1);
-      assert.equal(result.media[1].storage_key, 'comments/c1/img2.webp');
-
-      assert.equal(result.reports.length, 1);
-      assert.equal(result.reports[0].reason, 'INAPPROPRIATE_CONTENT');
-      assert.equal(result.reports[0].reviewed_at, null);
+      assert.equal(evidence.reports.length, 1);
+      assert.equal(evidence.reports[0].reason, 'INAPPROPRIATE_CONTENT');
+      assert.equal(evidence.reports[0].isOpen, true);
     });
 
     it('removeComment on parent with visible replies decrements post comment_count by 1 + replies, clears pins, and sets reply_count to 0', async () => {
