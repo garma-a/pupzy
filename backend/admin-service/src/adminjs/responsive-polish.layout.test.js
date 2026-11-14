@@ -94,8 +94,8 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
 
     it('includes reduced-motion accessibility rules', () => {
       assert.match(cssContent, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
-      assert.match(cssContent, /animation-duration:\s*0\.01ms/);
-      assert.match(cssContent, /transition-duration:\s*0\.01ms/);
+      assert.match(cssContent, /animation:\s*none/);
+      assert.match(cssContent, /transition:\s*none/);
     });
 
     it('configures touch-friendly target sizing for mobile and tablet devices', () => {

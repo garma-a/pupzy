@@ -763,6 +763,11 @@ describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
         layout.transitionSeconds <= 0.001,
         `reduced motion collapses tile transitions (saw ${layout.transitionSeconds}s)`,
       );
+      assert.equal(
+        await page.$eval(selector, (element) => getComputedStyle(element).transitionProperty),
+        'none',
+        'reduced motion disables transitions entirely',
+      );
       console.log(
         `[bwg-05 evidence] narrow inbox ${await recordEvidence(page, '05-narrow-dashboard', { fullPage: true })}`,
       );
