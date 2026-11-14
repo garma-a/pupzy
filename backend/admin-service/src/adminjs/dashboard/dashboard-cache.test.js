@@ -312,3 +312,47 @@ describe('DashboardStatsCache', () => {
     assert.equal(pool.queryCount, 1);
   });
 });
+
+describe('Shared work-queue counts', () => {
+  it('caches for 30 seconds and supports invalidation and an explicit refresh', async () => {
+    let now = 0;
+    let queries = 0;
+    const cache = new DashboardStatsCache({ clock: () => now });
+    const pool = { query: async () => ({ rows: [{ rescue: ++queries }] }) };
+    assert.equal((await cache.getQueueCounts(pool)).rescue, 1);
+    now = 29_999;
+    assert.equal((await cache.getQueueCounts(pool)).rescue, 1);
+    assert.equal(queries, 1);
+    now = 30_000;
+    assert.equal((await cache.getQueueCounts(pool)).rescue, 2);
+    cache.invalidate();
+    assert.equal((await cache.getQueueCounts(pool)).rescue, 3);
+    assert.equal((await cache.getQueueCounts(pool, { fresh: true })).rescue, 4);
+    assert.equal((await cache.getQueueCounts(pool)).rescue, 4);
+    assert.equal(queries, 4);
+  });
+
+  it('coalesces reads, fences invalidated work, and serializes a forced refresh', async () => {
+    const cache = new DashboardStatsCache();
+    const pending = Promise.withResolvers();
+    let queries = 0;
+    const pool = {
+      query: async () => {
+        const rescue = ++queries;
+        if (rescue === 1) await pending.promise;
+        return { rows: [{ rescue }] };
+      },
+    };
+    const first = cache.getQueueCounts(pool);
+    const second = cache.getQueueCounts(pool);
+    const forced = cache.getQueueCounts(pool, { fresh: true });
+    assert.equal(queries, 1);
+    cache.invalidate();
+    pending.resolve();
+    assert.equal((await first).rescue, 2);
+    assert.equal((await second).rescue, 2);
+    assert.equal((await forced).rescue, 3);
+    assert.equal((await cache.getQueueCounts(pool)).rescue, 3);
+    assert.equal(queries, 3);
+  });
+});

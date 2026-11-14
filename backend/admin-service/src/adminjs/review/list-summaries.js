@@ -1,4 +1,4 @@
-import { WORK_QUEUES, loadWorkQueueCounts } from '../dashboard/work-queues.js';
+import { WORK_QUEUES } from '../dashboard/work-queues.js';
 export const POST_QUEUE_IDS = Object.freeze([
   'rescue',
   'lost_pet',
@@ -10,7 +10,7 @@ export const POST_QUEUE_IDS = Object.freeze([
   'expired',
   'removed',
 ]);
-export async function attachListSummaries(pool, kind, response) {
+export async function attachListSummaries(pool, kind, response, cache) {
   if (!['posts', 'users', 'comments'].includes(kind)) return response;
   const records = response.records ?? [],
     ids = records.map((r) => r.id);
@@ -25,7 +25,7 @@ export async function attachListSummaries(pool, kind, response) {
   };
   const [details, counts] = await Promise.all([
     ids.length ? pool.query(sql[kind], [ids]) : { rows: [] },
-    kind === 'posts' ? loadWorkQueueCounts(pool) : null,
+    kind === 'posts' ? cache.getQueueCounts(pool) : null,
   ]);
   const byId = new Map(details.rows.map((r) => [r.id, r]));
   for (const record of records)
@@ -51,7 +51,7 @@ export function listOnlyProperty(component, type = 'number') {
     ...(component ? { components: { list: component } } : {}),
   };
 }
-export function attachReadableList(resource, pool) {
+export function attachReadableList(resource, pool, cache) {
   const name = resource.resource.tableName;
   if (!['posts', 'users', 'comments'].includes(name)) return resource;
   const list = resource.options.actions.list ?? {};
@@ -62,7 +62,7 @@ export function attachReadableList(resource, pool) {
       ...resource.options,
       actions: {
         ...resource.options.actions,
-        list: { ...list, after: [...previous, (response) => attachListSummaries(pool, name, response)] },
+        list: { ...list, after: [...previous, (response) => attachListSummaries(pool, name, response, cache)] },
       },
     },
   };

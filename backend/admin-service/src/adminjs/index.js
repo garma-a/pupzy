@@ -66,6 +66,14 @@ export const ADMIN_RESOURCE_TABLES = Object.freeze([
 ]);
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
+const BADGE_PROPERTIES = new Set([
+  'status',
+  'moderation_status',
+  'urgency',
+  'review_outcome',
+  'review_status',
+  'is_banned',
+]);
 
 export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}) {
   const cache =
@@ -215,16 +223,17 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
   ];
 
   const resources = rawResources.map((rawResource) => {
-    const resource = attachReadableList(attachReportCase(rawResource, pool, components), pool);
+    const resource = attachReadableList(attachReportCase(rawResource, pool, components), pool, cache);
     const navigation = navigationFor(resource.resource.tableName);
     const properties = { ...resource.options.properties };
-    for (const name of ['status', 'moderation_status', 'urgency', 'review_outcome', 'review_status', 'is_banned']) {
-      if (!properties[name]?.availableValues && !['review_status', 'is_banned'].includes(name)) continue;
-      if (!properties[name]) continue;
-      properties[name] = {
-        ...properties[name],
-        components: { ...properties[name].components, list: components.StatusBadge, show: components.StatusBadge },
-      };
+    for (const name of BADGE_PROPERTIES) {
+      const property = properties[name];
+      if (property && (property.availableValues || name === 'review_status' || name === 'is_banned')) {
+        properties[name] = {
+          ...property,
+          components: { ...property.components, list: components.StatusBadge, show: components.StatusBadge },
+        };
+      }
     }
     return attachPopulatedSanitizer(
       attachCacheInvalidation(

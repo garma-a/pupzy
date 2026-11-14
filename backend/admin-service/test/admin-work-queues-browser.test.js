@@ -33,6 +33,7 @@ const BUSINESS_TABLES = `
 let server;
 let baseUrl;
 let sqlAdapterPool;
+let dashboardCache;
 let principals;
 let browser;
 let fixture;
@@ -320,6 +321,7 @@ before(async () => {
 
   const built = await buildAdminJs(connectionString, databaseName, database.pool);
   sqlAdapterPool = built.sqlAdapterPool;
+  dashboardCache = built.cache;
   await built.admin.initialize();
   app.use(
     '/admin',
@@ -356,6 +358,7 @@ before(async () => {
 beforeEach(async () => {
   await database.pool.query(`TRUNCATE TABLE ${BUSINESS_TABLES} CASCADE`);
   await seedQueueFixture();
+  dashboardCache.invalidate();
 });
 
 after(async () => {

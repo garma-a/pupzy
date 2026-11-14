@@ -10,6 +10,7 @@ import {
 import { useLocation, useNavigate } from 'react-router';
 import { reportReviewStatus } from '../report-status.js';
 import { plainValue } from '../status-styles.js';
+import { userDisplayName } from '../reference-title.js';
 import { StatusBadge } from './status-badge-component.jsx';
 import { BackToInbox } from './back-to-inbox.jsx';
 import { RecordLink } from './record-link.jsx';
@@ -58,6 +59,7 @@ export default function ReportCase(props) {
   const state = reportReviewStatus({ reviewedAt: params.reviewed_at, reviewOutcome: params.review_outcome });
   const post = data.post,
     account = data.account;
+  const accountName = account ? userDisplayName(account, account.id) : null;
   const actions = ACTIONS.map((name) => record.recordActions.find((a) => a.name === name)).filter(Boolean);
   const technical = {
     ...resource,
@@ -118,7 +120,9 @@ export default function ReportCase(props) {
                   />
                 ))}
               </div>
-              <h2 dir="auto">{post.title}</h2>
+              <h2 dir="auto">
+                <RecordLink resourceId="posts" recordId={post.id} title={post.title} wrap />
+              </h2>
               <div className="pupzy-discussion-meta">
                 <StatusBadge value="CLOSED" label={post.typeLabel} />
                 <StatusBadge value={post.status} label={post.statusLabel} />
@@ -139,41 +143,20 @@ export default function ReportCase(props) {
                 </Field>
                 <Field label="City">{post.city}</Field>
                 <Field label="Created">{date(post.createdAt)}</Field>
-                <Field label="Post">
-                  <RecordLink resourceId="posts" recordId={post.id} title={post.title} />
-                </Field>
               </dl>
             </>
           ) : resource.id === 'comment_reports' ? (
-            <>
-              <CommentEvidence record={record} showReports={false} />
-              <dl>
-                <Field label="Comment">
-                  <ReferenceLink
-                    record={record}
-                    property={{ path: 'comment_id', reference: 'comments' }}
-                    where="list"
-                  />
-                </Field>
-              </dl>
-            </>
+            <CommentEvidence record={record} showReports={false} linkToComment />
           ) : account ? (
             <>
-              <Avatar
-                src={account.profile_picture_url}
-                name={account.full_name || account.full_name_arabic || account.email}
-                size={80}
-              />
-              <h2 dir="auto">{account.full_name || account.full_name_arabic || account.email}</h2>
-              {account.full_name_arabic ? <p dir="auto">{account.full_name_arabic}</p> : null}
+              <Avatar src={account.profile_picture_url} name={accountName} size={80} />
+              <h2 dir="auto">
+                <RecordLink resourceId="users" recordId={account.id} title={accountName} wrap />
+              </h2>
+              {account.full_name_arabic?.trim() && account.full_name_arabic.trim() !== accountName ? (
+                <p dir="auto">{account.full_name_arabic}</p>
+              ) : null}
               <dl>
-                <Field label="Account">
-                  <ReferenceLink
-                    record={record}
-                    property={{ path: 'reported_user_id', reference: 'users' }}
-                    where="list"
-                  />
-                </Field>
                 <Field label="Email">{account.email}</Field>
                 <Field label="Joined">{date(account.created_at)}</Field>
                 <Field label="Status">

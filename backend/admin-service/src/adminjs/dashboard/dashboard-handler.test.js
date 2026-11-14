@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 
 import { buildDashboardHandler } from './dashboard-handler.js';
 import { WORK_QUEUES } from './work-queues.js';
+import { DashboardStatsCache } from './dashboard-cache.js';
 
 function createPool() {
   const queries = [];
@@ -17,9 +18,9 @@ function createPool() {
 }
 
 function createCache(stats) {
-  return {
-    getStats: async () => stats,
-  };
+  const cache = new DashboardStatsCache();
+  cache.getStats = async () => stats;
+  return cache;
 }
 
 describe('Admin dashboard handler work queues', () => {

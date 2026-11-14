@@ -17,6 +17,7 @@ export function RecordLink({
   title,
   pictureUrl,
   showAvatar = false,
+  wrap = false,
   testId = 'pupzy-reference-link',
 }) {
   const navigate = useNavigate();
@@ -50,8 +51,8 @@ export function RecordLink({
         style={{
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          maxWidth: 'var(--pupzy-reference-width, 260px)',
+          whiteSpace: wrap ? 'normal' : 'nowrap',
+          maxWidth: wrap ? 'none' : 'var(--pupzy-reference-width, 260px)',
         }}
       >
         {title}

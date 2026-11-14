@@ -37,6 +37,7 @@ const LONG_TITLE =
 let server;
 let baseUrl;
 let sqlAdapterPool;
+let dashboardCache;
 let principals;
 let browser;
 let fixture;
@@ -292,6 +293,7 @@ before(async () => {
 
   const built = await buildAdminJs(connectionString, databaseName, database.pool);
   sqlAdapterPool = built.sqlAdapterPool;
+  dashboardCache = built.cache;
   await built.admin.initialize();
   app.use(
     '/admin',
@@ -328,6 +330,7 @@ before(async () => {
 beforeEach(async () => {
   await database.pool.query(`TRUNCATE TABLE ${BUSINESS_TABLES} CASCADE`);
   await seedReviewExperienceFixture();
+  dashboardCache.invalidate();
 });
 
 after(async () => {
@@ -396,6 +399,61 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       assert.deepEqual(errors, []);
     } finally {
       await page.close();
+    }
+  });
+
+  it('gives Post titles and City names room at every laptop width', async () => {
+    const {
+      rows: [originalCity],
+    } = await database.pool.query(
+      "SELECT id,name_arabic FROM cities WHERE name_english='Heliopolis' AND governorate='Cairo' LIMIT 1",
+    );
+    assert.ok(originalCity, 'the catalog includes Heliopolis');
+    await database.pool.query("UPDATE cities SET name_arabic='' WHERE id=$1", [originalCity.id]);
+    await database.pool.query('UPDATE posts SET city_id=$2 WHERE id=$1', [fixture.activeId, originalCity.id]);
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await page.goto(`${baseUrl}/admin/resources/posts`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector('tr[data-id]');
+      for (const width of [1440, 1280, 1024]) {
+        await page.setViewport({ width, height: width === 1440 ? 900 : 800 });
+        const layout = await page.evaluate((title) => {
+          const cell = [...document.querySelectorAll('td[data-property-name="title"]')].find((n) =>
+            n.innerText.includes(title),
+          );
+          const text = cell.querySelector('a span[dir="auto"]');
+          const city = cell.closest('tr').querySelector('td[data-property-name="city_id"] a span[dir="auto"]');
+          return {
+            overflow: document.documentElement.scrollWidth > innerWidth,
+            tableOverflow:
+              cell.closest('.pupzy-table-scroll').scrollWidth > cell.closest('.pupzy-table-scroll').clientWidth,
+            tableScrollWidth: cell.closest('.pupzy-table-scroll').scrollWidth,
+            tableClientWidth: cell.closest('.pupzy-table-scroll').clientWidth,
+            titleWidth: text.getBoundingClientRect().width,
+            columnWidth: cell.getBoundingClientRect().width,
+            fullTitle: text.title,
+            truncated: text.scrollWidth > text.clientWidth,
+            cityWidth: city.getBoundingClientRect().width,
+            cityTruncated: city.scrollWidth > city.clientWidth,
+          };
+        }, LONG_TITLE);
+        assert.equal(layout.overflow, false, `${width}: no horizontal page scroll`);
+        assert.equal(layout.tableOverflow, false, `${width}: every table column fits: ${JSON.stringify(layout)}`);
+        if (width >= 1280)
+          assert.ok(layout.columnWidth >= (width === 1440 ? 280 : 220), `${width}: ${JSON.stringify(layout)}`);
+        assert.equal(layout.fullTitle, LONG_TITLE);
+        assert.equal(layout.truncated, true);
+        assert.ok(layout.cityWidth <= 160);
+        assert.equal(layout.cityTruncated, false, `${width}: the City name is fully readable`);
+      }
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+      await database.pool.query('UPDATE cities SET name_arabic=$2 WHERE id=$1', [
+        originalCity.id,
+        originalCity.name_arabic,
+      ]);
     }
   });
 
@@ -1185,7 +1243,14 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         '[data-testid="pupzy-reference-link"][data-reference-resource="comments"]',
         (node) => node.innerText,
       );
-      assert.match(commentLink, /A comment that someone reported/);
+      assert.equal(commentLink, 'Comment');
+      assert.equal(
+        (await page.$eval('.pupzy-case-evidence', (node) => node.innerText)).split(
+          'A comment that someone reported for review',
+        ).length - 1,
+        1,
+        'the comment text appears once beneath its linked heading',
+      );
       await clickReference('comments');
       await waitForPath(`/resources/comments/records/${commentId}/show`);
       await page.waitForSelector('[data-testid="pupzy-reference-link"][data-reference-resource="users"]');
@@ -1251,6 +1316,20 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
           const fields = await page.$$eval('.pupzy-case-field dt', (nodes) => nodes.map((n) => n.innerText));
           for (const label of ['Status', 'Reason', 'Details', 'Reported by'])
             assert.ok(fields.includes(label), `${resourceId}: ${label}`);
+          const targetResource = { post_reports: 'posts', comment_reports: 'comments', account_reports: 'users' }[
+            resourceId
+          ];
+          const targetLink = `.pupzy-case-evidence h2 a[data-reference-resource="${targetResource}"], .pupzy-case-evidence h4 a[data-reference-resource="${targetResource}"]`;
+          assert.equal((await page.$$(targetLink)).length, 1, `${resourceId}: one target link in the heading`);
+          const evidenceFields = await page.$$eval('.pupzy-case-evidence .pupzy-case-field dt', (nodes) =>
+            nodes.map((n) => n.innerText),
+          );
+          assert.ok(
+            !evidenceFields.includes(
+              { post_reports: 'Post', comment_reports: 'Comment', account_reports: 'Account' }[resourceId],
+            ),
+            `${resourceId}: no duplicate target field`,
+          );
           for (const width of [1440, 1280, 1024]) {
             await page.setViewport({ width, height: width === 1440 ? 900 : 800 });
             const layout = await page.evaluate(() => {
@@ -1289,6 +1368,16 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
           assert.match(technical, /ID/);
           assert.doesNotMatch(technical, /reviewed_at|post_id|reporter_id/);
           if (resourceId === 'post_reports') assert.match(technical, /Reviewed[\s\S]*—/);
+          const targetHref = await page.$eval(targetLink, (node) => node.href);
+          await page.click(targetLink);
+          await page.waitForFunction((href) => location.href === href, {}, targetHref);
+          await page.waitForSelector(
+            resourceId === 'post_reports'
+              ? '[data-testid="pupzy-review-workspace"]'
+              : resourceId === 'comment_reports'
+                ? '[data-testid="pupzy-comment-evidence"]'
+                : '[data-testid="pupzy-profile-photo-none"], [data-testid="pupzy-profile-photo-open"]',
+          );
           continue;
         }
         await page.waitForSelector('main label, [data-css*="show"] label, label', { timeout: 60000 });

@@ -97,7 +97,7 @@ export function ReportItem({ report, isCurrent, resourceId = 'comment_reports' }
  * hidden ones too, marked), where it sits, and every Comment Report raised
  * against it. Used on the Comment page and above the Comment Report fields.
  */
-export default function CommentEvidence({ record, showReports = true }) {
+export default function CommentEvidence({ record, showReports = true, linkToComment = false }) {
   const evidence = useMemo(() => parse(record?.params?.comment_evidence), [record]);
   const { openMedia, dialog } = useMediaLightbox();
   if (!evidence) return null;
@@ -106,7 +106,15 @@ export default function CommentEvidence({ record, showReports = true }) {
   return (
     <Box variant="white" mb="xl" data-testid="pupzy-comment-evidence" aria-label="Comment under review">
       <div className="pupzy-discussion-meta" style={{ marginBottom: 12 }}>
-        <H4 mb="0">{evidence.isReply ? 'Reply' : 'Comment'}</H4>
+        <H4 mb="0">
+          {linkToComment ? (
+            <RecordLink resourceId="comments" recordId={evidence.id} title={evidence.isReply ? 'Reply' : 'Comment'} />
+          ) : evidence.isReply ? (
+            'Reply'
+          ) : (
+            'Comment'
+          )}
+        </H4>
         <StatusBadge value={evidence.status} data-testid="pupzy-comment-status">
           {evidence.imagesHidden
             ? 'Images hidden from users'

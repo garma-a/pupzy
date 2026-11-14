@@ -23,6 +23,7 @@ const originalMediaBase = process.env.COMMENT_MEDIA_CDN_BASE;
 let server;
 let baseUrl;
 let sqlAdapterPool;
+let dashboardCache;
 let principals;
 let staffCookie;
 let superCookie;
@@ -103,6 +104,7 @@ before(async () => {
   const databaseName = new URL(connectionString).pathname.replace(/^\//, '');
   const built = await buildAdminJs(connectionString, databaseName, database.pool);
   sqlAdapterPool = built.sqlAdapterPool;
+  dashboardCache = built.cache;
 
   const app = express();
   app.set('trust proxy', 1);
@@ -150,6 +152,7 @@ beforeEach(async () => {
     r2: await insertUser('r2', { name: 'Reporter Two' }),
     r3: await insertUser('r3', { name: 'Reporter Three' }),
   };
+  dashboardCache.invalidate();
 });
 
 after(async () => {

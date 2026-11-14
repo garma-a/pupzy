@@ -524,6 +524,34 @@ describe('AdminJS Redis-free dashboard and cache invalidation HTTP behavior', ()
     await freshBuilt.sqlAdapterPool.destroy();
   });
 
+  it('shares queue counts between Posts and Inbox and refreshes after a mutation or explicit refresh', async () => {
+    const queueCount = (data) => data.queues.find((q) => q.id === 'rescue').count;
+    const postsCount = async () => {
+      const response = await fetch(`${baseUrl}/admin/api/resources/posts/actions/list`, {
+        headers: { cookie: superCookie },
+      });
+      assert.equal(response.status, 200);
+      return (await response.json()).postQueues.find((q) => q.id === 'rescue').count;
+    };
+    const initial = queueCount(await getDashboard({ fresh: 'true' }));
+    const id = await insertPost(database.pool, {
+      ...principals,
+      postType: 'RESCUE',
+      title: 'Queue cache check',
+      moderationStatus: 'CLEAN',
+    });
+    assert.equal(await postsCount(), initial, 'a direct database write does not bypass the short TTL');
+    assert.equal(queueCount(await getDashboard()), initial);
+    assert.equal(queueCount(await getDashboard({ fresh: 'true' })), initial + 1);
+    assert.equal(await postsCount(), initial + 1, 'Posts reuses the Inbox refresh');
+    const removed = await postAction(`/admin/api/resources/posts/records/${id}/removePost`, {
+      reason: 'Queue cache check',
+    });
+    assert.equal(removed.data.notice.type, 'success');
+    assert.equal(await postsCount(), initial, 'existing moderation invalidation clears queue counts');
+    assert.equal(queueCount(await getDashboard()), initial);
+  });
+
   it('rate-limits expensive dashboard requests and resource mutations', async () => {
     let dashboardStatus = 200;
     for (let requestNumber = 1; requestNumber <= 31 && dashboardStatus !== 429; requestNumber += 1) {

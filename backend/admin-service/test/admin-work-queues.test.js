@@ -19,6 +19,7 @@ const database = new TestDatabaseHelper();
 let server;
 let baseUrl;
 let sqlAdapterPool;
+let dashboardCache;
 let principals;
 let superCookie;
 let staffCookie;
@@ -354,6 +355,7 @@ before(async () => {
   const databaseName = new URL(connectionString).pathname.replace(/^\//, '');
   const built = await buildAdminJs(connectionString, databaseName, database.pool);
   sqlAdapterPool = built.sqlAdapterPool;
+  dashboardCache = built.cache;
 
   const app = express();
   app.disable('x-powered-by');
@@ -409,6 +411,7 @@ before(async () => {
 beforeEach(async () => {
   await database.pool.query(`TRUNCATE TABLE ${BUSINESS_TABLES} CASCADE`);
   await seedFixture();
+  dashboardCache.invalidate();
 });
 
 after(async () => {
