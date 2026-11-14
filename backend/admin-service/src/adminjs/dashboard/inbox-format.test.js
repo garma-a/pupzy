@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { caseHref, inboxSearch, relativeAge, reportCountLabel } from './inbox-format.js';
+import { caseHref, headingCounts, inboxSearch, relativeAge, reportCountLabel } from './inbox-format.js';
 import { safeReturnPath } from '../components/list-return.js';
 
 const NOW = Date.parse('2026-11-13T12:00:00Z');
@@ -42,5 +42,12 @@ describe('Inbox formatting', () => {
       ),
       true,
     );
+  });
+
+  it('words the heading counts: cases and reports for a report tile, cases otherwise', () => {
+    assert.equal(headingCounts({ reports: true, cases: 4, reportCount: 5 }), '4 cases, 5 reports');
+    assert.equal(headingCounts({ reports: true, cases: 1, reportCount: 1 }), '1 case, 1 report');
+    assert.equal(headingCounts({ reports: false, cases: 3 }), '3');
+    assert.equal(headingCounts({ cases: 16 }), '16');
   });
 });

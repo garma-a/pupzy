@@ -366,6 +366,26 @@ after(async () => {
 });
 
 describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
+  it('counts grouped cases separately from reports in the heading', async () => {
+    const reporter = await insertUser('extra-reporter');
+    await database.pool.query("INSERT INTO post_reports(post_id,reporter_id,reason) VALUES ($1,$2,'SPAM')", [
+      fixture.approvedPostId,
+      reporter,
+    ]);
+    const { page } = await createTestPage(browser);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await openDashboard(page, '?kind=post_report');
+      assert.equal(
+        await page.$eval('[data-testid="pupzy-cases-heading"]', (el) => el.innerText),
+        'Open Post Reports · 2 cases, 3 reports',
+      );
+      assert.equal((await inboxCases(page)).length, 2);
+    } finally {
+      await page.close();
+    }
+  });
+
   it('counts the same open work in the Inbox tiles as the lists show, and filters the Inbox from a tile', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {
@@ -385,6 +405,10 @@ describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
       assert.equal(await tileCount(page, 'post_report'), '2', 'open Reports are counted separately from flags');
       assert.equal(await tileCount(page, 'comment_report'), '0');
       assert.equal(await tileCount(page, 'account_report'), '0');
+      assert.match(
+        await page.$eval('[data-testid="pupzy-cases-heading"]', (el) => el.innerText),
+        /^All open cases · \d+$/,
+      );
       console.log(`[bwg-05 evidence] inbox tiles ${await recordEvidence(page, '01-inbox-tiles', { fullPage: true })}`);
 
       await page.click('[data-testid="pupzy-tile-flagged"]');
@@ -510,6 +534,10 @@ describe('Admin work-queue real browser suite', { timeout: 120000 }, () => {
 
       await page.click('[data-testid="pupzy-tile-post_report"]');
       await page.waitForFunction(() => document.querySelectorAll('[data-testid="pupzy-case"]').length === 2);
+      assert.equal(
+        await page.$eval('[data-testid="pupzy-cases-heading"]', (el) => el.innerText),
+        'Open Post Reports · 2 cases, 2 reports',
+      );
       assert.deepEqual(
         new Set((await inboxCases(page)).map((row) => row.title)),
         new Set(['Flagged browser case', 'Approved case with an open report']),

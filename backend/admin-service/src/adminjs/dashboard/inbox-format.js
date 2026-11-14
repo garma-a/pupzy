@@ -37,3 +37,14 @@ export function caseHref(target, inboxPath, rootPath = '/admin') {
   const base = `${rootPath}/resources/${encodeURIComponent(target.resource)}/records/${encodeURIComponent(target.id)}/show`;
   return `${base}?returnTo=${encodeURIComponent(inboxPath)}`;
 }
+
+const plural = (count, word) => `${count.toLocaleString()} ${word}${count === 1 ? '' : 's'}`;
+
+/**
+ * The numbers beside the list heading. A report tile counts reports while the
+ * list shows one row per target, so it gives both ("4 cases, 5 reports"). A
+ * Post tile and the whole Inbox count cases only.
+ */
+export function headingCounts({ reports = false, cases = 0, reportCount = 0 }) {
+  return reports ? `${plural(cases, 'case')}, ${plural(reportCount, 'report')}` : cases.toLocaleString();
+}

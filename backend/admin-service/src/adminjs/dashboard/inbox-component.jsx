@@ -4,16 +4,16 @@ import { useLocation, useNavigate } from 'react-router';
 
 import { Avatar } from '../components/avatar-component.jsx';
 import { INBOX_RETURN_KEY, adminRootPath, rememberListSearch } from '../components/list-return.js';
-import { caseHref, inboxSearch, relativeAge, reportCountLabel } from './inbox-format.js';
+import { caseHref, headingCounts, inboxSearch, relativeAge, reportCountLabel } from './inbox-format.js';
 import { queueHref } from './work-queues.js';
 
 const api = new ApiClient();
 
 /** The five counts at the top; each one filters the list below. */
 const TILES = [
-  { kind: 'post_report', queue: 'open_post_reports', label: 'Open Post Reports' },
-  { kind: 'comment_report', queue: 'open_comment_reports', label: 'Open Comment Reports' },
-  { kind: 'account_report', queue: 'open_account_reports', label: 'Open Account Reports' },
+  { reports: true, kind: 'post_report', queue: 'open_post_reports', label: 'Open Post Reports' },
+  { reports: true, kind: 'comment_report', queue: 'open_comment_reports', label: 'Open Comment Reports' },
+  { reports: true, kind: 'account_report', queue: 'open_account_reports', label: 'Open Account Reports' },
   { kind: 'flagged', queue: 'flagged', label: 'Flagged posts' },
   { kind: 'pending', queue: 'pending_moderation', label: 'Pending review' },
 ];
@@ -282,7 +282,12 @@ export default function Inbox() {
             {data ? (
               <span className="pupzy-case-muted">
                 {' '}
-                · {(activeTile ? countOf(activeTile.queue) : (inbox?.total ?? 0)).toLocaleString()}
+                ·{' '}
+                {headingCounts({
+                  reports: activeTile?.reports,
+                  cases: inbox?.total ?? 0,
+                  reportCount: activeTile ? countOf(activeTile.queue) : 0,
+                })}
               </span>
             ) : null}
           </h2>
