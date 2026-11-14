@@ -130,11 +130,9 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
   });
 
   describe('Responsive Breakpoints & Content Usability', () => {
-    it('defines multi-tier grid breakpoints for dashboard metric cards', () => {
-      assert.match(cssContent, /\.pupzy-metric-grid/);
-      assert.match(cssContent, /@media\s*\(min-width:\s*576px\)/);
-      assert.match(cssContent, /@media\s*\(min-width:\s*900px\)/);
-      assert.match(cssContent, /@media\s*\(min-width:\s*1400px\)/);
+    it('defines responsive Inbox tiles without obsolete dashboard metric cards', () => {
+      assert.match(cssContent, /\.pupzy-tiles/);
+      assert.doesNotMatch(cssContent, /\.pupzy-metric-grid/);
     });
 
     it('prevents main content blowout near desktop breakpoint when persistent sidebar is active', () => {

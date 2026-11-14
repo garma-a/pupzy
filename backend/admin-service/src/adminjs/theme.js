@@ -58,6 +58,18 @@ export const PUPZY_COLORS = Object.freeze({
 export const pupzyTheme = Object.freeze({
   colors: PUPZY_COLORS,
   font: "'Onest', 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  fontSizes: {
+    xs: '12px',
+    sm: '13px',
+    default: '14px',
+    md: '14px',
+    lg: '16px',
+    xl: '20px',
+    h4: '16px',
+    h3: '20px',
+    h2: '28px',
+    h1: '28px',
+  },
   borders: {
     input: '1px solid #E8DED5',
     filterInput: '1px solid #E8DED5',
