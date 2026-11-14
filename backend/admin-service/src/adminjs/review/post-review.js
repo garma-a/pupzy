@@ -327,6 +327,7 @@ export async function loadReports(pool, postId) {
       reviewedByName: row.reviewed_by_name ?? null,
       isOpen: status.isOpen,
       statusLabel: status.label,
+      statusState: status.state,
       createdAt: row.created_at,
     };
   };

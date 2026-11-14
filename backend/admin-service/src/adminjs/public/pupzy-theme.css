@@ -1001,15 +1001,14 @@ svg[data-css*='Loader'] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 9px;
-  border-radius: 5px;
-  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
   line-height: 1.4;
   font-weight: 600;
   white-space: nowrap;
-  background: #f5ede3;
-  color: #8b6355;
 }
+
 .pupzy-status::before {
   content: '';
   width: 5px;
@@ -1018,18 +1017,7 @@ svg[data-css*='Loader'] {
   background: currentColor;
   flex-shrink: 0;
 }
-.pupzy-status[data-tone='warning'] {
-  background: #f6ede8;
-  color: #a14f17;
-}
-.pupzy-status[data-tone='danger'] {
-  background: #f9e5e7;
-  color: #9d0616;
-}
-.pupzy-status[data-tone='success'] {
-  background: #e7f3ef;
-  color: #246f59;
-}
+
 .pupzy-inbox-empty {
   padding: 38px 24px;
   text-align: center;

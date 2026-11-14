@@ -126,13 +126,9 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'ProfilePhoto',
       path.join(currentDirectory, 'components', 'profile-photo-component.jsx'),
     ),
-    ReportStatus: componentLoader.add(
-      'ReportStatus',
-      path.join(currentDirectory, 'components', 'report-status-component.jsx'),
-    ),
-    RecordStatus: componentLoader.add(
-      'RecordStatus',
-      path.join(currentDirectory, 'components', 'record-status-component.jsx'),
+    StatusBadge: componentLoader.add(
+      'StatusBadge',
+      path.join(currentDirectory, 'components', 'status-badge-component.jsx'),
     ),
     AnnouncementCompose: componentLoader.add(
       'AnnouncementCompose',
@@ -197,11 +193,12 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
   const resources = rawResources.map((resource) => {
     const navigation = navigationFor(resource.resource.tableName);
     const properties = { ...resource.options.properties };
-    for (const name of ['status', 'moderation_status', 'urgency', 'review_outcome']) {
-      if (!properties[name]?.availableValues) continue;
+    for (const name of ['status', 'moderation_status', 'urgency', 'review_outcome', 'review_status', 'is_banned']) {
+      if (!properties[name]?.availableValues && !['review_status', 'is_banned'].includes(name)) continue;
+      if (!properties[name]) continue;
       properties[name] = {
         ...properties[name],
-        components: { ...properties[name].components, list: components.RecordStatus, show: components.RecordStatus },
+        components: { ...properties[name].components, list: components.StatusBadge, show: components.StatusBadge },
       };
     }
     return attachPopulatedSanitizer(

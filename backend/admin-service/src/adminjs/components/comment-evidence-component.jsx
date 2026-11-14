@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { Badge, Box, H4, Text } from '@adminjs/design-system';
+import { Box, H4, Text } from '@adminjs/design-system';
 
+import { StatusBadge } from './status-badge-component.jsx';
 import { MediaThumb, useMediaLightbox } from './media-lightbox.jsx';
 import { RecordLink } from './record-link.jsx';
 
@@ -43,8 +44,8 @@ function ReportItem({ report, isCurrent }) {
     <li className="pupzy-report-row" data-testid="pupzy-comment-report" style={{ listStyle: 'none' }}>
       <div className="pupzy-discussion-meta">
         <Text fontWeight="bold">{report.reasonLabel}</Text>
-        <Badge variant={report.isOpen ? 'warning' : 'default'}>{report.statusLabel}</Badge>
-        {isCurrent ? <Badge variant="info">This report</Badge> : null}
+        <StatusBadge value={report.statusState}>{report.statusLabel}</StatusBadge>
+        {isCurrent ? <StatusBadge value="CLOSED" label="This report"></StatusBadge> : null}
       </div>
       {report.details ? (
         <Text mt="xs" dir="auto">
@@ -106,13 +107,13 @@ export default function CommentEvidence({ record }) {
     <Box variant="white" mb="xl" data-testid="pupzy-comment-evidence" aria-label="Comment under review">
       <div className="pupzy-discussion-meta" style={{ marginBottom: 12 }}>
         <H4 mb="0">{evidence.isReply ? 'Reply' : 'Comment'}</H4>
-        <Badge variant={evidence.status === 'ACTIVE' ? 'success' : 'warning'} data-testid="pupzy-comment-status">
+        <StatusBadge value={evidence.status} data-testid="pupzy-comment-status">
           {evidence.imagesHidden
             ? 'Images hidden from users'
             : evidence.hidden
               ? 'Hidden from users'
               : evidence.statusLabel}
-        </Badge>
+        </StatusBadge>
       </div>
 
       <div style={{ display: 'grid', gap: 6, marginBottom: 12 }}>
@@ -171,9 +172,9 @@ export default function CommentEvidence({ record }) {
                 onOpen={(trigger) => openMedia(media, index, trigger)}
               />
               {item.hiddenFromUsers ? (
-                <Badge variant="warning" data-testid="pupzy-image-hidden-badge">
+                <StatusBadge value="HIDDEN" data-testid="pupzy-image-hidden-badge">
                   Hidden from users
-                </Badge>
+                </StatusBadge>
               ) : null}
             </div>
           ))}

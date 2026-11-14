@@ -398,7 +398,7 @@ describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, ()
         const markerCount = document.querySelectorAll('.leaflet-marker-icon').length;
         const pageText = document.body.innerText;
         const hasCenteredNotice = pageText.includes('Map viewport centered on Cairo');
-        const hasNoPinBadge = pageText.includes('NO PIN');
+        const hasNoPinBadge = pageText.includes('No pin');
 
         return { latVal, lngVal, confirmed, markerCount, hasCenteredNotice, hasNoPinBadge };
       });
@@ -451,7 +451,7 @@ describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, ()
           lngVal,
           confirmed,
           markerCount,
-          isUnconfirmed: pageText.includes('UNCONFIRMED'),
+          isUnconfirmed: pageText.includes('Unconfirmed'),
         };
       });
 

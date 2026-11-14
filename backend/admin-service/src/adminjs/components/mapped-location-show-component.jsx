@@ -107,7 +107,7 @@ export default function MappedLocationShow({ property, record }) {
             style={{
               borderRadius: '4px',
               border: '1px solid #C4622D',
-              color: '#C4622D',
+              color: '#A84E1F',
               textDecoration: 'none',
             }}
           >

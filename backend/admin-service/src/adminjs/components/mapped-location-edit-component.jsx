@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ApiClient } from 'adminjs';
-import { Badge, Box, Button, CheckBox, FormGroup, H4, Input, Label, Text } from '@adminjs/design-system';
+import { Box, Button, CheckBox, FormGroup, H4, Input, Label, Text } from '@adminjs/design-system';
 
+import { StatusBadge } from './status-badge-component.jsx';
 import { parseCoordinatesValue } from './mapped-location.js';
 
 const api = new ApiClient();
@@ -444,9 +445,9 @@ export default function MappedLocationEdit({ property, record, onChange }) {
                 ? `ℹ Map viewport centered on ${viewportCityName}. Click on the map or search an address to place the clinic pin.`
                 : `ℹ No location placed. Click on the map or search an address to place the clinic pin.`}
         </Text>
-        <Badge variant={confirmed ? 'success' : hasLocation ? 'warning' : 'info'}>
-          {confirmed ? 'CONFIRMED' : hasLocation ? 'UNCONFIRMED' : 'NO PIN'}
-        </Badge>
+        <StatusBadge value={confirmed ? 'ACTIVE' : 'PENDING'}>
+          {confirmed ? 'Confirmed' : hasLocation ? 'Unconfirmed' : 'No pin'}
+        </StatusBadge>
       </Box>
 
       {/* Discrepancy Error Alert if returned from validation */}
@@ -530,7 +531,7 @@ export default function MappedLocationEdit({ property, record, onChange }) {
                 onClick={() => void handlePerformSearch()}
                 disabled={isSearching || !searchQuery.trim()}
                 style={{
-                  backgroundColor: '#C4622D',
+                  backgroundColor: '#B45625',
                   borderColor: '#C4622D',
                   color: '#FFFFFF',
                   fontWeight: 600,

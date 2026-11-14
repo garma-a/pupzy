@@ -55,6 +55,7 @@ export function buildCommentEvidence({ comment, media = [], reports = [] }, env 
         reviewedAt: report.reviewed_at ?? null,
         reviewedByName: report.reviewed_by_name ?? null,
         statusLabel: status.label,
+        statusState: status.state,
         isOpen: status.isOpen,
       };
     }),

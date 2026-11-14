@@ -1,7 +1,8 @@
 import React from 'react';
-import { Badge, ValueGroup } from '@adminjs/design-system';
+import { ValueGroup } from '@adminjs/design-system';
 import { useTranslation } from 'adminjs';
 
+import { StatusBadge } from './status-badge-component.jsx';
 import { EmptyValue } from './show-field.jsx';
 
 function startCase(value) {
@@ -30,11 +31,15 @@ export default function DefaultShowProperty({ property, record }) {
     const optionLabel = option.label || raw;
     return (
       <ValueGroup label={label}>
-        <Badge>
+        <StatusBadge value={raw}>
           {tl(`${property.propertyPath}.${optionLabel}`, property.resourceId, { defaultValue: startCase(optionLabel) })}
-        </Badge>
+        </StatusBadge>
       </ValueGroup>
     );
   }
-  return <ValueGroup label={label}>{String(raw)}</ValueGroup>;
+  return (
+    <ValueGroup label={label}>
+      <span dir="auto">{String(raw)}</span>
+    </ValueGroup>
+  );
 }

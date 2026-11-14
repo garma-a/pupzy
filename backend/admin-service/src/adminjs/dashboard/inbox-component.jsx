@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiClient } from 'adminjs';
 import { useLocation, useNavigate } from 'react-router';
 
+import { StatusBadge } from '../components/status-badge-component.jsx';
 import { Avatar } from '../components/avatar-component.jsx';
 import { INBOX_RETURN_KEY, adminRootPath, rememberListSearch } from '../components/list-return.js';
 import { caseHref, headingCounts, inboxSearch, relativeAge, reportCountLabel } from './inbox-format.js';
@@ -17,13 +18,6 @@ const TILES = [
   { kind: 'flagged', queue: 'flagged', label: 'Flagged posts' },
   { kind: 'pending', queue: 'pending_moderation', label: 'Pending review' },
 ];
-const KIND_TONE = {
-  post_report: 'warning',
-  comment_report: 'warning',
-  account_report: 'warning',
-  flagged: 'danger',
-  pending: 'warning',
-};
 const KINDS = new Set(TILES.map((tile) => tile.kind));
 
 function readSearch(search) {
@@ -83,9 +77,9 @@ function CaseRow({ item, search, rootPath, onOpen }) {
       <Thumbnail item={item} />
       <div className="pupzy-case-main">
         <div className="pupzy-case-meta">
-          <span className="pupzy-status" data-tone={KIND_TONE[item.kind]} data-testid="pupzy-case-kind">
+          <StatusBadge value={item.kind} data-testid="pupzy-case-kind">
             {item.kindLabel}
-          </span>
+          </StatusBadge>
           <span className="pupzy-case-count" data-open={item.reportCount > 0} data-testid="pupzy-case-count">
             {reportCountLabel(item.reportCount)}
           </span>

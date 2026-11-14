@@ -55,9 +55,7 @@ export function reportStatusProperty(components) {
     isSortable: false,
     isDisabled: true,
     isVisible: { list: true, show: true, edit: false, filter: false },
-    ...(components?.ReportStatus
-      ? { components: { list: components.ReportStatus, show: components.ReportStatus } }
-      : {}),
+    ...(components?.StatusBadge ? { components: { list: components.StatusBadge, show: components.StatusBadge } } : {}),
   };
 }
 
